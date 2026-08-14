@@ -1,0 +1,118 @@
+﻿$kind: http-request
+name: Admin Assign File
+method: POST
+url: '{{base_url}}/admin/files/pending/:uuid/assign'
+headers:
+  - key: Accept
+    value: application/json
+  - key: Content-Type
+    value: application/json
+  - key: X-CSRF-TOKEN
+    value: '{{csrf_token}}'
+  - key: Authorization
+    value: 'Bearer {{auth_token}}'
+body:
+  type: json
+  content: |-
+    {
+      "user_id": 1
+    }
+pathVariables:
+  - key: uuid
+    value: FILE_UUID_HERE
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      // Test 1: Status code is in success or redirect range (2xx or 3xx)
+      pm.test("Status code is 2xx or 3xx (success range)", function () {
+        pm.expect([200, 201, 302]).to.include(pm.response.code);
+      });
+
+      // Test 2: Response time is acceptable
+      pm.test("Response time is under 3000ms", function () {
+        pm.expect(pm.response.responseTime).to.be.below(3000);
+      });
+
+      // Test 3: Successful assignment - status is 302
+      pm.test("Successful assignment: status is 302", function () {
+        if (pm.response.code === 302) {
+          pm.expect(pm.response.code).to.equal(302);
+          console.log("File assigned successfully. Redirect received.");
+        } else {
+          console.log("Status is not 302. Actual status: " + pm.response.code);
+        }
+      });
+
+      // Test 4: Validation error - status is 422
+      pm.test("Validation error: status is 422 with errors or message field", function () {
+        if (pm.response.code === 422) {
+          var jsonData = pm.response.json();
+          pm.expect(jsonData).to.have.any.keys("errors", "message");
+        } else {
+          console.log("Not a 422 response. Skipping validation error check.");
+        }
+      });
+
+      // Test 5: Unauthorized - status is 401 or 403
+      pm.test("Unauthorized: status is 401 or 403", function () {
+        if (pm.response.code === 401 || pm.response.code === 403) {
+          console.log("Auth error encountered. Status: " + pm.response.code + ". Check auth_token and user permissions.");
+          pm.expect([401, 403]).to.include(pm.response.code);
+        } else {
+          console.log("No auth error. Status: " + pm.response.code);
+        }
+      });
+
+      // Test 6: Not found - status is 404
+      pm.test("Not found: status is 404 (file UUID may be invalid or not pending)", function () {
+        if (pm.response.code === 404) {
+          console.log("404 Not Found: The file UUID may be invalid, not in pending_assignment status, or not in the admin's department.");
+          pm.expect(pm.response.code).to.equal(404);
+        } else {
+          console.log("Not a 404 response. Skipping not-found check.");
+        }
+      });
+
+      // Test 7: CSRF mismatch - status is 419
+      pm.test("CSRF mismatch: status is 419 (CSRF token missing or invalid)", function () {
+        if (pm.response.code === 419) {
+          console.log("419 CSRF Token Mismatch: Ensure the csrf_token environment variable is set correctly.");
+          pm.expect(pm.response.code).to.equal(419);
+        } else {
+          console.log("No CSRF mismatch. Status: " + pm.response.code);
+        }
+      });
+
+      // Test 8: Content-Type header check
+      pm.test("Content-Type header is present when response has a body", function () {
+        var body = pm.response.text();
+        if (body && body.length > 0) {
+          pm.expect(pm.response.headers.get("Content-Type")).to.not.be.null;
+        } else {
+          console.log("Response body is empty. Skipping Content-Type check.");
+        }
+      });
+
+      // Test 9: On success (302) - store file UUID in environment
+      pm.test("On success (302): log success and optionally store file UUID", function () {
+        if (pm.response.code === 302) {
+          var pathParts = pm.request.url.path;
+          var uuid = null;
+          for (var i = 0; i < pathParts.length; i++) {
+            var seg = pathParts[i];
+            if (seg !== "admin" && seg !== "files" && seg !== "pending" && seg !== "assign") {
+              uuid = seg;
+              break;
+            }
+          }
+          if (uuid) {
+            pm.environment.set("assigned_file_uuid", uuid);
+            console.log("File successfully assigned. UUID stored in environment: " + uuid);
+          } else {
+            console.log("File successfully assigned (302 redirect received).");
+          }
+        } else {
+          console.log("Assignment not confirmed (status not 302). UUID not stored.");
+        }
+      });

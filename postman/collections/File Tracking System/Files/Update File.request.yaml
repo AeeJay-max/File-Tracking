@@ -1,0 +1,23 @@
+$kind: http-request
+name: Update File
+method: PUT
+url: '{{base_url}}/files/:file'
+headers:
+  - key: Accept
+    value: application/json
+  - key: Content-Type
+    value: application/json
+  - key: X-CSRF-TOKEN
+    value: '{{csrf_token}}'
+  - key: Authorization
+    value: 'Bearer {{auth_token}}'
+body:
+  type: json
+  content: |-
+    {
+      "title": "Updated File Title",
+      "description": "Updated description"
+    }
+pathVariables:
+  - key: file
+    value: FILE_UUID_HERE

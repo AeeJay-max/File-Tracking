@@ -1,0 +1,11 @@
+$kind: http-request
+name: Mark Visible As Read
+method: POST
+url: '{{base_url}}/notifications/read-visible'
+headers:
+  - key: Accept
+    value: application/json
+  - key: X-CSRF-TOKEN
+    value: '{{csrf_token}}'
+  - key: Authorization
+    value: 'Bearer {{auth_token}}'

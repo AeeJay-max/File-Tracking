@@ -1,0 +1,17 @@
+$kind: http-request
+name: Upload Profile Photo
+method: POST
+url: '{{base_url}}/profile/photo'
+headers:
+  - key: Accept
+    value: application/json
+  - key: X-CSRF-TOKEN
+    value: '{{csrf_token}}'
+  - key: Authorization
+    value: 'Bearer {{auth_token}}'
+body:
+  type: formdata
+  content:
+    - key: photo
+      type: text
+      value: ''

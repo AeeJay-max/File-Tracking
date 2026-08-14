@@ -1,0 +1,3 @@
+$kind: collection
+name: Notifications
+description: 'User notification routes'

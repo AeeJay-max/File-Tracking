@@ -1,0 +1,11 @@
+$kind: http-request
+name: Delete Profile Photo
+method: DELETE
+url: '{{base_url}}/profile/photo'
+headers:
+  - key: Accept
+    value: application/json
+  - key: X-CSRF-TOKEN
+    value: '{{csrf_token}}'
+  - key: Authorization
+    value: 'Bearer {{auth_token}}'

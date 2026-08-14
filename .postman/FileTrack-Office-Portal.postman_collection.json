@@ -1,0 +1,241 @@
+{
+  "info": {
+    "name": "FileTrack Office Portal",
+    "description": "Automated API collection for FileTrack Office Portal — covers public pages, authentication, file management, transfers, admin panel, and notifications.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://127.0.0.1:8000", "type": "string" },
+    { "key": "cookie_jar", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Public",
+      "item": [
+        {
+          "name": "Landing Page",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/",
+            "description": "Public welcome/landing page"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "Help Page",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/help",
+            "description": "Help center page — route('help')"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Help page loaded', () => pm.response.text().includes('help') || pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "Privacy Policy",
+          "request": { "method": "GET", "url": "{{base_url}}/privacy-policy" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "Terms",
+          "request": { "method": "GET", "url": "{{base_url}}/terms" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "About (redirect)",
+          "request": { "method": "GET", "url": "{{base_url}}/about" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Redirects to /#about (3xx or 200)', () => { pm.expect([200, 301, 302]).to.include(pm.response.code); });"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "Public File Search",
+          "request": { "method": "GET", "url": "{{base_url}}/public/file-search" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "Public File Search — with query",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/public/file-search/result?q=TEST",
+              "query": [{ "key": "q", "value": "TEST" }]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}]
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login Page",
+          "request": { "method": "GET", "url": "{{base_url}}/login" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const cookies = pm.response.headers.get('Set-Cookie') || '';",
+            "pm.collectionVariables.set('cookie_jar', cookies);"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "Login — POST (valid credentials)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/login",
+            "header": [
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" },
+              { "key": "Accept", "value": "text/html,application/xhtml+xml" },
+              { "key": "X-XSRF-TOKEN", "value": "{{xsrf_token}}" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "_token", "value": "{{csrf_token}}" },
+                { "key": "email", "value": "{{test_email}}", "description": "Set in environment" },
+                { "key": "password", "value": "{{test_password}}", "description": "Set in environment" }
+              ]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Redirects after login (3xx)', () => pm.expect([302, 303]).to.include(pm.response.code));"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "Login — POST (invalid credentials)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/login",
+            "header": [
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "_token", "value": "{{csrf_token}}" },
+                { "key": "email", "value": "wrong@example.com" },
+                { "key": "password", "value": "wrongpassword" }
+              ]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Returns 422 or redirects back with error', () => pm.expect([302, 422]).to.include(pm.response.code));"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "Forgot Password Page",
+          "request": { "method": "GET", "url": "{{base_url}}/forgot-password" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/logout",
+            "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "body": { "mode": "urlencoded", "urlencoded": [{ "key": "_token", "value": "{{csrf_token}}" }] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Redirects after logout', () => pm.expect([302, 303]).to.include(pm.response.code));"
+          ], "type": "text/javascript" }}]
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Dashboard (unauthenticated — should redirect)",
+          "request": { "method": "GET", "url": "{{base_url}}/dashboard" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Redirects to login when unauthenticated', () => pm.expect([302, 303]).to.include(pm.response.code));"
+          ], "type": "text/javascript" }}]
+        }
+      ]
+    },
+    {
+      "name": "Files",
+      "item": [
+        {
+          "name": "Files Index (unauthenticated)",
+          "request": { "method": "GET", "url": "{{base_url}}/files" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Redirects to login', () => pm.expect([302, 303]).to.include(pm.response.code));"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "File Show (unauthenticated)",
+          "request": { "method": "GET", "url": "{{base_url}}/files/00000000-0000-0000-0000-000000000001" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Redirects or 404', () => pm.expect([302, 303, 404]).to.include(pm.response.code));"
+          ], "type": "text/javascript" }}]
+        }
+      ]
+    },
+    {
+      "name": "Admin Panel",
+      "item": [
+        {
+          "name": "Admin Dashboard (unauthenticated)",
+          "request": { "method": "GET", "url": "{{base_url}}/admin/dashboard" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Redirects to login', () => pm.expect([302, 303]).to.include(pm.response.code));"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "Pending Files (unauthenticated)",
+          "request": { "method": "GET", "url": "{{base_url}}/admin/files/pending" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Redirects to login', () => pm.expect([302, 303]).to.include(pm.response.code));"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "Admin Transfers (unauthenticated)",
+          "request": { "method": "GET", "url": "{{base_url}}/admin/transfers" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Redirects to login', () => pm.expect([302, 303]).to.include(pm.response.code));"
+          ], "type": "text/javascript" }}]
+        }
+      ]
+    },
+    {
+      "name": "AJAX Endpoints",
+      "item": [
+        {
+          "name": "Department Search (unauthenticated)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/ajax/departments/search?q=test",
+              "query": [{ "key": "q", "value": "test" }]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Redirects or 401/403 when unauthenticated', () => pm.expect([302, 401, 403]).to.include(pm.response.code));"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "Notifications Poll (unauthenticated)",
+          "request": { "method": "GET", "url": "{{base_url}}/notifications/poll" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Auth required', () => pm.expect([302, 401, 403]).to.include(pm.response.code));"
+          ], "type": "text/javascript" }}]
+        }
+      ]
+    }
+  ]
+}

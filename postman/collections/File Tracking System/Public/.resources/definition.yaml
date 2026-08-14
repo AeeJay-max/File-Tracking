@@ -1,0 +1,3 @@
+$kind: collection
+name: Public
+description: 'Publicly accessible routes - no authentication required'

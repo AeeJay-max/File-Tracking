@@ -1,0 +1,12 @@
+$kind: http-request
+name: Edit User Form
+method: GET
+url: '{{base_url}}/users/:id/edit'
+headers:
+  - key: Accept
+    value: application/json
+  - key: Authorization
+    value: 'Bearer {{auth_token}}'
+pathVariables:
+  - key: id
+    value: '1'

@@ -1,0 +1,17 @@
+﻿name: New Environment
+values:
+  - key: base_url
+    value: 'http://localhost:8000'
+    enabled: true
+  - key: auth_token
+    value: ''
+    enabled: true
+  - key: email
+    value: ''
+    enabled: true
+  - key: password
+    value: ''
+    enabled: true
+  - key: csrf_token
+    value: ''
+    enabled: true

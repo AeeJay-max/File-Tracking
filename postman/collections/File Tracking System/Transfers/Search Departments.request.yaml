@@ -1,0 +1,12 @@
+$kind: http-request
+name: Search Departments
+method: GET
+url: '{{base_url}}/ajax/departments/search'
+queryParams:
+  - key: q
+    value: finance
+headers:
+  - key: Accept
+    value: application/json
+  - key: Authorization
+    value: 'Bearer {{auth_token}}'

@@ -1,0 +1,5 @@
+$kind: http-request
+method: GET
+url: "{{base_url}}/"
+headers:
+  Accept: application/json

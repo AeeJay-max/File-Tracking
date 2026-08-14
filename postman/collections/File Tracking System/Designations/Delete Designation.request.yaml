@@ -1,0 +1,14 @@
+$kind: http-request
+name: Delete Designation
+method: DELETE
+url: '{{base_url}}/designations/:id'
+headers:
+  - key: Accept
+    value: application/json
+  - key: X-CSRF-TOKEN
+    value: '{{csrf_token}}'
+  - key: Authorization
+    value: 'Bearer {{auth_token}}'
+pathVariables:
+  - key: id
+    value: '1'

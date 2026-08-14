@@ -1,0 +1,18 @@
+$kind: http-request
+name: Login
+method: POST
+url: '{{base_url}}/login'
+headers:
+  - key: Accept
+    value: application/json
+  - key: Content-Type
+    value: application/json
+  - key: X-CSRF-TOKEN
+    value: '{{csrf_token}}'
+body:
+  type: json
+  content: |-
+    {
+      "email": "{{email}}",
+      "password": "{{password}}"
+    }

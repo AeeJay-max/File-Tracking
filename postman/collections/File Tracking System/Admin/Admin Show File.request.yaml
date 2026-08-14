@@ -1,0 +1,12 @@
+$kind: http-request
+name: Admin Show File
+method: GET
+url: '{{base_url}}/admin/files/:uuid'
+headers:
+  - key: Accept
+    value: application/json
+  - key: Authorization
+    value: 'Bearer {{auth_token}}'
+pathVariables:
+  - key: uuid
+    value: FILE_UUID_HERE

@@ -1,0 +1,9 @@
+$kind: http-request
+name: List Designations
+method: GET
+url: '{{base_url}}/designations'
+headers:
+  - key: Accept
+    value: application/json
+  - key: Authorization
+    value: 'Bearer {{auth_token}}'

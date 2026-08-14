@@ -1,0 +1,12 @@
+$kind: http-request
+name: Edit File Form
+method: GET
+url: '{{base_url}}/files/:file/edit'
+headers:
+  - key: Accept
+    value: application/json
+  - key: Authorization
+    value: 'Bearer {{auth_token}}'
+pathVariables:
+  - key: file
+    value: FILE_UUID_HERE

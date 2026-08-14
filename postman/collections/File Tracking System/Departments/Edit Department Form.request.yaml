@@ -1,0 +1,12 @@
+$kind: http-request
+name: Edit Department Form
+method: GET
+url: '{{base_url}}/departments/:id/edit'
+headers:
+  - key: Accept
+    value: application/json
+  - key: Authorization
+    value: 'Bearer {{auth_token}}'
+pathVariables:
+  - key: id
+    value: '1'

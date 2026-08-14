@@ -1,0 +1,9 @@
+$kind: http-request
+name: List Users
+method: GET
+url: '{{base_url}}/users'
+headers:
+  - key: Accept
+    value: application/json
+  - key: Authorization
+    value: 'Bearer {{auth_token}}'

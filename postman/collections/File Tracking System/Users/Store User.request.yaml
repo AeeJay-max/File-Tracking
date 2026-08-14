@@ -1,0 +1,23 @@
+$kind: http-request
+name: Store User
+method: POST
+url: '{{base_url}}/users'
+headers:
+  - key: Accept
+    value: application/json
+  - key: Content-Type
+    value: application/json
+  - key: X-CSRF-TOKEN
+    value: '{{csrf_token}}'
+  - key: Authorization
+    value: 'Bearer {{auth_token}}'
+body:
+  type: json
+  content: |-
+    {
+      "name": "New User",
+      "email": "newuser@example.com",
+      "password": "password",
+      "role": "user",
+      "department_id": 1
+    }

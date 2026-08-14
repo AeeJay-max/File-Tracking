@@ -1,0 +1,8 @@
+$kind: collection
+name: File Tracking System
+description: 'Complete API collection for the File Tracking System Laravel application. Uses {{base_url}} for all requests.'
+variables:
+  - key: base_url
+    value: '{{base_url}}'
+  - key: auth_token
+    value: '{{auth_token}}'

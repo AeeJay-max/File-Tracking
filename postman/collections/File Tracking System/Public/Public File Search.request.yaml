@@ -1,0 +1,7 @@
+$kind: http-request
+name: Public File Search
+method: GET
+url: '{{base_url}}/public/file-search'
+headers:
+  - key: Accept
+    value: application/json

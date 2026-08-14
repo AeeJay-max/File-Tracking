@@ -1,0 +1,9 @@
+$kind: http-request
+name: Create Department Form
+method: GET
+url: '{{base_url}}/departments/create'
+headers:
+  - key: Accept
+    value: application/json
+  - key: Authorization
+    value: 'Bearer {{auth_token}}'

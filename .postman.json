@@ -1,0 +1,7 @@
+{
+  "workspace_id": "60c997a5-bcf6-4a89-8d6f-63f9694403ad",
+  "collection_id": null,
+  "environment_id": null,
+  "collection_file": ".postman/FileTrack-Office-Portal.postman_collection.json",
+  "note": "Run 'kiro postman push' or use the Postman power to upload this collection and populate collection_id / environment_id."
+}

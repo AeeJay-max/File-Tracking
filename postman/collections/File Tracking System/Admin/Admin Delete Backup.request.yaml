@@ -1,0 +1,14 @@
+$kind: http-request
+name: Admin Delete Backup
+method: DELETE
+url: '{{base_url}}/admin/backup/:filename'
+headers:
+  - key: Accept
+    value: application/json
+  - key: X-CSRF-TOKEN
+    value: '{{csrf_token}}'
+  - key: Authorization
+    value: 'Bearer {{auth_token}}'
+pathVariables:
+  - key: filename
+    value: backup_2024_01_01.sql

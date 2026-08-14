@@ -1,0 +1,3 @@
+$kind: collection
+name: Transfers
+description: 'File transfer routes and AJAX department search'

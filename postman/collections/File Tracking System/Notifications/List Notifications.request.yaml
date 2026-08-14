@@ -1,0 +1,9 @@
+$kind: http-request
+name: List Notifications
+method: GET
+url: '{{base_url}}/notifications'
+headers:
+  - key: Accept
+    value: application/json
+  - key: Authorization
+    value: 'Bearer {{auth_token}}'

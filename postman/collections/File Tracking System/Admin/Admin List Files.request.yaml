@@ -1,0 +1,9 @@
+$kind: http-request
+name: Admin List Files
+method: GET
+url: '{{base_url}}/admin/files'
+headers:
+  - key: Accept
+    value: application/json
+  - key: Authorization
+    value: 'Bearer {{auth_token}}'

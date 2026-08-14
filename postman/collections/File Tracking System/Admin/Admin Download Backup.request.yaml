@@ -1,0 +1,12 @@
+$kind: http-request
+name: Admin Download Backup
+method: GET
+url: '{{base_url}}/admin/backup/:filename/download'
+headers:
+  - key: Accept
+    value: application/octet-stream
+  - key: Authorization
+    value: 'Bearer {{auth_token}}'
+pathVariables:
+  - key: filename
+    value: backup_2024_01_01.sql

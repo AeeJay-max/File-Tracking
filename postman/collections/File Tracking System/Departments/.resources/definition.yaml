@@ -1,0 +1,4 @@
+$kind: collection
+name: Departments
+description: 'Department resource management (Super Admin only)'
+order: 479254675455999

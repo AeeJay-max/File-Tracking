@@ -1,0 +1,12 @@
+$kind: http-request
+name: Transfer File Form
+method: GET
+url: '{{base_url}}/files/:file/transfer'
+headers:
+  - key: Accept
+    value: application/json
+  - key: Authorization
+    value: 'Bearer {{auth_token}}'
+pathVariables:
+  - key: file
+    value: FILE_UUID_HERE

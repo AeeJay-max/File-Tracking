@@ -1,0 +1,3 @@
+$kind: collection
+name: Admin
+description: 'Admin panel routes - dashboard, users, files, transfers, backup (Admin + Super Admin)'

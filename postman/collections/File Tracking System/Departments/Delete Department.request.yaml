@@ -1,0 +1,14 @@
+$kind: http-request
+name: Delete Department
+method: DELETE
+url: '{{base_url}}/departments/:id'
+headers:
+  - key: Accept
+    value: application/json
+  - key: X-CSRF-TOKEN
+    value: '{{csrf_token}}'
+  - key: Authorization
+    value: 'Bearer {{auth_token}}'
+pathVariables:
+  - key: id
+    value: '1'

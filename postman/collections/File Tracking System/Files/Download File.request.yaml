@@ -1,0 +1,12 @@
+$kind: http-request
+name: Download File
+method: GET
+url: '{{base_url}}/files/:file/download'
+headers:
+  - key: Accept
+    value: application/octet-stream
+  - key: Authorization
+    value: 'Bearer {{auth_token}}'
+pathVariables:
+  - key: file
+    value: FILE_UUID_HERE

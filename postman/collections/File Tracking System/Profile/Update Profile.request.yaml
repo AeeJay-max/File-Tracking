@@ -1,0 +1,20 @@
+$kind: http-request
+name: Update Profile
+method: PATCH
+url: '{{base_url}}/profile'
+headers:
+  - key: Accept
+    value: application/json
+  - key: Content-Type
+    value: application/json
+  - key: X-CSRF-TOKEN
+    value: '{{csrf_token}}'
+  - key: Authorization
+    value: 'Bearer {{auth_token}}'
+body:
+  type: json
+  content: |-
+    {
+      "name": "Updated Name",
+      "email": "updated@example.com"
+    }
