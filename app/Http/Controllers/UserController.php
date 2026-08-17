@@ -67,7 +67,7 @@ class UserController extends Controller
         $data = $request->only(['name', 'email', 'department_id', 'designation_id', 'contact_number']);
         $data['password'] = Hash::make('Password@123');
         $data['role'] = 'admin';
-        $data['can_create_file'] = false;
+        $data['can_create_file'] = true;
         $data['must_change_password'] = true;
 
         if ($request->hasFile('photo')) {

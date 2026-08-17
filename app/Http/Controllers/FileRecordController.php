@@ -156,6 +156,16 @@ class FileRecordController extends Controller
             'remarks' => $request->string('remarks')->trim()->value() ?: null,
         ]);
 
+        FileMovement::create([
+            'file_id' => $file->id,
+            'from_user' => Auth::id(),
+            'to_user' => Auth::id(),
+            'from_department' => Auth::user()->department_id,
+            'to_department' => Auth::user()->department_id,
+            'action' => 'updated',
+            'remarks' => 'Document contents updated by '.Auth::user()->name,
+        ]);
+
         if ($request->hasFile('attachment')) {
             if ($file->attachment_path && Storage::disk('private')->exists($file->attachment_path)) {
                 Storage::disk('private')->delete($file->attachment_path);
@@ -172,7 +182,7 @@ class FileRecordController extends Controller
             ]);
         }
 
-        return redirect()->route('files.show', $file->uuid)->with('success', 'File updated successfully.');
+        return redirect()->route('files.show', $file->uuid)->with('success', 'Document contents updated successfully.');
     }
 
     public function show(FileRecord $file)

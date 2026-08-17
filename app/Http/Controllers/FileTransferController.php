@@ -28,63 +28,107 @@ class FileTransferController extends Controller
 
         $currentUser = Auth::user();
 
-        // All active users in the same department (excluding self)
-        $sameDeptUsers = User::where('department_id', $currentUser->department_id)
+        // Same department active users
+        $sameDeptUsers = User::with(['department', 'designation'])
+            ->where('department_id', $currentUser->department_id)
             ->where('id', '!=', $currentUser->id)
             ->where('is_active', true)
             ->orderBy('name')
-            ->get(['id', 'name']);
+            ->get();
 
-        return view('files.transfer', compact('file', 'sameDeptUsers'));
+        // All active users in system (excluding self) for direct person-to-person selection
+        $allUsers = User::with(['department', 'designation'])
+            ->where('id', '!=', $currentUser->id)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        $departments = Department::where('is_active', true)->orderBy('name')->get();
+
+        return view('files.transfer', compact('file', 'sameDeptUsers', 'allUsers', 'departments'));
     }
 
     /**
-     * Execute an immediate file transfer — no approval, no pending state.
+     * Execute an immediate file transfer — directly to a specific Person or Department.
      *
-     * destination_type = 'same' | 'other'
-     * If same:  to_user_id required (must be in same dept)
-     * If other: department_id required (must be an existing dept in DB)
+     * destination_type = 'user' | 'same' | 'other' | 'department'
+     * If person/user: to_user_id required (can be any active user in any department)
+     * If department:  department_id required
      */
     public function store(Request $request)
     {
         $request->validate([
             'file_record_uuid' => 'required|string|exists:file_records,uuid',
-            'destination_type' => 'required|in:same,other',
-            'to_user_id' => 'required_if:destination_type,same|nullable|integer|exists:users,id',
-            'department_id' => 'required_if:destination_type,other|nullable|integer|exists:departments,id',
-            'remarks' => 'nullable|string|max:500',
+            'destination_type' => 'required|in:user,same,other,department',
+            'to_user_id' => 'required_if:destination_type,user,same|nullable|integer|exists:users,id',
+            'department_id' => 'required_if:destination_type,other,department|nullable|integer|exists:departments,id',
+            'remarks' => 'nullable|string|max:1000',
         ]);
 
         $file = FileRecord::where('uuid', $request->file_record_uuid)->firstOrFail();
         $currentUser = Auth::user();
 
-        // Auth check — policy enforces current holder (ownership-based, not role-based)
+        // Auth check — policy enforces current holder
         $this->authorize('transfer', $file);
 
-        // SECURITY: re-verify ownership hasn't changed since the form was loaded (race condition guard)
+        // SECURITY: re-verify ownership
         if ((int) $file->current_user_id !== $currentUser->id) {
             return back()->with('error', 'You no longer hold this file.');
         }
 
         $remarks = $request->string('remarks')->trim()->value() ?: null;
 
-        if ($request->destination_type === 'same') {
+        if (in_array($request->destination_type, ['user', 'same'], true) || $request->filled('to_user_id')) {
             $toUserId = (int) $request->to_user_id;
 
-            // ── SECURITY: verify target user is actually in the same department ──
             $targetUser = User::where('id', $toUserId)
-                ->where('department_id', $currentUser->department_id)
                 ->where('is_active', true)
                 ->first();
 
             if (! $targetUser) {
-                return back()->with('error', 'Invalid recipient. The selected user must be in your department.');
+                return back()->with('error', 'Invalid recipient selected. Please select an active user.');
             }
 
             return $this->transferToUser($file, $currentUser, $targetUser, $remarks);
         }
 
         return $this->transferToDepartment($file, $currentUser, (int) $request->department_id, $remarks);
+    }
+
+    /**
+     * AJAX: search users by name, department, or designation.
+     */
+    public function searchUsers(Request $request)
+    {
+        $q = $request->string('q')->trim()->value();
+        $currentUser = Auth::user();
+
+        if (strlen($q) < 2) {
+            return response()->json([]);
+        }
+
+        $users = User::with(['department:id,name', 'designation:id,name'])
+            ->where('is_active', true)
+            ->where('id', '!=', $currentUser->id)
+            ->where(function ($query) use ($q) {
+                $query->where('name', 'like', "%{$q}%")
+                    ->orWhere('email', 'like', "%{$q}%")
+                    ->orWhereHas('department', fn ($d) => $d->where('name', 'like', "%{$q}%"))
+                    ->orWhereHas('designation', fn ($ds) => $ds->where('name', 'like', "%{$q}%"));
+            })
+            ->orderBy('name')
+            ->limit(10)
+            ->get(['id', 'name', 'department_id', 'designation_id', 'photo_url'])
+            ->map(fn ($u) => [
+                'id' => $u->id,
+                'name' => $u->name,
+                'dept_name' => $u->department->name ?? 'No Department',
+                'designation_name' => $u->designation->name ?? '',
+                'initials' => $u->initials,
+                'photo_url' => $u->photo_url,
+            ]);
+
+        return response()->json($users);
     }
 
     /**
@@ -135,12 +179,13 @@ class FileTransferController extends Controller
                 'from_department' => $currentUser->department_id,
                 'to_department' => $targetUser->department_id,
                 'action' => 'transferred',
-                'remarks' => $remarks ?? 'Same-department transfer',
+                'remarks' => $remarks ?? 'Transferred to '.$targetUser->name,
             ]);
 
             $file->update([
                 'current_user_id' => $targetUser->id,
                 'current_department_id' => $targetUser->department_id,
+                'remarks' => $remarks ?? $file->remarks,
                 'status' => 'active',
             ]);
         });

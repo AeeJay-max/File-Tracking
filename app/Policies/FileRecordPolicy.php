@@ -78,7 +78,11 @@ class FileRecordPolicy
      */
     public function create(User $user): bool
     {
-        return (bool) $user->can_create_file;
+        if ($user->role === 'super_admin') {
+            return false;
+        }
+
+        return (bool) ($user->can_create_file ?? true);
     }
 
     // ──────────────────────────────────────────────────────────

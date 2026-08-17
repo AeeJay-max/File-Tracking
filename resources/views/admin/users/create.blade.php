@@ -60,7 +60,7 @@
             <div class="col-12">
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" name="can_create_file" value="1"
-                        id="canCreateFile" {{ old('can_create_file') ? 'checked' : '' }}>
+                        id="canCreateFile" {{ old('can_create_file', 1) ? 'checked' : '' }}>
                     <label class="form-check-label fw-600" for="canCreateFile">Allow this user to create files</label>
                 </div>
             </div>

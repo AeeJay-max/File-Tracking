@@ -58,7 +58,7 @@ class AdminUserController extends Controller
             'department_id' => Auth::user()->department_id,
             'role' => 'user',
             'contact_number' => $request->contact_number,
-            'can_create_file' => $request->boolean('can_create_file'),
+            'can_create_file' => $request->has('can_create_file') ? $request->boolean('can_create_file') : true,
             'must_change_password' => true,
         ];
 

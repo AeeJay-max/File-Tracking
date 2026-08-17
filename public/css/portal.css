@@ -155,8 +155,8 @@ body.portal-body.sidebar-open { overflow: hidden; }
     top: calc(50% + 36px);
     left: calc(50% + (var(--sidebar-w) / 2));
     transform: translate(-50%, -50%);
-    width: min(560px, 65vw);
-    height: min(560px, 65vw);
+    width: min(660px, 65vw);
+    height: min(660px, 65vw);
     background: url('../images/logo.png') no-repeat center center / contain;
     opacity: 0.20;
     pointer-events: none;

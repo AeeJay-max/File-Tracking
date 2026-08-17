@@ -34,7 +34,7 @@
 ================================================================ -->
     <div class="portal-sidebar" id="portalSidebar">
         <div class="sidebar-brand">
-            <div class="brand-icon-wrap" style="background:transparent;box-shadow:none;"><img src="{{ asset('images/logo.png') }}" alt="Ministry Logo" style="width:54px;height:54px;object-fit:contain;"></div>
+            <div class="brand-icon-wrap" style="background:transparent;box-shadow:none;"><img src="{{ asset('images/logo.png') }}" alt="Ministry Logo" style="width:84px;height:84px;object-fit:contain;"></div>
             <div class="brand-text">
                 <span class="brand-name">FileTrack</span>
                 <span class="brand-sub">Office Portal</span>

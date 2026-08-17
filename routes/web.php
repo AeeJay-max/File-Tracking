@@ -65,7 +65,8 @@ Route::middleware(['auth', 'verified', 'no.cache', 'force.pwd.change'])->group(f
     Route::get('/files/{file}/transfer', [FileTransferController::class, 'create'])->name('files.transfer.create');
     Route::post('/files/transfer', [FileTransferController::class, 'store'])->name('files.transfer.store');
 
-    // AJAX: department search for transfer form autocomplete
+    // AJAX: user & department search for transfer form autocomplete
+    Route::get('/ajax/users/search', [FileTransferController::class, 'searchUsers'])->name('ajax.users.search');
     Route::get('/ajax/departments/search', [FileTransferController::class, 'searchDepartments'])->name('ajax.departments.search');
 
     // AJAX: inline department creation from File Creation page (any authenticated user)

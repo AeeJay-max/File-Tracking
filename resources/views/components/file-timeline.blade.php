@@ -105,6 +105,21 @@
                 'rejected'    => 'Returned',
                 default       => ucfirst($move->action),
             };
+            /* ── Duration calculation (time spent with this person) ── */
+            $startTime = $move->created_at;
+            $nextMove  = $moves->get($idx + 1);
+            $endTime   = $nextMove ? $nextMove->created_at : now();
+            $diffSecs  = $startTime->diffInSeconds($endTime);
+
+            if ($diffSecs < 60) {
+                $durationLabel = 'Less than 1 min';
+            } else {
+                $durationLabel = $startTime->diffForHumans($endTime, [
+                    'parts' => 2,
+                    'short' => false,
+                    'syntax' => \Carbon\CarbonInterface::DIFF_ABSOLUTE,
+                ]);
+            }
         @endphp
 
         {{-- ── Arrow connector (between cards, not before first) ── --}}
@@ -163,6 +178,12 @@
             <div class="tl-dept">
                 <i class="fa-solid fa-building-columns fa-xs"></i>
                 {{ $deptLabel }}
+            </div>
+
+            {{-- Time Spent with Person --}}
+            <div class="tl-duration-badge my-1" style="font-size:.72rem;background:#fef3c7;color:#854d0e;padding:3px 8px;border-radius:6px;font-weight:700;display:inline-flex;align-items:center;gap:4px;">
+                <i class="fa-regular fa-hourglass-half fa-xs"></i>
+                <span>{{ $isCurrent ? 'Held so far: ' : 'Time with person: ' }}{{ $durationLabel }}</span>
             </div>
 
             {{-- Date + Time --}}

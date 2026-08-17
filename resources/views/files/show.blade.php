@@ -154,6 +154,70 @@
     </div>
 </div>
 
+{{-- MOVEMENT & TIME SPENT HISTORY TABLE --}}
+<div class="portal-card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="fa-solid fa-history me-2 text-primary"></i>Movement &amp; Time Spent History</span>
+        <span class="badge bg-secondary">{{ $file->movements->count() }} Movements</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="portal-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>From Person</th>
+                        <th>Sent To (Recipient)</th>
+                        <th>Department</th>
+                        <th>Sent At</th>
+                        <th>Time Spent with Person</th>
+                        <th>General Content / Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php $movesList = $file->movements->sortBy('created_at')->values(); @endphp
+                    @foreach($movesList as $i => $m)
+                    @php
+                        $startT = $m->created_at;
+                        $nextM = $movesList->get($i + 1);
+                        $endT = $nextM ? $nextM->created_at : now();
+                        $durSec = $startT->diffInSeconds($endT);
+                        $durText = $durSec < 60 ? 'Less than 1 min' : $startT->diffForHumans($endT, ['parts' => 2, 'short' => false, 'syntax' => \Carbon\CarbonInterface::DIFF_ABSOLUTE]);
+                        $isLast = ($i === count($movesList) - 1);
+                    @endphp
+                    <tr>
+                        <td class="text-muted fw-600">{{ $i + 1 }}</td>
+                        <td class="fw-600">
+                            {{ $m->fromUser->name ?? 'System' }}
+                            @if($m->fromUser?->designation)
+                                <div class="text-muted fs-sm">{{ $m->fromUser->designation->name }}</div>
+                            @endif
+                        </td>
+                        <td class="fw-700 text-portal-primary">
+                            {{ $m->toUser->name ?? ($m->toDept->name ?? 'Department') }}
+                            @if($m->toUser?->designation)
+                                <div class="text-muted fs-sm">{{ $m->toUser->designation->name }}</div>
+                            @endif
+                        </td>
+                        <td class="text-muted fs-sm">{{ $m->toDept->name ?? ($m->fromDept->name ?? '—') }}</td>
+                        <td class="fs-sm">{{ $m->created_at->format('d M Y, h:i A') }}</td>
+                        <td>
+                            <span class="badge {{ $isLast ? 'bg-success' : 'bg-warning text-dark' }} py-1 px-2">
+                                <i class="fa-regular fa-clock me-1"></i>
+                                {{ $isLast ? 'Held so far: ' : 'Time spent: ' }}{{ $durText }}
+                            </span>
+                        </td>
+                        <td class="text-break fs-sm" style="max-width:280px;">
+                            {{ $m->remarks ? Str::limit($m->remarks, 100) : '—' }}
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 {{-- LINKED-LIST TIMELINE (shared component) --}}
 <div class="portal-card">
     <div class="card-header">

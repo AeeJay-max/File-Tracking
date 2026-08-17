@@ -18,7 +18,7 @@
 
         /* ── Hero ───────────────────────────────────── */
         .search-hero {
-            background: linear-gradient(135deg, #005a2b 0%, #00421f 100%);
+            background: linear-gradient(135deg, #088745 0%, #0B4D29 100%);
             padding: 56px 0 76px;
             color: #fff;
         }

@@ -147,26 +147,35 @@
             @enderror
         </div>
 
-        {{-- Remarks --}}
+        {{-- General Document Contents --}}
         <div class="mb-3">
-            <label class="form-label">Remarks</label>
+            <label class="form-label">
+                General Document Contents / Subject Details <span class="required-star">*</span>
+            </label>
             <textarea name="remarks"
                       class="form-control @error('remarks') is-invalid @enderror"
-                      rows="3"
-                      placeholder="Optional remarks or notes">{{ old('remarks') }}</textarea>
+                      rows="4"
+                      placeholder="Write the general contents, summary, or details of the document being registered…"
+                      required>{{ old('remarks') }}</textarea>
+            <div class="form-text text-muted">
+                <i class="fa-solid fa-circle-info me-1"></i>
+                Enter the general contents of what you want to send and record in history.
+            </div>
             @error('remarks')
             <div class="invalid-feedback">{{ $message }}</div>
             @enderror
         </div>
 
-        {{-- Attachment --}}
+        {{-- Optional Attachment --}}
         <div class="mb-4">
-            <label class="form-label">Upload Document</label>
+            <label class="form-label">
+                Physical File Attachment <span class="text-muted fw-normal">(Optional — No file selection required)</span>
+            </label>
             <input type="file"
                    name="attachment"
                    class="form-control @error('attachment') is-invalid @enderror"
                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png">
-            <div class="form-text text-muted">Max 10 MB. Allowed: PDF, Word, Excel, PowerPoint, Images.</div>
+            <div class="form-text text-muted">Optional. Max 10 MB. You do not need to attach a physical file to create or send a document.</div>
             @error('attachment')
             <div class="invalid-feedback">{{ $message }}</div>
             @enderror
