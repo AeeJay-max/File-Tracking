@@ -30,9 +30,15 @@ class FileRecordController extends Controller
                 ->orWhere('current_user_id', $user->id)
                 ->orWhereIn('id', $involvedFileIds));
         } elseif ($user->role === 'admin') {
-            // Admin sees all files in their department (current_department_id),
-            // including unassigned (pending_assignment) files awaiting their action.
-            $query->where('current_department_id', $user->department_id);
+            // Departmental Admin sees all files currently in, created in, or transferred to/from their department
+            $deptFileIds = FileMovement::where('from_department', $user->department_id)
+                ->orWhere('to_department', $user->department_id)
+                ->pluck('file_id')->unique()->values();
+
+            $query->where(fn ($q) => $q
+                ->where('current_department_id', $user->department_id)
+                ->orWhere('department_id', $user->department_id)
+                ->orWhereIn('id', $deptFileIds));
         }
         // super_admin sees all
 

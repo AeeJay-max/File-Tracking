@@ -34,7 +34,9 @@
 ================================================================ -->
     <div class="portal-sidebar" id="portalSidebar">
         <div class="sidebar-brand">
-            <div class="brand-icon-wrap" style="background:transparent;box-shadow:none;"><img src="{{ asset('images/logo.png') }}" alt="Ministry Logo" style="width:84px;height:84px;object-fit:contain;"></div>
+            <div class="brand-icon-wrap">
+                <img src="{{ asset('images/logo.png') }}" alt="Ministry Logo" class="sidebar-logo-img">
+            </div>
             <div class="brand-text">
                 <span class="brand-name">FileTrack</span>
                 <span class="brand-sub">Office Portal</span>
@@ -113,7 +115,7 @@
 
             <a href="{{ route('users.index') }}"
                 class="sidebar-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
-                <i class="fa-solid fa-user-shield"></i><span>Admin Management</span>
+                <i class="fa-solid fa-users-gear"></i><span>User &amp; Officer Management</span>
             </a>
             @endif
 
@@ -224,7 +226,7 @@
 
                         <div class="d-none d-md-block text-start">
                             <div class="topbar-user-name">{{ auth()->user()->name }}</div>
-                            <div class="topbar-user-role">{{ ucfirst(str_replace('_',' ', $role)) }}</div>
+                            <div class="topbar-user-role">{{ match($role) { 'super_admin' => 'Director', 'admin' => 'Departmental Admin', default => 'User' } }}</div>
                         </div>
                         <i class="fa-solid fa-chevron-down ms-1 small"></i>
                     </button>

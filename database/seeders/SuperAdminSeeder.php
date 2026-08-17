@@ -10,21 +10,22 @@ class SuperAdminSeeder extends Seeder
 {
     public function run(): void
     {
-        // Super Admin has NO department (system-wide access)
+        $dept = \App\Models\Department::first();
+
         User::firstOrCreate(
             ['email' => 'superadmin@filetrack.local'],
             [
-                'name' => 'Super Admin',
+                'name' => 'Director General',
                 'password' => Hash::make('Admin@1234'),
                 'role' => 'super_admin',
-                'department_id' => null,    // intentionally null — system-wide
+                'department_id' => $dept?->id,
                 'designation_id' => null,
                 'is_active' => true,
-                'can_create_file' => false,   // super admin cannot create files (per SRS)
+                'can_create_file' => true,
                 'email_verified_at' => now(),
             ]
         );
 
-        $this->command->info('Super Admin seeded: superadmin@filetrack.local / Admin@1234');
+        $this->command->info('Director seeded: superadmin@filetrack.local / Admin@1234');
     }
 }

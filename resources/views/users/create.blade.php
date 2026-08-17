@@ -1,16 +1,16 @@
 @extends('layouts.app')
-@section('title', 'Create Admin Account')
+@section('title', 'Create User Account')
 
 @section('breadcrumb')
-<li class="breadcrumb-item"><a href="{{ route('users.index') }}">Admin Management</a></li>
-<li class="breadcrumb-item active">Create Admin</li>
+<li class="breadcrumb-item"><a href="{{ route('users.index') }}">User Management</a></li>
+<li class="breadcrumb-item active">Create User</li>
 @endsection
 
 @section('content')
 <div class="page-header">
     <div>
-        <h1 class="page-title">Create Admin Account</h1>
-        <div class="page-subtitle">Admin accounts are created and managed by Super Admin only.</div>
+        <h1 class="page-title">Create User Account</h1>
+        <div class="page-subtitle">Directors can create Directors, Departmental Admins, and Users.</div>
     </div>
     <a href="{{ route('users.index') }}" class="btn-portal-outline"><i class="fa-solid fa-arrow-left"></i> Back</a>
 </div>
@@ -38,21 +38,23 @@
                 @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
             <div class="col-md-6">
-                <label class="form-label">Role</label>
-                <input type="text" class="form-control bg-light" value="Admin" readonly>
-                <div class="form-text text-muted">
-                    <i class="fa-solid fa-lock me-1"></i>
-                    Super Admin can only create Admin accounts via this form.
-                </div>
+                <label class="form-label">Role <span class="required-star">*</span></label>
+                <select name="role" class="form-select @error('role') is-invalid @enderror" required>
+                    <option value="admin" {{ old('role', 'admin') === 'admin' ? 'selected' : '' }}>Departmental Admin</option>
+                    <option value="super_admin" {{ old('role') === 'super_admin' ? 'selected' : '' }}>Director</option>
+                    <option value="user" {{ old('role') === 'user' ? 'selected' : '' }}>User (Standard Staff)</option>
+                </select>
+                @error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
             <div class="col-md-6">
-                <label class="form-label">Department</label>
-                <select name="department_id" class="form-select">
+                <label class="form-label">Department <span class="required-star">*</span></label>
+                <select name="department_id" class="form-select @error('department_id') is-invalid @enderror" required>
                     <option value="">Select Department</option>
                     @foreach($departments as $dept)
                     <option value="{{ $dept->id }}" {{ old('department_id') == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
                     @endforeach
                 </select>
+                @error('department_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
             <div class="col-md-6">
                 <label class="form-label">Designation</label>

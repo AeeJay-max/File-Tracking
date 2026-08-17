@@ -20,10 +20,13 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
-        // Super Admin sees only admins (not users, not other super_admins)
+        // Director sees Directors, Departmental Admins, and Users
         $query = User::with(['department', 'designation'])
-            ->where('role', 'admin')
             ->latest();
+
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
 
         if ($request->filled('search')) {
             $search = $request->string('search')->trim()->value();
@@ -56,17 +59,15 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email:rfc,dns|max:255|unique:users,email',
-            'department_id' => 'nullable|exists:departments,id',
+            'role' => 'required|in:super_admin,admin,user',
+            'department_id' => 'required|exists:departments,id',
             'designation_id' => 'nullable|exists:designations,id',
             'contact_number' => ['nullable', 'regex:/^[0-9]{10}$/'],
             'photo' => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        // Super Admin can ONLY create Admin accounts — no privilege escalation.
-        // Default password is Password@123, user must change on first login.
-        $data = $request->only(['name', 'email', 'department_id', 'designation_id', 'contact_number']);
+        $data = $request->only(['name', 'email', 'role', 'department_id', 'designation_id', 'contact_number']);
         $data['password'] = Hash::make('Password@123');
-        $data['role'] = 'admin';
         $data['can_create_file'] = true;
         $data['must_change_password'] = true;
 
@@ -76,15 +77,17 @@ class UserController extends Controller
 
         $user = User::create($data);
 
-        return redirect()->route('users.index')->with('success', 'Admin account created. Default password is Password@123 — they will be prompted to change it on first login.');
+        $roleLabel = match($user->role) {
+            'super_admin' => 'Director',
+            'admin'       => 'Departmental Admin',
+            default       => 'User',
+        };
+
+        return redirect()->route('users.index')->with('success', "{$roleLabel} account created. Default password is Password@123 — they will be prompted to change it on first login.");
     }
 
     public function show(User $user)
     {
-        // Only show admins
-        if ($user->role !== 'admin') {
-            abort(403, 'Access denied.');
-        }
         $user->load(['department', 'designation']);
 
         return view('users.show', compact('user'));
@@ -92,10 +95,6 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        // Only edit admins
-        if ($user->role !== 'admin') {
-            abort(403, 'Access denied.');
-        }
         $departments = Department::orderBy('name')->get();
         $designations = Designation::with('department')->orderBy('name')->get();
 
@@ -104,23 +103,18 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
-        // Only update admins
-        if ($user->role !== 'admin') {
-            abort(403, 'Access denied.');
-        }
-
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email:rfc,dns|max:255|unique:users,email,'.$user->id,
-            'department_id' => 'nullable|exists:departments,id',
+            'role' => 'required|in:super_admin,admin,user',
+            'department_id' => 'required|exists:departments,id',
             'designation_id' => 'nullable|exists:designations,id',
             'contact_number' => ['nullable', 'regex:/^[0-9]{10}$/'],
             'password' => 'nullable|min:8|confirmed',
             'photo' => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        // role stays 'admin' — cannot be changed via this form
-        $data = $request->only(['name', 'email', 'department_id', 'designation_id', 'contact_number']);
+        $data = $request->only(['name', 'email', 'role', 'department_id', 'designation_id', 'contact_number']);
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
@@ -135,23 +129,18 @@ class UserController extends Controller
 
         $user->update($data);
 
-        return redirect()->route('users.index')->with('success', 'Admin updated successfully.');
+        return redirect()->route('users.index')->with('success', 'User updated successfully.');
     }
 
     public function destroy(User $user)
     {
-        // Only delete admins
-        if ($user->role !== 'admin') {
-            abort(403, 'Access denied.');
-        }
-
         if ($user->id === Auth::id()) {
             return back()->with('error', 'You cannot delete your own account.');
         }
 
         $user->delete();
 
-        return redirect()->route('users.index')->with('success', 'Admin deleted successfully.');
+        return redirect()->route('users.index')->with('success', 'User account deleted successfully.');
     }
 
     private function storePhoto(Request $request): string

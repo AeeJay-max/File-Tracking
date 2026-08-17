@@ -164,11 +164,12 @@ class BackupController extends Controller
             } // only show SQL files
 
             $filename = basename($file);
+            $tz = config('app.timezone', 'Africa/Harare');
             $backups[] = [
                 'filename' => $filename,
                 'size' => $this->formatBytes($disk->size($file)),
                 'size_bytes' => $disk->size($file),
-                'created_at' => Carbon::createFromTimestamp($disk->lastModified($file)),
+                'created_at' => Carbon::createFromTimestamp($disk->lastModified($file))->setTimezone($tz),
                 'type' => str_contains($filename, '_db_') ? 'Database' : 'Files',
                 'download_url' => route('admin.backup.download', ['filename' => $filename]),
                 'delete_url' => route('admin.backup.destroy', ['filename' => $filename]),
@@ -181,51 +182,97 @@ class BackupController extends Controller
     }
 
     /**
-     * Pure PDO database dump — no external mysqldump binary required.
+     * Database dump — supports both SQLite and MySQL/MariaDB PDO drivers.
      */
     private function dumpDatabase(): string
     {
+        $driver = DB::connection()->getDriverName();
         $pdo = DB::connection()->getPdo();
         $config = config('database.connections.'.config('database.default'));
         $output = [];
 
         $output[] = '-- FileTrack Database Backup';
         $output[] = '-- Generated: '.now()->toDateTimeString();
+        $output[] = '-- Driver: '.$driver;
         $output[] = '-- Database: '.($config['database'] ?? 'unknown');
-        $output[] = 'SET FOREIGN_KEY_CHECKS=0;';
         $output[] = '';
 
-        $tables = $pdo->query('SHOW TABLES')->fetchAll(\PDO::FETCH_COLUMN);
-
-        foreach ($tables as $table) {
-            $createRow = $pdo->query("SHOW CREATE TABLE `{$table}`")->fetch(\PDO::FETCH_ASSOC);
-            $createSql = array_values($createRow)[1];
-
-            $output[] = '';
-            $output[] = '-- --------------------------------------------------------';
-            $output[] = "-- Table: `{$table}`";
-            $output[] = '-- --------------------------------------------------------';
-            $output[] = "DROP TABLE IF EXISTS `{$table}`;";
-            $output[] = $createSql.';';
+        if ($driver === 'sqlite') {
+            $output[] = 'PRAGMA foreign_keys = OFF;';
+            $output[] = 'BEGIN TRANSACTION;';
             $output[] = '';
 
-            $rows = $pdo->query("SELECT * FROM `{$table}`")->fetchAll(\PDO::FETCH_ASSOC);
-            if (! empty($rows)) {
-                $columns = '`'.implode('`, `', array_keys($rows[0])).'`';
-                foreach (array_chunk($rows, 100) as $chunk) {
-                    $valueGroups = [];
-                    foreach ($chunk as $row) {
-                        $vals = array_map(fn ($v) => $v === null ? 'NULL' : $pdo->quote((string) $v), $row);
-                        $valueGroups[] = '('.implode(', ', $vals).')';
-                    }
-                    $output[] = "INSERT INTO `{$table}` ({$columns}) VALUES";
-                    $output[] = implode(",\n", $valueGroups).';';
+            $tables = $pdo->query("SELECT name, sql FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")->fetchAll(\PDO::FETCH_ASSOC);
+
+            foreach ($tables as $tRow) {
+                $table = $tRow['name'];
+                $createSql = $tRow['sql'];
+
+                if (! $createSql) {
+                    continue;
                 }
-                $output[] = '';
-            }
-        }
 
-        $output[] = 'SET FOREIGN_KEY_CHECKS=1;';
+                $output[] = '-- --------------------------------------------------------';
+                $output[] = "-- Table: `{$table}`";
+                $output[] = '-- --------------------------------------------------------';
+                $output[] = "DROP TABLE IF EXISTS `{$table}`;";
+                $output[] = $createSql.';';
+                $output[] = '';
+
+                $rows = $pdo->query("SELECT * FROM `{$table}`")->fetchAll(\PDO::FETCH_ASSOC);
+                if (! empty($rows)) {
+                    $columns = '`'.implode('`, `', array_keys($rows[0])).'`';
+                    foreach (array_chunk($rows, 100) as $chunk) {
+                        $valueGroups = [];
+                        foreach ($chunk as $row) {
+                            $vals = array_map(fn ($v) => $v === null ? 'NULL' : $pdo->quote((string) $v), $row);
+                            $valueGroups[] = '('.implode(', ', $vals).')';
+                        }
+                        $output[] = "INSERT INTO `{$table}` ({$columns}) VALUES";
+                        $output[] = implode(",\n", $valueGroups).';';
+                    }
+                    $output[] = '';
+                }
+            }
+
+            $output[] = 'COMMIT;';
+            $output[] = 'PRAGMA foreign_keys = ON;';
+        } else {
+            // MySQL / MariaDB
+            $output[] = 'SET FOREIGN_KEY_CHECKS=0;';
+            $output[] = '';
+
+            $tables = $pdo->query('SHOW TABLES')->fetchAll(\PDO::FETCH_COLUMN);
+
+            foreach ($tables as $table) {
+                $createRow = $pdo->query("SHOW CREATE TABLE `{$table}`")->fetch(\PDO::FETCH_ASSOC);
+                $createSql = array_values($createRow)[1];
+
+                $output[] = '-- --------------------------------------------------------';
+                $output[] = "-- Table: `{$table}`";
+                $output[] = '-- --------------------------------------------------------';
+                $output[] = "DROP TABLE IF EXISTS `{$table}`;";
+                $output[] = $createSql.';';
+                $output[] = '';
+
+                $rows = $pdo->query("SELECT * FROM `{$table}`")->fetchAll(\PDO::FETCH_ASSOC);
+                if (! empty($rows)) {
+                    $columns = '`'.implode('`, `', array_keys($rows[0])).'`';
+                    foreach (array_chunk($rows, 100) as $chunk) {
+                        $valueGroups = [];
+                        foreach ($chunk as $row) {
+                            $vals = array_map(fn ($v) => $v === null ? 'NULL' : $pdo->quote((string) $v), $row);
+                            $valueGroups[] = '('.implode(', ', $vals).')';
+                        }
+                        $output[] = "INSERT INTO `{$table}` ({$columns}) VALUES";
+                        $output[] = implode(",\n", $valueGroups).';';
+                    }
+                    $output[] = '';
+                }
+            }
+
+            $output[] = 'SET FOREIGN_KEY_CHECKS=1;';
+        }
 
         return implode("\n", $output);
     }

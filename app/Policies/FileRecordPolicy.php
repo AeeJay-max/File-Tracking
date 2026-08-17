@@ -22,12 +22,8 @@ class FileRecordPolicy
             return null;
         }
 
-        // Super Admin: can view/download/update but NOT create files
+        // Director (super_admin): full system access including creating and sending files
         if ($user->role === 'super_admin') {
-            if (in_array($ability, ['create', 'store'], true)) {
-                return false;
-            }
-
             return true;
         }
 
@@ -38,7 +34,7 @@ class FileRecordPolicy
      * View a file:
      * - creator
      * - current holder
-     * - same-department admin (read-only)
+     * - departmental admin for files transferred to/from their department
      * - anyone who appeared in transfer history
      */
     public function view(User $user, FileRecord $file): bool
@@ -72,14 +68,13 @@ class FileRecordPolicy
     }
 
     /**
-     * Create: any authenticated user with can_create_file = true.
-     * They may choose any department (restriction removed per spec).
-     * Super Admin is blocked via before().
+     * Create: Directors can create files.
+     * Any authenticated user with can_create_file = true can create files.
      */
     public function create(User $user): bool
     {
         if ($user->role === 'super_admin') {
-            return false;
+            return true;
         }
 
         return (bool) ($user->can_create_file ?? true);
@@ -91,6 +86,11 @@ class FileRecordPolicy
 
     private function hasFileAccess(User $user, FileRecord $file): bool
     {
+        // Director (super_admin) sees all
+        if ($user->role === 'super_admin') {
+            return true;
+        }
+
         // Creator
         if ((int) $file->created_by === $user->id) {
             return true;
@@ -101,10 +101,22 @@ class FileRecordPolicy
             return true;
         }
 
-        // Same-department admin — can view any file currently in their department
-        if ($user->role === 'admin' &&
-            (int) $user->department_id === (int) ($file->current_department_id ?? $file->department_id)) {
-            return true;
+        // Departmental admin — can view files currently in, created in, or transferred to/from their department
+        if ($user->role === 'admin' && $user->department_id) {
+            if ((int) $user->department_id === (int) ($file->current_department_id ?? $file->department_id)) {
+                return true;
+            }
+            if ((int) $user->department_id === (int) $file->department_id) {
+                return true;
+            }
+            $isDeptInvolved = $file->movements()
+                ->where(function ($q) use ($user) {
+                    $q->where('from_department', $user->department_id)
+                      ->orWhere('to_department', $user->department_id);
+                })->exists();
+            if ($isDeptInvolved) {
+                return true;
+            }
         }
 
         // Was involved in a transfer for this file

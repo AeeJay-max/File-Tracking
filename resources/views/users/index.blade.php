@@ -1,26 +1,32 @@
 @extends('layouts.app')
-@section('title', 'Admin Management')
+@section('title', 'User & Officer Management')
 
 @section('breadcrumb')
-<li class="breadcrumb-item active">Admin Management</li>
+<li class="breadcrumb-item active">User Management</li>
 @endsection
 
 @section('content')
 <div class="page-header">
     <div>
-        <h1 class="page-title">Admin Management</h1>
-        <div class="page-subtitle">Create and manage administrator accounts</div>
+        <h1 class="page-title">User &amp; Officer Management</h1>
+        <div class="page-subtitle">Create and manage Director, Departmental Admin, and User accounts</div>
     </div>
     <a href="{{ route('users.create') }}" class="btn-portal-primary">
-        <i class="fa-solid fa-plus"></i> Create Admin
+        <i class="fa-solid fa-user-plus"></i> Create User Account
     </a>
 </div>
 
 <div class="portal-table-wrap mb-3">
     <form method="GET" class="table-toolbar">
-        <input type="text" name="search" class="form-control" style="max-width:220px;"
+        <input type="text" name="search" class="form-control" style="max-width:200px;"
             placeholder="Search name or email..." value="{{ request('search') }}">
-        <select name="department_id" class="form-select" style="max-width:220px;">
+        <select name="role" class="form-select" style="max-width:180px;">
+            <option value="">All Roles</option>
+            <option value="super_admin" {{ request('role') === 'super_admin' ? 'selected' : '' }}>Director</option>
+            <option value="admin" {{ request('role') === 'admin' ? 'selected' : '' }}>Departmental Admin</option>
+            <option value="user" {{ request('role') === 'user' ? 'selected' : '' }}>User</option>
+        </select>
+        <select name="department_id" class="form-select" style="max-width:200px;">
             <option value="">All Departments</option>
             @foreach($departments as $dept)
             <option value="{{ $dept->id }}" {{ request('department_id') == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
@@ -39,7 +45,7 @@
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>Name</th>
+                    <th>Name &amp; Role</th>
                     <th>Email</th>
                     <th>Department</th>
                     <th>Designation</th>
@@ -56,7 +62,9 @@
                             <div>
                                 <div class="fw-700">{{ $user->name }}</div>
                                 <div class="text-muted" style="font-size:.78rem;">
-                                    <span class="badge-status badge-role-admin">Admin</span>
+                                    <span class="badge-status badge-role-{{ $user->role }}">
+                                        {{ match($user->role) { 'super_admin' => 'Director', 'admin' => 'Departmental Admin', default => 'User' } }}
+                                    </span>
                                 </div>
                             </div>
                         </div>

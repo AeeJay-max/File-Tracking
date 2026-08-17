@@ -1,7 +1,7 @@
 @extends('layouts.app')
-@section('title', 'Admin Dashboard')
+@section('title', 'Departmental Admin Dashboard')
 @section('breadcrumb')
-<li class="breadcrumb-item active">Admin Dashboard</li>
+<li class="breadcrumb-item active">Departmental Admin Dashboard</li>
 @endsection
 
 @section('content')
@@ -9,7 +9,7 @@
 
 <div class="page-header">
     <div>
-        <h1 class="page-title">Admin Dashboard</h1>
+        <h1 class="page-title">Departmental Admin Dashboard</h1>
         <div class="page-subtitle">{{ $deptName }} &mdash; Welcome, {{ auth()->user()->name }}</div>
     </div>
     <div class="d-flex gap-2">

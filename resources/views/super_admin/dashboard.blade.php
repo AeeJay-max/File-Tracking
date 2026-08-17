@@ -1,18 +1,19 @@
 @extends('layouts.app')
-@section('title', 'Super Admin Dashboard')
+@section('title', 'Director Dashboard')
 @section('breadcrumb')
-<li class="breadcrumb-item active">Super Admin Dashboard</li>
+<li class="breadcrumb-item active">Director Dashboard</li>
 @endsection
 
 @section('content')
 <div class="page-header">
     <div>
-        <h1 class="page-title">System Overview</h1>
-        <div class="page-subtitle">Super Admin — Full system monitoring</div>
+        <h1 class="page-title">Executive System Overview</h1>
+        <div class="page-subtitle">Director &mdash; Executive system monitoring &amp; inter-departmental file tracking</div>
     </div>
     <div class="d-flex gap-2 flex-wrap">
-        <a href="{{ route('departments.create') }}" class="btn-portal-outline"><i class="fa-solid fa-plus me-1"></i>Department</a>
-        <a href="{{ route('users.create') }}"       class="btn-portal-primary"><i class="fa-solid fa-user-shield me-1"></i>Create Admin</a>
+        <a href="{{ route('files.create') }}" class="btn-portal-primary"><i class="fa-solid fa-plus me-1"></i>New File</a>
+        <a href="{{ route('departments.create') }}" class="btn-portal-outline"><i class="fa-solid fa-building-columns me-1"></i>Department</a>
+        <a href="{{ route('users.create') }}"       class="btn-portal-outline"><i class="fa-solid fa-user-plus me-1"></i>Create User Account</a>
         <a href="{{ route('public.file.search') }}" class="btn-portal-outline"><i class="fa-solid fa-magnifying-glass me-1"></i>File Search</a>
     </div>
 </div>

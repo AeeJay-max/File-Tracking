@@ -48,18 +48,23 @@
                 <input type="password" name="password_confirmation" class="form-control">
             </div>
             <div class="col-md-6">
-                <label class="form-label">Role</label>
-                <input type="text" class="form-control bg-light" value="Admin" readonly>
-                <div class="form-text text-muted"><i class="fa-solid fa-lock me-1"></i>Role cannot be changed here.</div>
+                <label class="form-label">Role <span class="required-star">*</span></label>
+                <select name="role" class="form-select @error('role') is-invalid @enderror" required>
+                    <option value="admin" {{ old('role', $user->role) === 'admin' ? 'selected' : '' }}>Departmental Admin</option>
+                    <option value="super_admin" {{ old('role', $user->role) === 'super_admin' ? 'selected' : '' }}>Director</option>
+                    <option value="user" {{ old('role', $user->role) === 'user' ? 'selected' : '' }}>User (Standard Staff)</option>
+                </select>
+                @error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
             <div class="col-md-6">
-                <label class="form-label">Department</label>
-                <select name="department_id" class="form-select">
-                    <option value="">None</option>
+                <label class="form-label">Department <span class="required-star">*</span></label>
+                <select name="department_id" class="form-select @error('department_id') is-invalid @enderror" required>
+                    <option value="" disabled {{ !$user->department_id ? 'selected' : '' }}>Select Department</option>
                     @foreach($departments as $dept)
-                    <option value="{{ $dept->id }}" {{ $user->department_id == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
+                    <option value="{{ $dept->id }}" {{ old('department_id', $user->department_id) == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
                     @endforeach
                 </select>
+                @error('department_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
             <div class="col-md-6">
                 <label class="form-label">Designation</label>
