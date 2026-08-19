@@ -1,0 +1,1441 @@
+
+
+==================== 0001_01_01_000000_create_users_table.php ====================
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('email')->unique();
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('password');
+            $table->rememberToken();
+            $table->timestamps();
+        });
+
+        Schema::create('password_reset_tokens', function (Blueprint $table) {
+            $table->string('email')->primary();
+            $table->string('token');
+            $table->timestamp('created_at')->nullable();
+        });
+
+        Schema::create('sessions', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->foreignId('user_id')->nullable()->index();
+            $table->string('ip_address', 45)->nullable();
+            $table->text('user_agent')->nullable();
+            $table->longText('payload');
+            $table->integer('last_activity')->index();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('users');
+        Schema::dropIfExists('password_reset_tokens');
+        Schema::dropIfExists('sessions');
+    }
+};
+
+
+
+==================== 0001_01_01_000001_create_cache_table.php ====================
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('cache', function (Blueprint $table) {
+            $table->string('key')->primary();
+            $table->mediumText('value');
+            $table->integer('expiration')->index();
+        });
+
+        Schema::create('cache_locks', function (Blueprint $table) {
+            $table->string('key')->primary();
+            $table->string('owner');
+            $table->integer('expiration')->index();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('cache');
+        Schema::dropIfExists('cache_locks');
+    }
+};
+
+
+
+==================== 0001_01_01_000002_create_jobs_table.php ====================
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('jobs', function (Blueprint $table) {
+            $table->id();
+            $table->string('queue')->index();
+            $table->longText('payload');
+            $table->unsignedTinyInteger('attempts');
+            $table->unsignedInteger('reserved_at')->nullable();
+            $table->unsignedInteger('available_at');
+            $table->unsignedInteger('created_at');
+        });
+
+        Schema::create('job_batches', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->string('name');
+            $table->integer('total_jobs');
+            $table->integer('pending_jobs');
+            $table->integer('failed_jobs');
+            $table->longText('failed_job_ids');
+            $table->mediumText('options')->nullable();
+            $table->integer('cancelled_at')->nullable();
+            $table->integer('created_at');
+            $table->integer('finished_at')->nullable();
+        });
+
+        Schema::create('failed_jobs', function (Blueprint $table) {
+            $table->id();
+            $table->string('uuid')->unique();
+            $table->text('connection');
+            $table->text('queue');
+            $table->longText('payload');
+            $table->longText('exception');
+            $table->timestamp('failed_at')->useCurrent();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('jobs');
+        Schema::dropIfExists('job_batches');
+        Schema::dropIfExists('failed_jobs');
+    }
+};
+
+
+
+==================== 2026_06_16_162816_add_role_to_users_table.php ====================
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->enum('role', [
+                'super_admin',
+                'admin',
+                'user',
+            ])->default('user');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('role');
+        });
+    }
+};
+
+
+
+==================== 2026_06_16_163228_create_departments_table.php ====================
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('departments', function (Blueprint $table) {
+            $table->id();
+
+            $table->string('name');
+            $table->string('code')->unique();
+
+            $table->boolean('is_active')->default(true);
+
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('departments');
+    }
+};
+
+
+
+==================== 2026_06_16_163414_create_designations_table.php ====================
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('designations', function (Blueprint $table) {
+            $table->id();
+
+            $table->foreignId('department_id')
+                ->constrained()
+                ->cascadeOnDelete();
+
+            $table->string('name');
+
+            $table->boolean('is_active')
+                ->default(true);
+
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('designations');
+    }
+};
+
+
+
+==================== 2026_06_16_163534_create_file_records_table.php ====================
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('file_records', function (Blueprint $table) {
+            $table->id();
+
+            // 🔗 Relationships
+            $table->foreignId('department_id')
+                ->constrained()
+                ->onDelete('cascade');
+
+            $table->foreignId('created_by')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
+
+            // 📄 File Info
+            $table->string('file_name');
+            $table->string('file_number');
+            $table->text('remarks')->nullable();
+
+            // File number is unique only within the originating department.
+            $table->unique(['department_id', 'file_number']);
+
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('file_records');
+    }
+};
+
+
+
+==================== 2026_06_16_163625_create_file_transfers_table.php ====================
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('file_transfers', function (Blueprint $table) {
+            $table->id();
+
+            $table->foreignId('file_id')
+                ->constrained('file_records')
+                ->onDelete('cascade');
+
+            $table->foreignId('sender_id')
+                ->constrained('users')
+                ->onDelete('cascade');
+
+            // Nullable: when a file is transferred to a department (not a specific user),
+            // receiver_id is NULL until the department admin assigns it.
+            $table->foreignId('receiver_id')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
+
+            $table->timestamp('transferred_at')->nullable();
+            $table->text('remarks')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('file_transfers');
+    }
+};
+
+
+
+==================== 2026_06_16_163705_create_notifications_table.php ====================
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('notifications', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->string('type');
+            $table->morphs('notifiable');
+            $table->text('data');
+            $table->timestamp('read_at')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('notifications');
+    }
+};
+
+
+
+==================== 2026_06_16_174251_add_employee_fields_to_users_table.php ====================
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table('users', function (Blueprint $table) {
+
+            $table->foreignId('department_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+
+            $table->foreignId('designation_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+
+            $table->string('employee_code')
+                ->nullable()
+                ->unique();
+
+            $table->string('phone', 20)
+                ->nullable();
+
+            $table->boolean('is_active')
+                ->default(true);
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('users', function (Blueprint $table) {
+
+            $table->dropConstrainedForeignId('department_id');
+            $table->dropConstrainedForeignId('designation_id');
+
+            $table->dropColumn([
+                'employee_code',
+                'phone',
+                'is_active',
+            ]);
+        });
+    }
+};
+
+
+
+==================== 2026_06_16_184806_add_description_to_departments_table.php ====================
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table('departments', function (Blueprint $table) {
+            $table->text('description')->nullable();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('departments', function (Blueprint $table) {
+            $table->dropColumn('description');
+        });
+    }
+};
+
+
+
+==================== 2026_06_17_163127_create_transfer_requests_table.php ====================
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('transfer_requests', function (Blueprint $table) {
+
+            $table->id();
+
+            $table->foreignId('file_id')
+                ->constrained('file_records')
+                ->onDelete('cascade');
+
+            $table->foreignId('requested_by')
+                ->constrained('users')
+                ->onDelete('cascade');
+
+            $table->foreignId('from_department')
+                ->constrained('departments')
+                ->onDelete('cascade');
+
+            $table->foreignId('to_department')
+                ->constrained('departments')
+                ->onDelete('cascade');
+
+            $table->foreignId('target_user')
+                ->constrained('users')
+                ->onDelete('cascade');
+
+            $table->enum('status', [
+                'pending',
+                'approved',
+                'rejected',
+            ])->default('pending');
+
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('transfer_requests');
+    }
+};
+
+
+
+==================== 2026_06_18_053023_add_extra_fields_to_users_table.php ====================
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('contact_number')->nullable();
+            $table->string('photo')->nullable();
+            $table->boolean('can_create_file')->default(false);
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn(['contact_number', 'photo', 'can_create_file']);
+        });
+    }
+};
+
+
+
+==================== 2026_06_18_062955_create_file_movements_table.php ====================
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('file_movements', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('file_id')
+                ->constrained('file_records')
+                ->onDelete('cascade');
+
+            $table->foreignId('from_user')->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
+            $table->foreignId('to_user')->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
+
+            $table->foreignId('from_department')->nullable()
+                ->constrained('departments')
+                ->nullOnDelete();
+            $table->foreignId('to_department')->nullable()
+                ->constrained('departments')
+                ->nullOnDelete();
+
+            $table->string('action'); // created, transfer, approved, rejected
+            $table->text('remarks')->nullable();
+
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('file_movements');
+    }
+};
+
+
+
+==================== 2026_06_18_181939_add_status_to_file_records_table.php ====================
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
+/**
+ * Adds a `status` column to file_records.
+ *
+ * Cross-database compatible:
+ *  - MySQL/MariaDB: uses ENUM for strict database-level enforcement.
+ *  - SQLite:        uses TEXT (SQLite has no ENUM type); application-level
+ *                   validation in FileRecordController enforces valid values.
+ */
+return new class extends Migration
+{
+    public function up(): void
+    {
+        $driver = DB::getDriverName();
+
+        if ($driver === 'mysql' || $driver === 'mariadb') {
+            DB::statement(
+                'ALTER TABLE file_records ADD COLUMN status '.
+                "ENUM('draft','active','pending_transfer','archived') ".
+                "NOT NULL DEFAULT 'active'"
+            );
+        } else {
+            // SQLite / other databases
+            Schema::table('file_records', function (Blueprint $table) {
+                $table->string('status', 30)->default('active')->after('remarks');
+            });
+        }
+    }
+
+    public function down(): void
+    {
+        Schema::table('file_records', function (Blueprint $table) {
+            $table->dropColumn('status');
+        });
+    }
+};
+
+
+
+==================== 2026_06_22_000001_create_public_files_table.php ====================
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('public_files', function (Blueprint $table) {
+            $table->id();
+            $table->string('applicant_name');
+            $table->string('email');
+            $table->string('contact_number');
+            $table->string('subject');
+            $table->text('remarks')->nullable();
+            $table->string('attachment_path');
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('public_files');
+    }
+};
+
+
+
+==================== 2026_06_22_100000_create_audit_logs_table.php ====================
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('audit_logs', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('action');
+            $table->string('auditable_type')->nullable();
+            $table->unsignedBigInteger('auditable_id')->nullable();
+            $table->text('description')->nullable();
+            $table->json('metadata')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('audit_logs');
+    }
+};
+
+
+
+==================== 2026_06_23_000001_add_uuids_and_indexes.php ====================
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
+
+/**
+ * 1. Adds UUID columns to users, file_records, departments, designations.
+ * 2. Adds only the performance indexes that are NOT already created by
+ *    foreign-key constraints or unique constraints in the base migrations.
+ *
+ * Indexes NOT added here (already exist from base migrations):
+ *  - file_records_department_id_file_number_* → covered by ->unique(['department_id','file_number']) in create_file_records
+ *  - file_records_department_id_*   → covered by ->foreignId() FK index
+ *  - file_records_created_by_*      → covered by ->foreignId() FK index
+ *  - file_movements_file_id_*       → covered by ->foreignId() FK index
+ *  - file_movements_from_user_*     → covered by ->foreignId() FK index
+ *  - file_movements_to_user_*       → covered by ->foreignId() FK index
+ *  - users_department_id_*          → covered by ->foreignId() FK index
+ *  - audit_logs_user_id_*           → covered by ->foreignId() FK index
+ *
+ * Indexes added here (no FK or unique already covers them):
+ *  - file_records: status, current_user_id, created_at
+ *  - file_movements: action, created_at
+ *  - users: role
+ *  - audit_logs: action, created_at
+ */
+return new class extends Migration
+{
+    public function up(): void
+    {
+        // ── UUIDs ─────────────────────────────────────────────────────────────
+        // Guarded by hasColumn — safe for both fresh installs and existing DBs.
+
+        foreach (['users', 'file_records', 'departments', 'designations'] as $table) {
+            if (Schema::hasColumn($table, 'uuid')) {
+                continue; // already added (e.g. by 000003 or a previous run)
+            }
+
+            Schema::table($table, function (Blueprint $t) {
+                $t->string('uuid', 36)->nullable()->after('id');
+            });
+
+            DB::table($table)->orderBy('id')->chunk(200, function ($rows) use ($table) {
+                foreach ($rows as $row) {
+                    DB::table($table)
+                        ->where('id', $row->id)
+                        ->update(['uuid' => Str::uuid()->toString()]);
+                }
+            });
+
+            Schema::table($table, function (Blueprint $t) use ($table) {
+                $t->string('uuid', 36)->nullable(false)->change();
+                $t->unique('uuid', "{$table}_uuid_unique");
+            });
+        }
+
+        // ── PERFORMANCE INDEXES ───────────────────────────────────────────────
+        // Only add indexes that are NOT already covered by FK constraints or
+        // unique keys created in the base migrations.
+        // Each call is wrapped so a pre-existing index never breaks the migration.
+
+        // file_records — status, current_user_id, created_at
+        // (file_number, department_id already indexed by unique/FK)
+        $this->addIndexIfMissing('file_records', 'status',      'file_records_status_index');
+        $this->addIndexIfMissing('file_records', 'created_at',  'file_records_created_at_index');
+
+        // current_user_id is added in a later migration — only index it if the column exists
+        if (Schema::hasColumn('file_records', 'current_user_id')) {
+            $this->addIndexIfMissing('file_records', 'current_user_id', 'file_records_current_user_id_index');
+        }
+
+        // file_movements — action, created_at
+        // (file_id, from_user, to_user already indexed by FK constraints)
+        $this->addIndexIfMissing('file_movements', 'action',     'file_movements_action_index');
+        $this->addIndexIfMissing('file_movements', 'created_at', 'file_movements_created_at_index');
+
+        // users — role
+        // (department_id, designation_id already indexed by FK constraints)
+        $this->addIndexIfMissing('users', 'role', 'users_role_index');
+
+        // audit_logs — action, created_at
+        // (user_id already indexed by FK constraint)
+        if (Schema::hasTable('audit_logs')) {
+            $this->addIndexIfMissing('audit_logs', 'action',     'audit_logs_action_index');
+            $this->addIndexIfMissing('audit_logs', 'created_at', 'audit_logs_created_at_index');
+        }
+    }
+
+    public function down(): void
+    {
+        // Drop performance indexes (only the ones we added)
+        $indexes = [
+            'file_records'  => ['file_records_status_index', 'file_records_current_user_id_index', 'file_records_created_at_index'],
+            'file_movements' => ['file_movements_action_index', 'file_movements_created_at_index'],
+            'users'          => ['users_role_index'],
+            'audit_logs'     => ['audit_logs_action_index', 'audit_logs_created_at_index'],
+        ];
+
+        foreach ($indexes as $table => $names) {
+            if (! Schema::hasTable($table)) {
+                continue;
+            }
+            foreach ($names as $name) {
+                $this->dropIndexIfExists($table, $name);
+            }
+        }
+
+        // Drop UUID columns
+        foreach (['users', 'file_records', 'departments', 'designations'] as $table) {
+            if (Schema::hasColumn($table, 'uuid')) {
+                Schema::table($table, function (Blueprint $t) use ($table) {
+                    $this->dropIndexIfExists($table, "{$table}_uuid_unique");
+                    $t->dropColumn('uuid');
+                });
+            }
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // HELPERS
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Add a plain index on $column, but only if no index with $name already exists.
+     *
+     * Works on both MySQL and SQLite:
+     *  - MySQL:  uses information_schema to check existence before adding.
+     *  - SQLite: uses PRAGMA index_list to check existence before adding.
+     *
+     * Falls back to try/catch as a last resort so the migration never crashes.
+     */
+    private function addIndexIfMissing(string $table, string $column, string $name): void
+    {
+        if ($this->indexExists($table, $name)) {
+            return;
+        }
+
+        try {
+            Schema::table($table, function (Blueprint $t) use ($column, $name) {
+                $t->index($column, $name);
+            });
+        } catch (\Throwable) {
+            // Index appeared between the check and the add (race) or already exists
+        }
+    }
+
+    /**
+     * Drop an index by name if it exists — cross-database safe.
+     */
+    private function dropIndexIfExists(string $table, string $name): void
+    {
+        if (! $this->indexExists($table, $name)) {
+            return;
+        }
+
+        try {
+            Schema::table($table, function (Blueprint $t) use ($name) {
+                $t->dropIndex($name);
+            });
+        } catch (\Throwable) {
+            // Already gone
+        }
+    }
+
+    /**
+     * Check whether an index named $name exists on $table.
+     * Cross-database: MySQL uses information_schema; SQLite uses PRAGMA.
+     */
+    private function indexExists(string $table, string $name): bool
+    {
+        $driver = DB::getDriverName();
+
+        try {
+            if ($driver === 'sqlite') {
+                $indexes = DB::select("PRAGMA index_list(\"{$table}\")");
+                foreach ($indexes as $idx) {
+                    if ($idx->name === $name) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            // MySQL / MariaDB / PostgreSQL — use information_schema
+            $result = DB::selectOne(
+                "SELECT COUNT(*) as cnt
+                 FROM information_schema.STATISTICS
+                 WHERE table_schema = DATABASE()
+                   AND table_name   = ?
+                   AND index_name   = ?",
+                [$table, $name]
+            );
+            return (int) ($result->cnt ?? 0) > 0;
+
+        } catch (\Throwable) {
+            // If we can't check, assume it doesn't exist and let try/catch handle it
+            return false;
+        }
+    }
+};
+
+
+
+==================== 2026_06_23_000002_add_uuids_to_transfer_requests_and_public_files.php ====================
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        foreach (['transfer_requests', 'public_files'] as $table) {
+            if (! Schema::hasColumn($table, 'uuid')) {
+                Schema::table($table, function (Blueprint $t) {
+                    $t->string('uuid', 36)->nullable()->after('id');
+                });
+
+                DB::table($table)->orderBy('id')->each(function ($row) use ($table) {
+                    DB::table($table)->where('id', $row->id)->update(['uuid' => Str::uuid()->toString()]);
+                });
+
+                Schema::table($table, function (Blueprint $t) use ($table) {
+                    $t->string('uuid', 36)->nullable(false)->change();
+                    $t->unique('uuid', "{$table}_uuid_unique");
+                });
+            }
+        }
+    }
+
+    public function down(): void
+    {
+        foreach (['transfer_requests', 'public_files'] as $table) {
+            if (Schema::hasColumn($table, 'uuid')) {
+                Schema::table($table, function (Blueprint $t) use ($table) {
+                    $t->dropUnique("{$table}_uuid_unique");
+                    $t->dropColumn('uuid');
+                });
+            }
+        }
+    }
+};
+
+
+
+==================== 2026_06_23_000003_add_uuid_to_designations_table.php ====================
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        if (! Schema::hasColumn('designations', 'uuid')) {
+            Schema::table('designations', function (Blueprint $table) {
+                $table->string('uuid', 36)->nullable()->after('id');
+            });
+
+            // Backfill existing rows
+            DB::table('designations')->orderBy('id')->each(function ($row) {
+                DB::table('designations')->where('id', $row->id)->update([
+                    'uuid' => Str::uuid()->toString(),
+                ]);
+            });
+
+            Schema::table('designations', function (Blueprint $table) {
+                $table->string('uuid', 36)->nullable(false)->change();
+                $table->unique('uuid', 'designations_uuid_unique');
+            });
+        }
+    }
+
+    public function down(): void
+    {
+        if (Schema::hasColumn('designations', 'uuid')) {
+            Schema::table('designations', function (Blueprint $table) {
+                $table->dropUnique('designations_uuid_unique');
+                $table->dropColumn('uuid');
+            });
+        }
+    }
+};
+
+
+
+==================== 2026_06_28_000000_add_attachment_fields_to_file_records_table.php ====================
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('file_records', function (Blueprint $table) {
+            $table->string('attachment_path')->nullable()->after('remarks');
+            $table->string('attachment_name')->nullable()->after('attachment_path');
+            $table->string('attachment_mime')->nullable()->after('attachment_name');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('file_records', function (Blueprint $table) {
+            $table->dropColumn(['attachment_path', 'attachment_name', 'attachment_mime']);
+        });
+    }
+};
+
+
+
+==================== 2026_07_03_000001_make_receiver_id_nullable_in_file_transfers.php ====================
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
+/**
+ * Make receiver_id nullable in file_transfers.
+ *
+ * On a fresh install the base create_file_transfers migration already creates
+ * receiver_id as nullable, so this migration is a no-op for new setups.
+ *
+ * For existing MySQL databases that already have receiver_id as NOT NULL,
+ * this migration drops and re-adds the column as nullable.
+ *
+ * SQLite: silently skipped — SQLite does not support column modification
+ * and the column is already nullable from the base migration on test envs.
+ */
+return new class extends Migration
+{
+    public function up(): void
+    {
+        // Already nullable in base migration — skip if column is already nullable.
+        // This check prevents errors on fresh installs and SQLite test environments.
+        $driver = Schema::getConnection()->getDriverName();
+
+        if (($driver === 'mysql' || $driver === 'mariadb') && $this->isNotNullable()) {
+            Schema::table('file_transfers', function (Blueprint $table) {
+                $table->dropForeign(['receiver_id']);
+                $table->dropColumn('receiver_id');
+            });
+            Schema::table('file_transfers', function (Blueprint $table) {
+                $table->foreignId('receiver_id')
+                    ->nullable()
+                    ->after('sender_id')
+                    ->constrained('users')
+                    ->nullOnDelete();
+            });
+        }
+        // SQLite / already-nullable columns: nothing to do
+    }
+
+    public function down(): void
+    {
+        // Intentional no-op: reverting to NOT NULL would break department ownership.
+    }
+
+    /** Check if receiver_id is currently NOT NULL on MySQL. */
+    private function isNotNullable(): bool
+    {
+        try {
+            $col = DB::selectOne(
+                "SELECT IS_NULLABLE FROM information_schema.COLUMNS
+                 WHERE TABLE_SCHEMA = DATABASE()
+                   AND TABLE_NAME   = 'file_transfers'
+                   AND COLUMN_NAME  = 'receiver_id'"
+            );
+
+            return $col && $col->IS_NULLABLE === 'NO';
+        } catch (Throwable) {
+            return false;
+        }
+    }
+};
+
+
+
+==================== 2026_07_07_115515_add_must_change_password_to_users_table.php ====================
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->boolean('must_change_password')->default(false)->after('can_create_file');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('must_change_password');
+        });
+    }
+};
+
+
+
+==================== 2026_07_29_000001_add_department_ownership_to_file_records.php ====================
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
+/**
+ * Department-Owned Files — Schema
+ *
+ * Adds `current_department_id` to file_records so that a department can own
+ * a file independently of any user. Also adds `pending_assignment` to the
+ * status column.
+ *
+ * Cross-database compatible: MySQL uses ALTER TABLE MODIFY COLUMN to extend
+ * the enum; SQLite recreates the column via string (SQLite has no native enum).
+ */
+return new class extends Migration
+{
+    public function up(): void
+    {
+        // 1. Add current_department_id FK
+        Schema::table('file_records', function (Blueprint $table) {
+            $table->unsignedBigInteger('current_department_id')
+                  ->nullable()
+                  ->after('department_id');
+
+            $table->foreign('current_department_id')
+                  ->references('id')
+                  ->on('departments')
+                  ->nullOnDelete();
+
+            // Supports lookups by (current department + file number).
+            $table->index(['current_department_id', 'file_number'], 'file_records_current_department_id_file_number_index');
+        });
+
+        // 2. Backfill: every existing file's current dept = its registered dept
+        DB::table('file_records')->whereNull('current_department_id')
+            ->update(['current_department_id' => DB::raw('department_id')]);
+
+        // 3. Extend the status column to include pending_assignment
+        //    MySQL/MariaDB: ALTER TABLE … MODIFY COLUMN (enum extension)
+        //    SQLite: string column — no ENUM type, accepts any value
+        $driver = DB::getDriverName();
+        if ($driver === 'mysql' || $driver === 'mariadb') {
+            DB::statement(
+                "ALTER TABLE file_records MODIFY COLUMN status ".
+                "ENUM('draft','active','pending_transfer','pending_assignment','archived') ".
+                "NOT NULL DEFAULT 'active'"
+            );
+        }
+        // SQLite uses TEXT for enum columns — no ALTER needed;
+        // the application-level validation enforces valid values.
+    }
+
+    public function down(): void
+    {
+        // Restore status enum without pending_assignment (MySQL/MariaDB only)
+        $driver = DB::getDriverName();
+        if ($driver === 'mysql' || $driver === 'mariadb') {
+            DB::statement(
+                "ALTER TABLE file_records MODIFY COLUMN status ".
+                "ENUM('draft','active','pending_transfer','archived') ".
+                "NOT NULL DEFAULT 'active'"
+            );
+        }
+
+        Schema::table('file_records', function (Blueprint $table) {
+            $table->dropIndex('file_records_current_department_id_file_number_index');
+            $table->dropForeign(['current_department_id']);
+            $table->dropColumn('current_department_id');
+        });
+    }
+};
+
+
+
+==================== 2026_07_29_000002_add_current_user_id_to_file_records.php ====================
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+/**
+ * Adds `current_user_id` to file_records.
+ *
+ * This column tracks which individual user currently holds the file.
+ * NULL means the file is held at department level (pending_assignment).
+ *
+ * The original migration that added this column was removed during a
+ * cleanup pass. This migration restores it.
+ *
+ * Guarded by hasColumn so it is safe to re-run and safe on fresh installs
+ * where the column may already exist via a future consolidated migration.
+ */
+return new class extends Migration
+{
+    public function up(): void
+    {
+        if (Schema::hasColumn('file_records', 'current_user_id')) {
+            return; // already present — nothing to do
+        }
+
+        Schema::table('file_records', function (Blueprint $table) {
+            $table->foreignId('current_user_id')
+                  ->nullable()
+                  ->after('current_department_id')
+                  ->constrained('users')
+                  ->nullOnDelete();
+
+            // Add performance index here — this is the migration that owns
+            // the column, so the index is guaranteed to be created after
+            // the column exists. (add_uuids_and_indexes runs earlier and
+            // guards against the column being absent.)
+            $table->index('current_user_id', 'file_records_current_user_id_index');
+        });
+    }
+
+    public function down(): void
+    {
+        if (! Schema::hasColumn('file_records', 'current_user_id')) {
+            return;
+        }
+
+        Schema::table('file_records', function (Blueprint $table) {
+            $table->dropForeign(['current_user_id']);
+            $table->dropIndex('file_records_current_user_id_index');
+            $table->dropColumn('current_user_id');
+        });
+    }
+};
+
+
+
+==================== 2026_07_31_000003_scope_file_number_uniqueness_by_department.php ====================
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
+/**
+ * Scope File Number Uniqueness to Department
+ *
+ * Ensures the composite unique constraint (department_id, file_number) is
+ * in place and removes any legacy global unique index on file_number alone.
+ *
+ * On a fresh install, create_file_records_table already creates the composite
+ * unique, so this migration acts as a safety net for databases upgraded from
+ * an older schema that had a global unique constraint.
+ *
+ * Also adds the (current_department_id, file_number) non-unique index used
+ * by queries that look up files by their current holding department.
+ *
+ * All DDL operations are guarded with existence checks to make this migration
+ * fully idempotent — safe to run on both fresh installs and upgrades.
+ */
+return new class extends Migration
+{
+    public function up(): void
+    {
+        if (! Schema::hasTable('file_records')) {
+            return;
+        }
+
+        // ── 1. Drop any legacy GLOBAL unique index on file_number alone ──────────
+        // This existed in older versions of the schema before department-scoped
+        // uniqueness was introduced. On current fresh installs it does not exist.
+        if ($this->indexExists('file_records', 'file_records_file_number_unique')) {
+            Schema::table('file_records', function (Blueprint $table) {
+                $table->dropUnique('file_records_file_number_unique');
+            });
+        }
+
+        // ── 2. Add composite UNIQUE (department_id, file_number) if missing ──────
+        // The original create_file_records_table migration already adds this
+        // on fresh installs, so this block is for upgrade paths only.
+        if (! $this->indexExists('file_records', 'file_records_department_id_file_number_unique')) {
+            Schema::table('file_records', function (Blueprint $table) {
+                $table->unique(
+                    ['department_id', 'file_number'],
+                    'file_records_department_id_file_number_unique'
+                );
+            });
+        }
+
+        // ── 3. Add (current_department_id, file_number) lookup index if missing ──
+        // Used by queries that resolve which department currently holds a file.
+        if (! $this->indexExists('file_records', 'file_records_current_department_id_file_number_index')) {
+            Schema::table('file_records', function (Blueprint $table) {
+                $table->index(
+                    ['current_department_id', 'file_number'],
+                    'file_records_current_department_id_file_number_index'
+                );
+            });
+        }
+    }
+
+    public function down(): void
+    {
+        if (! Schema::hasTable('file_records')) {
+            return;
+        }
+
+        // Remove the current-department lookup index
+        if ($this->indexExists('file_records', 'file_records_current_department_id_file_number_index')) {
+            Schema::table('file_records', function (Blueprint $table) {
+                $table->dropIndex('file_records_current_department_id_file_number_index');
+            });
+        }
+
+        // Remove the composite unique — only if it was added by THIS migration
+        // (i.e. it was absent before this migration ran). On a fresh install the
+        // original migration owns this index, so we leave it alone on rollback.
+        // We cannot reliably determine ownership here, so we intentionally leave
+        // the composite unique in place to avoid breaking the schema on rollback.
+        // A full rollback should drop and recreate the table instead.
+    }
+
+    // ── Helper: check whether a named index exists on a table ─────────────────
+
+    private function indexExists(string $table, string $indexName): bool
+    {
+        $driver = DB::getDriverName();
+
+        if ($driver === 'sqlite') {
+            // SQLite: query sqlite_master for the index
+            $result = DB::select(
+                "SELECT name FROM sqlite_master WHERE type='index' AND name=?",
+                [$indexName]
+            );
+
+            return ! empty($result);
+        }
+
+        // MySQL / MariaDB / PostgreSQL — information_schema
+        if (in_array($driver, ['mysql', 'mariadb', 'pgsql'], true)) {
+            $database = DB::getDatabaseName();
+            $result = DB::select(
+                "SELECT 1 FROM information_schema.statistics
+                  WHERE table_schema = ? AND table_name = ? AND index_name = ?
+                  LIMIT 1",
+                [$database, $table, $indexName]
+            );
+
+            return ! empty($result);
+        }
+
+        // Unknown driver — assume index does not exist (safe default)
+        return false;
+    }
+};
+
