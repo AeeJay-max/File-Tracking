@@ -12,9 +12,15 @@
         <div class="page-subtitle">Organize and manage official document folders</div>
     </div>
     <div class="d-flex gap-2">
+        @php
+        $u = auth()->user();
+        $isRecordsAdmin = $u && $u->role === 'admin' && $u->department && (strtoupper((string)$u->department->code) === 'REC' || \Illuminate\Support\Str::contains(\Illuminate\Support\Str::lower((string)$u->department->name), 'record'));
+        @endphp
+        @if($isRecordsAdmin)
         <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addFolderPageModal">
             <i class="fa-solid fa-folder-plus me-1"></i>Add New Folder
         </button>
+        @endif
         @can('create', App\Models\FileRecord::class)
         <button type="button" class="btn-portal-primary" data-bs-toggle="modal" data-bs-target="#createFileModal">
             <i class="fa-solid fa-plus me-1"></i>New File

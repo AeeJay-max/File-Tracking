@@ -9,7 +9,7 @@
 <div class="page-header">
     <div>
         <h1 class="page-title">User &amp; Officer Management</h1>
-        <div class="page-subtitle">Create and manage Director, Departmental Admin, and User accounts</div>
+        <div class="page-subtitle">Create and manage Departmental Admin and User accounts</div>
     </div>
     <a href="{{ route('users.create') }}" class="btn-portal-primary">
         <i class="fa-solid fa-user-plus"></i> Create User Account
@@ -22,7 +22,7 @@
             placeholder="Search name or email..." value="{{ request('search') }}">
         <select name="role" class="form-select" style="max-width:180px;">
             <option value="">All Roles</option>
-            <option value="super_admin" {{ request('role') === 'super_admin' ? 'selected' : '' }}>Director</option>
+            <option value="super_admin" {{ request('role') === 'super_admin' ? 'selected' : '' }}>Super Admin</option>
             <option value="admin" {{ request('role') === 'admin' ? 'selected' : '' }}>Departmental Admin</option>
             <option value="user" {{ request('role') === 'user' ? 'selected' : '' }}>User</option>
         </select>
@@ -63,7 +63,7 @@
                                 <div class="fw-700">{{ $user->name }}</div>
                                 <div class="text-muted" style="font-size:.78rem;">
                                     <span class="badge-status badge-role-{{ $user->role }}">
-                                        {{ match($user->role) { 'super_admin' => 'Director', 'admin' => 'Departmental Admin', default => 'User' } }}
+                                        {{ match($user->role) { 'super_admin' => 'Super Admin', 'admin' => 'Departmental Admin', default => 'User' } }}
                                     </span>
                                 </div>
                             </div>
@@ -76,16 +76,6 @@
                         <div class="d-flex gap-1">
                             <a href="{{ route('users.edit', $user->uuid) }}" class="btn btn-sm btn-outline-primary" title="Edit">
                                 <i class="fa-solid fa-pen"></i>
-                            </a>
-                            {{-- Impersonate (super admin can impersonate any admin) --}}
-                            @if(!session('impersonator_id') && auth()->user()->canImpersonate($user))
-                            <form method="POST" action="{{ route('impersonation.start', $user->uuid) }}" class="d-inline">
-                                @csrf
-                                <button type="submit" class="btn btn-sm btn-outline-warning" title="Impersonate {{ $user->name }}">
-                                    <i class="fa-solid fa-user-secret"></i>
-                                </button>
-                            </form>
-                            @endif
                             @if($user->id !== auth()->id())
                             <form action="{{ route('users.destroy', $user->uuid) }}" method="POST" class="d-inline">
                                 @csrf @method('DELETE')

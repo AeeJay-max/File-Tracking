@@ -9,6 +9,19 @@ use Illuminate\Support\Str;
 
 class FolderController extends Controller
 {
+    private function isRecordsAdmin(): bool
+    {
+        $user = Auth::user();
+        if (! $user || $user->role !== 'admin' || ! $user->department) {
+            return false;
+        }
+
+        $code = strtoupper((string) $user->department->code);
+        $name = Str::lower((string) $user->department->name);
+
+        return $code === 'REC' || $name === 'records' || Str::contains($name, 'record');
+    }
+
     public function index(Request $request)
     {
         $query = Folder::with(['department', 'creator'])->withCount('files');
@@ -28,6 +41,13 @@ class FolderController extends Controller
 
     public function store(Request $request)
     {
+        if (! $this->isRecordsAdmin()) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Only the Records Department Admin is permitted to create folders.'], 403);
+            }
+            return redirect()->back()->with('error', 'Only the Records Department Admin is permitted to create folders.');
+        }
+
         $normalizedNumber = strtoupper(trim((string) $request->input('folder_number', '')));
         $request->merge(['folder_number' => $normalizedNumber]);
 
@@ -59,6 +79,10 @@ class FolderController extends Controller
 
     public function storeAjax(Request $request)
     {
+        if (! $this->isRecordsAdmin()) {
+            return response()->json(['success' => false, 'message' => 'Only the Records Department Admin is permitted to create folders.'], 403);
+        }
+
         $normalizedNumber = strtoupper(trim((string) $request->input('folder_number', '')));
         $request->merge(['folder_number' => $normalizedNumber]);
 
@@ -96,8 +120,8 @@ class FolderController extends Controller
             $folder = Folder::where('folder_number', $number)->first();
         }
 
-        if (!$folder) {
-            return response()->json(['success' => false, 'message' => 'Folder not found'], 444);
+        if (! $folder) {
+            return response()->json(['success' => false, 'message' => 'Folder not found'], 404);
         }
 
         return response()->json([

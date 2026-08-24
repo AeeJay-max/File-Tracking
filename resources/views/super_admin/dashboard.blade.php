@@ -1,14 +1,14 @@
 @extends('layouts.app')
-@section('title', 'Director Dashboard')
+@section('title', 'Super Admin Dashboard')
 @section('breadcrumb')
-<li class="breadcrumb-item active">Director Dashboard</li>
+<li class="breadcrumb-item active">Super Admin Dashboard</li>
 @endsection
 
 @section('content')
 <div class="page-header">
     <div>
         <h1 class="page-title">User Account & System Administration</h1>
-        <div class="page-subtitle">Director &mdash; User account creation, department administration, and database backups</div>
+        <div class="page-subtitle">Super Admin &mdash; User account creation, department administration, and database backups</div>
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a href="{{ route('users.create') }}"       class="btn-portal-primary"><i class="fa-solid fa-user-plus me-1"></i>Create User Account</a>
@@ -59,7 +59,7 @@
             </div>
             <div class="card-body">
                 <p class="text-muted fs-sm mb-3">
-                    As Director / SuperAdmin, you are responsible for managing user accounts across all operational departments.
+                    As Super Admin, you are responsible for managing user accounts across all operational departments.
                 </p>
                 <div class="d-flex gap-2">
                     <a href="{{ route('users.index') }}" class="btn-portal-outline btn-sm"><i class="fa-solid fa-list me-1"></i>View All Users</a>

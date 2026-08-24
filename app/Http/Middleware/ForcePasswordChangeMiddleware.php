@@ -29,10 +29,6 @@ class ForcePasswordChangeMiddleware
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->session()->has('impersonator_id')) {
-            return $next($request);
-        }
-
         $user = Auth::user();
 
         if (! $user || ! $user->must_change_password) {
@@ -40,8 +36,6 @@ class ForcePasswordChangeMiddleware
         }
 
         if ($request->routeIs(
-            'impersonation.start',
-            'impersonation.stop',
             'profile.edit',
             'profile.password.update',
             'logout',

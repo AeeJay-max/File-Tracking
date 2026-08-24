@@ -59,11 +59,15 @@
             </div>
             <div class="col-md-6">
                 <label class="form-label">Role <span class="required-star">*</span></label>
+                @if($user->role === 'super_admin')
+                <input type="text" class="form-control" value="Super Admin" readonly>
+                <input type="hidden" name="role" value="super_admin">
+                @else
                 <select name="role" class="form-select @error('role') is-invalid @enderror" required>
                     <option value="admin" {{ old('role', $user->role) === 'admin' ? 'selected' : '' }}>Departmental Admin</option>
-                    <option value="super_admin" {{ old('role', $user->role) === 'super_admin' ? 'selected' : '' }}>Director</option>
                     <option value="user" {{ old('role', $user->role) === 'user' ? 'selected' : '' }}>User (Standard Staff)</option>
                 </select>
+                @endif
                 @error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
             <div class="col-md-6">

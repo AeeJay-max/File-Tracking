@@ -59,12 +59,38 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email:rfc,dns|max:255|unique:users,email',
-            'role' => 'required|in:super_admin,admin,user',
+            'role' => 'required|in:admin,user',
             'department_id' => 'required|exists:departments,id',
             'designation_id' => 'nullable|exists:designations,id',
             'contact_number' => ['nullable', 'regex:/^[0-9]{10}$/'],
             'photo' => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
+        ], [
+            'role.in' => 'Super Admin accounts cannot be created. The seeded Super Admin account is the only Super Admin permitted.',
         ]);
+
+        if ($request->role === 'user') {
+            $dept = Department::find((int) $request->department_id);
+            if ($dept) {
+                $code = strtoupper((string) $dept->code);
+                $name = Str::lower((string) $dept->name);
+                if ($code === 'REC' || $name === 'records' || Str::contains($name, 'record')) {
+                    return back()->withInput()->withErrors([
+                        'department_id' => 'Standard user accounts cannot be assigned to the Records department when created by Super Admin.',
+                    ]);
+                }
+            }
+        }
+
+        if ($request->role === 'admin') {
+            $hasAdmin = User::where('department_id', (int) $request->department_id)
+                ->where('role', 'admin')
+                ->exists();
+            if ($hasAdmin) {
+                return back()->withInput()->withErrors([
+                    'department_id' => 'The selected department already has an assigned Department Admin. Only one Admin per department is permitted.',
+                ]);
+            }
+        }
 
         $data = $request->only(['name', 'email', 'role', 'department_id', 'designation_id', 'contact_number']);
         $data['password'] = Hash::make('Password@123');
@@ -79,7 +105,7 @@ class UserController extends Controller
         $user = User::create($data);
 
         $roleLabel = match($user->role) {
-            'super_admin' => 'Director',
+            'super_admin' => 'Super Admin',
             'admin'       => 'Departmental Admin',
             default       => 'User',
         };
@@ -114,6 +140,24 @@ class UserController extends Controller
             'password' => 'nullable|min:8|confirmed',
             'photo' => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
         ]);
+
+        if ($request->role === 'super_admin' && $user->role !== 'super_admin') {
+            return back()->withInput()->withErrors([
+                'role' => 'Super Admin accounts cannot be created or assigned. The seeded Super Admin account is the only Super Admin permitted.',
+            ]);
+        }
+
+        if ($request->role === 'admin') {
+            $hasAdmin = User::where('department_id', (int) $request->department_id)
+                ->where('role', 'admin')
+                ->where('id', '!=', $user->id)
+                ->exists();
+            if ($hasAdmin) {
+                return back()->withInput()->withErrors([
+                    'department_id' => 'The selected department already has an assigned Department Admin. Only one Admin per department is permitted.',
+                ]);
+            }
+        }
 
         $data = $request->only(['name', 'email', 'role', 'department_id', 'designation_id', 'contact_number']);
 

@@ -45,12 +45,22 @@ class FileTransferController extends Controller
             ->where('id', '!=', $currentUser->id)
             ->where('is_active', true);
 
-        if ($isRecordsStaff) {
+        if ($isRecordsStaff && $currentUser->role === 'user') {
+            $sameDeptUsers = User::with(['department', 'designation'])
+                ->where('department_id', $currentUser->department_id)
+                ->where('role', 'admin')
+                ->where('id', '!=', $currentUser->id)
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get();
+            $allUsers = $sameDeptUsers;
+        } else if ($isRecordsStaff) {
             $allUsersQuery->where(function ($q) use ($currentUser) {
                 $q->where('department_id', $currentUser->department_id)
                   ->orWhere('email', 'permsec@filetrack.local')
                   ->orWhereHas('designation', fn ($d) => $d->where('name', 'Permanent Secretary'));
             });
+            $allUsers = $allUsersQuery->orderBy('name')->get();
         } else {
             $allUsersQuery->where(function ($q) use ($currentUser) {
                 $q->where('department_id', $currentUser->department_id)
@@ -58,9 +68,9 @@ class FileTransferController extends Controller
                   ->orWhereHas('department', fn ($dept) => $dept->where('code', 'REC'))
                   ->orWhereHas('designation', fn ($d) => $d->where('name', 'Permanent Secretary'));
             });
+            $allUsers = $allUsersQuery->orderBy('name')->get();
         }
 
-        $allUsers = $allUsersQuery->orderBy('name')->get();
         $departments = Department::where('is_active', true)->orderBy('name')->get();
 
         return view('files.transfer', compact('file', 'sameDeptUsers', 'allUsers', 'departments'));
@@ -98,6 +108,18 @@ class FileTransferController extends Controller
 
         $remarks = $request->string('remarks')->trim()->value() ?: null;
         $isRecordsStaff = ($currentUser->department?->code === 'REC' || Str::contains(Str::lower($currentUser->department?->name ?? ''), 'record'));
+
+        // RULE 0: General users in Records are ONLY permitted to send files to their Records Department Admin.
+        if ($isRecordsStaff && $currentUser->role === 'user') {
+            $targetUser = $request->filled('to_user_id') ? User::find((int) $request->to_user_id) : null;
+            $isRecordsAdminTarget = $targetUser
+                && $targetUser->role === 'admin'
+                && (int) $targetUser->department_id === (int) $currentUser->department_id;
+
+            if (! $isRecordsAdminTarget) {
+                return back()->with('error', 'General users in Records are only permitted to send files to their Records Department Admin.');
+            }
+        }
 
         // RULE 1: Non-Records staff CANNOT dispatch files directly to other departments.
         // Cross-department transfers from non-Records departments MUST route back to Records Admin.

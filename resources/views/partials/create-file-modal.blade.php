@@ -58,6 +58,11 @@
                                     </option>
                                     @endforeach
                                 </select>
+                                @php
+                                $u = auth()->user();
+                                $isRecordsAdmin = $u && $u->role === 'admin' && $u->department && (strtoupper((string)$u->department->code) === 'REC' || \Illuminate\Support\Str::contains(\Illuminate\Support\Str::lower((string)$u->department->name), 'record'));
+                                @endphp
+                                @if($isRecordsAdmin)
                                 <button type="button"
                                         class="btn btn-outline-primary"
                                         data-bs-toggle="modal"
@@ -65,6 +70,7 @@
                                         title="Add New Folder">
                                     <i class="fa-solid fa-folder-plus me-1"></i>New
                                 </button>
+                                @endif
                             </div>
                             <div class="form-text text-muted fs-xs">
                                 <i class="fa-solid fa-circle-info me-1"></i>Select folder number or create a new folder.

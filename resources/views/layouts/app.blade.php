@@ -233,7 +233,7 @@
 
                         <div class="d-none d-md-block text-start">
                             <div class="topbar-user-name">{{ auth()->user()->name }}</div>
-                            <div class="topbar-user-role">{{ match($role) { 'super_admin' => 'Director', 'admin' => 'Departmental Admin', default => 'User' } }}</div>
+                            <div class="topbar-user-role">{{ match($role) { 'super_admin' => 'Super Admin', 'admin' => 'Departmental Admin', default => 'User' } }}</div>
                         </div>
                         <i class="fa-solid fa-chevron-down ms-1 small"></i>
                     </button>
@@ -262,27 +262,6 @@
 
         <!-- PAGE CONTENT -->
         <main class="portal-content">
-
-            {{-- ── Impersonation Banner ──────────────────────────── --}}
-            @if(session('impersonator_id'))
-            <div class="impersonation-banner d-flex align-items-center justify-content-between flex-wrap gap-2"
-                 role="alert" aria-live="assertive">
-                <div class="d-flex align-items-center gap-2">
-                    <i class="fa-solid fa-user-secret fa-lg"></i>
-                    <span>
-                        You are impersonating
-                        <strong>{{ auth()->user()->name }}</strong>
-                        <span class="ms-1 badge bg-white text-dark">{{ ucfirst(auth()->user()->role) }}</span>
-                    </span>
-                </div>
-                <form method="POST" action="{{ route('impersonation.stop') }}" class="mb-0">
-                    @csrf
-                    <button type="submit" class="btn btn-sm btn-light fw-700">
-                        <i class="fa-solid fa-right-from-bracket me-1"></i>Stop Impersonating
-                    </button>
-                </form>
-            </div>
-            @endif
 
             {{-- ── Force Password Change Warning ──────────────────── --}}
             @auth

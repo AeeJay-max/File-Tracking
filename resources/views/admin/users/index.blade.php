@@ -44,16 +44,6 @@
                     <div class="d-flex gap-1">
                         <a href="{{ route('admin.users.edit', $user->uuid) }}" class="btn btn-sm btn-outline-primary">
                             <i class="fa-solid fa-pen"></i>
-                        </a>
-                        {{-- Impersonate (admin can impersonate own dept users) --}}
-                        @if(!session('impersonator_id') && auth()->user()->canImpersonate($user))
-                        <form method="POST" action="{{ route('impersonation.start', $user->uuid) }}" class="d-inline">
-                            @csrf
-                            <button type="submit" class="btn btn-sm btn-outline-warning" title="Impersonate {{ $user->name }}">
-                                <i class="fa-solid fa-user-secret"></i>
-                            </button>
-                        </form>
-                        @endif
                         <form method="POST" action="{{ route('admin.users.destroy', $user->uuid) }}" class="d-inline">
                             @csrf @method('DELETE')
                             <button type="submit" class="btn btn-sm btn-outline-danger"

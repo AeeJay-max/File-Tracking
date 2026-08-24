@@ -13,7 +13,6 @@ use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\FileRecordController;
 use App\Http\Controllers\FileTransferController;
 use App\Http\Controllers\FolderController;
-use App\Http\Controllers\ImpersonationController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
@@ -88,9 +87,6 @@ Route::middleware(['auth', 'verified', 'no.cache', 'force.pwd.change'])->group(f
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('/notifications/poll', [NotificationController::class, 'poll'])->name('notifications.poll');
     Route::post('/notifications/read-visible', [NotificationController::class, 'markVisibleAsRead'])->name('notifications.readVisible');
-
-    Route::post('/impersonate/{user}', [ImpersonationController::class, 'start'])->name('impersonation.start');
-    Route::post('/impersonation/stop', [ImpersonationController::class, 'stop'])->name('impersonation.stop');
 });
 
 /*
