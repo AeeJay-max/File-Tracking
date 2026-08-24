@@ -35,7 +35,7 @@
             <div class="col-md-6">
                 <label class="form-label">Contact Number</label>
                 <input type="text" name="contact_number" class="form-control"
-                    value="{{ old('contact_number') }}" placeholder="+1 234 567 8900">
+                    value="{{ old('contact_number') }}" placeholder="+263 780 000 111">
             </div>
             <div class="col-md-6">
                 <label class="form-label">Email Address <span class="required-star">*</span></label>

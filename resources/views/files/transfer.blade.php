@@ -17,6 +17,29 @@
     </a>
 </div>
 
+<div class="alert alert-info d-flex align-items-start gap-2 mb-3" style="background:rgba(15,118,110,.08);border:1px solid rgba(15,118,110,.25);color:#0f766e;border-radius:10px;">
+    <i class="fa-solid fa-route fa-lg mt-1"></i>
+    <div>
+        <strong style="font-size:.9rem;">Standard Ministry File Transfer Sequence:</strong>
+        <div class="d-flex flex-wrap align-items-center gap-1 mt-1 fs-sm fw-600" style="color:#0f172a;">
+            <span class="badge bg-light text-dark border"><i class="fa-solid fa-file-circle-plus me-1 text-success"></i>1. Records Creator</span> &rarr;
+            <span class="badge bg-light text-dark border"><i class="fa-solid fa-user-gear me-1 text-primary"></i>2. Records Admin</span> &rarr;
+            <span class="badge bg-light text-dark border"><i class="fa-solid fa-user-tie me-1 text-warning"></i>3. Permanent Secretary</span> &rarr;
+            <span class="badge bg-light text-dark border"><i class="fa-solid fa-user-gear me-1 text-primary"></i>4. Records Admin</span> &rarr;
+            <span class="badge bg-light text-dark border"><i class="fa-solid fa-building-columns me-1 text-info"></i>5. Handling Department</span>
+        </div>
+    </div>
+</div>
+
+@if(! $file->hasBeenToPermSec())
+<div class="alert alert-warning d-flex align-items-center gap-2 mb-3" style="border-radius:10px;">
+    <i class="fa-solid fa-triangle-exclamation fa-lg text-warning"></i>
+    <div>
+        <strong>Permanent Secretary Review Required:</strong> This file has not yet been reviewed by the Permanent Secretary. In accordance with ministry policy, it must be sent to the Permanent Secretary before it can be dispatched to any other department.
+    </div>
+</div>
+@endif
+
 <div class="row g-3 justify-content-center">
 
     {{-- Document Summary --}}
@@ -65,6 +88,10 @@
                     <input type="hidden" name="to_user_id"       id="to_user_id"       value="{{ old('to_user_id') }}">
                     <input type="hidden" name="department_id"    id="department_id"    value="{{ old('department_id') }}">
 
+                    @php
+                        $needsPermSec = ! $file->hasBeenToPermSec();
+                    @endphp
+
                     {{-- ── Mode Switcher ────────────────────────────────────── --}}
                     <div class="mb-3">
                         <label class="form-label fw-600">Send Target <span class="text-danger">*</span></label>
@@ -72,8 +99,8 @@
                             <button type="button" class="btn btn-outline-primary active fw-600" id="btnModePerson">
                                 <i class="fa-solid fa-user me-1"></i> Send Directly to Person
                             </button>
-                            <button type="button" class="btn btn-outline-primary fw-600" id="btnModeDept">
-                                <i class="fa-solid fa-building-columns me-1"></i> Send to Department
+                            <button type="button" class="btn btn-outline-primary fw-600 {{ $needsPermSec ? 'disabled opacity-50' : '' }}" id="btnModeDept" {{ $needsPermSec ? 'disabled title="Locked: Must be sent to Permanent Secretary first"' : '' }}>
+                                <i class="fa-solid fa-{{ $needsPermSec ? 'lock' : 'building-columns' }} me-1"></i> Send to Department {{ $needsPermSec ? '(Locked)' : '' }}
                             </button>
                         </div>
                     </div>
@@ -88,7 +115,7 @@
                             <input type="text"
                                    id="userSearchInput"
                                    class="form-control mb-2"
-                                   placeholder="Search person by name, department, or designation…"
+                                   placeholder="{{ $needsPermSec ? 'Select Permanent Secretary below (Other recipients locked)…' : 'Search person by name, department, or designation…' }}"
                                    autocomplete="off">
 
                             {{-- AJAX Person Search Results --}}
@@ -100,7 +127,7 @@
 
                         <select id="personSelect"
                                 class="form-select @error('to_user_id') is-invalid @enderror">
-                            <option value="" disabled selected>— Choose recipient person —</option>
+                            <option value="" disabled {{ $needsPermSec ? '' : 'selected' }}>— Choose recipient person —</option>
 
                             @if($sameDeptUsers->count())
                             <optgroup label="Your Department ({{ auth()->user()->department->name ?? 'Department' }})">
@@ -120,8 +147,9 @@
                             @foreach($groupedOthers as $deptName => $users)
                             <optgroup label="{{ $deptName }}">
                                 @foreach($users as $u)
-                                <option value="{{ $u->id }}" {{ old('to_user_id') == $u->id ? 'selected' : '' }}>
-                                    {{ $u->name }} {{ $u->designation && $u->designation->name !== '—' ? ' (' . $u->designation->name . ')' : '' }}
+                                @php $isPS = ($u->designation?->name === 'Permanent Secretary' || $u->email === 'permsec@filetrack.local'); @endphp
+                                <option value="{{ $u->id }}" {{ $needsPermSec && !$isPS ? 'disabled style=color:#94a3b8;background:#f8fafc;' : '' }} {{ ($needsPermSec && $isPS) || old('to_user_id') == $u->id ? 'selected' : '' }}>
+                                    {{ $needsPermSec && !$isPS ? '🔒 ' : '' }}{{ $u->name }} {{ $u->designation && $u->designation->name !== '—' ? ' (' . $u->designation->name . ')' : '' }} {{ $needsPermSec && !$isPS ? '(Locked: Needs PermSec Review)' : '' }}
                                 </option>
                                 @endforeach
                             </optgroup>
@@ -140,30 +168,30 @@
                         @enderror
                     </div>
 
-                    {{-- ── SECTION 2: Department Search ────────────────────── --}}
+                    {{-- ── SECTION 2: Select Department Dropdown ───────────────── --}}
                     <div class="mb-3" id="deptSearchSection" style="display:none;">
-                        <label for="deptSearchInput" class="form-label fw-600">
-                            Select Department <span class="text-danger">*</span>
+                        <label for="departmentSelect" class="form-label fw-600">
+                            Select Target Department <span class="text-danger">*</span>
                         </label>
 
-                        <div class="position-relative">
-                            <input type="text"
-                                   id="deptSearchInput"
-                                   class="form-control @error('department_id') is-invalid @enderror"
-                                   placeholder="Type to search department…"
-                                   autocomplete="off">
+                        <select id="departmentSelect"
+                                class="form-select @error('department_id') is-invalid @enderror">
+                            <option value="" disabled {{ old('department_id', $file->recommended_department_id) ? '' : 'selected' }}>— Choose target department —</option>
 
-                            <div id="deptResultsList"
-                                 class="list-group shadow"
-                                 style="display:none;position:absolute;z-index:1055;width:100%;top:calc(100% + 2px);border-radius:8px;overflow:hidden;">
-                            </div>
-                        </div>
+                            @foreach($departments as $dept)
+                            @php
+                                $isRecommended = ($file->recommended_department_id && (int)$file->recommended_department_id === (int)$dept->id);
+                            @endphp
+                            <option value="{{ $dept->id }}" {{ (old('department_id', $file->recommended_department_id) == $dept->id) ? 'selected' : '' }}>
+                                {{ $isRecommended ? '⭐ Recommended: ' : '' }}{{ $dept->name }} {{ $dept->code ? ' (' . $dept->code . ')' : '' }}
+                            </option>
+                            @endforeach
+                        </select>
 
-                        <div id="deptSelectedBadge" class="mt-2" style="display:{{ old('department_id') ? '' : 'none' }};">
-                            <span class="badge bg-primary bg-opacity-10 text-primary fw-600 px-3 py-2" style="font-size:.8rem;border-radius:8px;">
+                        <div id="deptSelectedBadge" class="mt-2" style="display:none;">
+                            <span class="badge bg-primary bg-opacity-10 text-primary fw-600 px-3 py-2" style="font-size:.84rem;border-radius:8px;">
                                 <i class="fa-solid fa-building-columns me-1"></i>
-                                <span id="deptSelectedName">{{ old('_dept_display', '') }}</span>
-                                <button type="button" id="deptClearBtn" class="btn-close btn-close-sm ms-2" style="font-size:.6rem;"></button>
+                                Target Department: <span id="deptSelectedName"></span>
                             </span>
                         </div>
 
@@ -190,6 +218,46 @@
                         <div class="invalid-feedback d-block">{{ $message }}</div>
                         @enderror
                     </div>
+
+                    @php
+                        $authUser = auth()->user();
+                        $isPermSecUser = ($authUser->designation?->name === 'Permanent Secretary' || $authUser->email === 'permsec@filetrack.local');
+                        $isRecordsUser = ($authUser->department?->code === 'REC' || \Illuminate\Support\Str::contains(\Illuminate\Support\Str::lower($authUser->department?->name ?? ''), 'record'));
+                        $canSetDeadline = $isPermSecUser || $isRecordsUser;
+                    @endphp
+
+                    @if($canSetDeadline)
+                    {{-- ── Permanent Secretary & Records: Return Timeframe & Priority ── --}}
+                    <div class="card mb-4 border-danger border-opacity-25 bg-danger bg-opacity-10" style="border-radius:10px;">
+                        <div class="card-body p-3">
+                            <h6 class="fw-700 text-danger mb-2">
+                                <i class="fa-solid fa-clock-rotate-left me-1"></i>Return Timeframe &amp; Urgency (PermSec &amp; Records Only)
+                            </h6>
+                            <div class="row g-2 mb-1">
+                                <div class="col-md-7">
+                                    <label class="form-label fw-600 fs-xs mb-1">Return Time Limit</label>
+                                    <select name="return_minutes" class="form-select form-select-sm">
+                                        <option value="">— No Return Deadline —</option>
+                                        <option value="30" {{ old('return_minutes') == '30' ? 'selected' : '' }}>30 Minutes</option>
+                                        <option value="60" {{ old('return_minutes') == '60' ? 'selected' : '' }}>1 Hour</option>
+                                        <option value="120" {{ old('return_minutes') == '120' ? 'selected' : '' }}>2 Hours</option>
+                                        <option value="240" {{ old('return_minutes') == '240' ? 'selected' : '' }}>4 Hours</option>
+                                        <option value="1440" {{ old('return_minutes') == '1440' ? 'selected' : '' }}>24 Hours (1 Day)</option>
+                                    </select>
+                                    <div class="form-text fs-xs text-muted">Required time frame for the document to return to Records.</div>
+                                </div>
+                                <div class="col-md-5 d-flex align-items-center pt-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="is_urgent" value="1" id="isUrgentSwitch" {{ old('is_urgent', $file->is_urgent) ? 'checked' : '' }}>
+                                        <label class="form-check-label fw-700 text-danger ms-1" for="isUrgentSwitch">
+                                            <i class="fa-solid fa-triangle-exclamation me-1"></i>Mark Urgent
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
 
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn-portal-primary">
@@ -223,11 +291,9 @@
     var personSelectedBadge = document.getElementById('personSelectedBadge');
     var personSelectedName = document.getElementById('personSelectedName');
 
-    var deptSearchInput = document.getElementById('deptSearchInput');
-    var deptResultsList = document.getElementById('deptResultsList');
+    var departmentSelect  = document.getElementById('departmentSelect');
     var deptSelectedBadge = document.getElementById('deptSelectedBadge');
-    var deptSelectedName = document.getElementById('deptSelectedName');
-    var deptClearBtn = document.getElementById('deptClearBtn');
+    var deptSelectedName  = document.getElementById('deptSelectedName');
 
     var searchTimer = null;
 
@@ -254,6 +320,39 @@
             personSection.style.display = 'none';
             inpDestType.value = 'department';
             inpToUser.value = '';
+            if (departmentSelect && departmentSelect.value) {
+                inpDeptId.value = departmentSelect.value;
+            }
+        }
+    }
+
+    if (departmentSelect && departmentSelect.value) {
+        inpDeptId.value = departmentSelect.value;
+        var selectedDeptOpt = departmentSelect.options[departmentSelect.selectedIndex];
+        if (selectedDeptOpt) {
+            deptSelectedName.textContent = selectedDeptOpt.text;
+            deptSelectedBadge.style.display = '';
+        }
+    }
+
+    if (departmentSelect) {
+        departmentSelect.addEventListener('change', function() {
+            var dId = departmentSelect.value;
+            if (dId) {
+                inpDeptId.value = dId;
+                var optText = departmentSelect.options[departmentSelect.selectedIndex].text;
+                deptSelectedName.textContent = optText;
+                deptSelectedBadge.style.display = '';
+            }
+        });
+    }
+
+    if (personSelect.value) {
+        inpToUser.value = personSelect.value;
+        var selectedOpt = personSelect.options[personSelect.selectedIndex];
+        if (selectedOpt) {
+            personSelectedName.textContent = selectedOpt.text;
+            personSelectedBadge.style.display = '';
         }
     }
 

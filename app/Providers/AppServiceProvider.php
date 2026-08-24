@@ -2,13 +2,16 @@
 
 namespace App\Providers;
 
+use App\Models\Department;
 use App\Models\FileRecord;
+use App\Models\Folder;
 use App\Policies\FileRecordPolicy;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,6 +25,14 @@ class AppServiceProvider extends ServiceProvider
 
         $this->configureRateLimiting();
         Paginator::useBootstrapFive();
+
+        // Share departments & folders globally with all views for authenticated users
+        View::composer('*', function ($view) {
+            if (auth()->check()) {
+                $view->with('globalDepartments', Department::where('is_active', true)->orderBy('name')->get());
+                $view->with('globalFolders', Folder::orderBy('folder_number')->get());
+            }
+        });
     }
 
     protected function configureRateLimiting(): void

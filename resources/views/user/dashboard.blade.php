@@ -15,15 +15,15 @@
             @endif
         </div>
     </div>
-    @if(auth()->user()->role === 'user' && auth()->user()->can_create_file)
-    <a href="{{ route('files.create') }}" class="btn-portal-primary">
+    @can('create', App\Models\FileRecord::class)
+    <button type="button" class="btn-portal-primary" data-bs-toggle="modal" data-bs-target="#createFileModal">
         <i class="fa-solid fa-plus me-1"></i>New File
-    </a>
-    @elseif(auth()->user()->role === 'user')
-    <span class="badge-status badge-pending" title="Contact your admin to enable file creation">
-        <i class="fa-solid fa-lock me-1"></i>File creation restricted
+    </button>
+    @else
+    <span class="badge-status badge-pending" style="font-size:.85rem;padding:6px 12px;" title="Only Records Department can create files">
+        <i class="fa-solid fa-lock me-1"></i>Files Created by Records Dept
     </span>
-    @endif
+    @endcan
 </div>
 
 {{-- KPI ROW --}}

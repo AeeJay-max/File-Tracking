@@ -13,9 +13,23 @@ use Illuminate\Support\Str;
 
 class AdminUserController extends Controller
 {
+    private function ensureDepartmentAdmin(): void
+    {
+        $user = Auth::user();
+        if (! $user || ! $user->department_id) {
+            abort(403, 'User creation requires a valid department assignment.');
+        }
+
+        if ($user->role !== 'admin' && $user->role !== 'super_admin') {
+            abort(403, 'Only Departmental Admins and Directors can manage users within their department.');
+        }
+    }
+
     /** Resolve user by UUID, scoped to admin's department */
     private function resolveUser(string $uuid): User
     {
+        $this->ensureDepartmentAdmin();
+
         return User::where('uuid', $uuid)
             ->where('department_id', Auth::user()->department_id)
             ->firstOrFail();
@@ -23,6 +37,8 @@ class AdminUserController extends Controller
 
     public function index()
     {
+        $this->ensureDepartmentAdmin();
+
         $users = User::where('department_id', Auth::user()->department_id)
             ->where('role', 'user')
             ->with('designation')
@@ -34,17 +50,23 @@ class AdminUserController extends Controller
 
     public function create()
     {
+        $this->ensureDepartmentAdmin();
+
         $designations = Designation::where('department_id', Auth::user()->department_id)->get();
+        if ($designations->isEmpty()) {
+            $designations = Designation::orderBy('name')->get();
+        }
 
         return view('admin.users.create', compact('designations'));
     }
 
     public function store(Request $request)
     {
+        $this->ensureDepartmentAdmin();
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email:rfc|max:255|unique:users,email',
-            'designation_id' => 'required|exists:designations,id',
+            'designation_id' => 'nullable|exists:designations,id',
             'contact_number' => ['nullable', 'regex:/^[0-9]{10}$/'],
             'photo' => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
             'can_create_file' => 'nullable|boolean',

@@ -26,8 +26,10 @@ class AdminTransferController extends Controller
             'toDept',
         ])->where('action', 'transferred');
 
-        // Department scope for regular admin
-        if ($user->role !== 'super_admin') {
+        // SuperAdmin is strictly for user account management — no file/transfer access
+        if ($user->role === 'super_admin') {
+            $query->whereRaw('1 = 0');
+        } else {
             $query->where(function ($q) use ($user) {
                 $q->where('from_department', $user->department_id)
                     ->orWhere('to_department', $user->department_id);

@@ -12,6 +12,7 @@ use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\FileRecordController;
 use App\Http\Controllers\FileTransferController;
+use App\Http\Controllers\FolderController;
 use App\Http\Controllers\ImpersonationController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\NotificationController;
@@ -64,6 +65,11 @@ Route::middleware(['auth', 'verified', 'no.cache', 'force.pwd.change'])->group(f
     // Transfer (immediate — no approval)
     Route::get('/files/{file}/transfer', [FileTransferController::class, 'create'])->name('files.transfer.create');
     Route::post('/files/transfer', [FileTransferController::class, 'store'])->name('files.transfer.store');
+    Route::post('/files/{file}/permsec-done', [FileTransferController::class, 'permsecDone'])->name('files.permsecDone');
+    Route::post('/files/{file}/officer-done', [FileTransferController::class, 'officerDone'])->name('files.officerDone');
+    Route::post('/files/{file}/admin-return-records', [FileTransferController::class, 'adminReturnToRecords'])->name('files.adminReturnRecords');
+    Route::post('/files/{file}/dispatch-recommended', [FileTransferController::class, 'dispatchRecommendedDepartment'])->name('files.dispatchRecommended');
+    Route::post('/files/{file}/complete-operations', [FileTransferController::class, 'completeOperations'])->name('files.completeOperations');
 
     // AJAX: user & department search for transfer form autocomplete
     Route::get('/ajax/users/search', [FileTransferController::class, 'searchUsers'])->name('ajax.users.search');
@@ -71,6 +77,12 @@ Route::middleware(['auth', 'verified', 'no.cache', 'force.pwd.change'])->group(f
 
     // AJAX: inline department creation from File Creation page (any authenticated user)
     Route::post('/ajax/departments/create', [DepartmentController::class, 'storeAjax'])->name('ajax.departments.create');
+
+    // Folders management & AJAX
+    Route::get('/folders', [FolderController::class, 'index'])->name('folders.index');
+    Route::post('/folders', [FolderController::class, 'store'])->name('folders.store');
+    Route::post('/ajax/folders/create', [FolderController::class, 'storeAjax'])->name('ajax.folders.create');
+    Route::get('/ajax/folders/details', [FolderController::class, 'getDetails'])->name('ajax.folders.details');
 
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');

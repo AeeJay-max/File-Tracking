@@ -17,7 +17,7 @@ function makeTransferUser(Department $department, string $role = 'user'): User
 
 it('allows only the current owner to transfer through direct and department ownership changes', function () {
     /** @var TestCase $this */
-    $sourceDepartment = Department::factory()->create(['name' => 'Source Department']);
+    $sourceDepartment = Department::factory()->create(['name' => 'Records Department', 'code' => 'REC']);
     $financeDepartment = Department::factory()->create(['name' => 'Finance Department']);
     $accountsDepartment = Department::factory()->create(['name' => 'Accounts Department']);
 
@@ -35,6 +35,7 @@ it('allows only the current owner to transfer through direct and department owne
         'file_name' => 'Ownership Test',
         'file_number' => 'OWN-001',
         'status' => 'active',
+        'has_permsec_reviewed' => true,
     ]);
 
     $this->actingAs($userA)->post(route('files.transfer.store'), [
@@ -86,14 +87,13 @@ it('allows only the current owner to transfer through direct and department owne
     ])->assertRedirect(route('files.index'));
 
     $file->refresh();
-    // Same pattern: cross-dept sets current_user_id=null, current_department_id=destination
-    expect($file->current_user_id)->toBeNull()
-        ->and($file->current_department_id)->toBe($accountsDepartment->id)
-        ->and($file->department_id)->toBe($sourceDepartment->id)
-        ->and($file->status)->toBe('pending_assignment');
+    // Non-records cross-dept transfer returns file to Records Admin and flags recommended department
+    expect($file->current_department_id)->toBe($sourceDepartment->id)
+        ->and($file->recommended_department_id)->toBe($accountsDepartment->id)
+        ->and($file->department_id)->toBe($sourceDepartment->id);
 
-    // Simulate accounts admin being assigned
-    $file->update(['current_user_id' => $accountsAdmin->id, 'status' => 'active']);
+    // Simulate Records Admin dispatching to Accounts Admin
+    $file->update(['current_user_id' => $accountsAdmin->id, 'current_department_id' => $accountsDepartment->id, 'status' => 'active']);
 
     $this->actingAs($accountsAdmin)
         ->get(route('files.transfer.create', $file->uuid))

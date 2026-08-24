@@ -10,6 +10,8 @@ class DepartmentSeeder extends Seeder
     public function run(): void
     {
         $departments = [
+            ['name' => 'Records',                 'code' => 'REC',   'is_active' => true],
+            ['name' => 'Executive Office',        'code' => 'EXEC',  'is_active' => true],
             ['name' => 'Administration',         'code' => 'ADMIN', 'is_active' => true],
             ['name' => 'Human Resources',         'code' => 'HR',    'is_active' => true],
             ['name' => 'Finance',                 'code' => 'FIN',   'is_active' => true],

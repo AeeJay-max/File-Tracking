@@ -5,26 +5,20 @@ namespace App\Policies;
 use App\Models\FileRecord;
 use App\Models\FileTransfer;
 use App\Models\User;
+use Illuminate\Support\Str;
 
 class FileRecordPolicy
 {
     /**
      * before() — short-circuit checks before specific ability methods.
      *
-     * Super Admin: can do everything except create files (no restriction on dept).
-     * Admin:       can view dept files, cannot create.
-     * Transfer:    always bypasses before() — handled by transfer() method.
+     * Transfer & Create are handled explicitly by their method handlers.
      */
     public function before(User $user, string $ability): ?bool
     {
-        // Transfer is ownership-based — bypass before() entirely
-        if ($ability === 'transfer') {
+        // Transfer and create are handled by their method logic
+        if ($ability === 'transfer' || $ability === 'create') {
             return null;
-        }
-
-        // Director (super_admin): full system access including creating and sending files
-        if ($user->role === 'super_admin') {
-            return true;
         }
 
         return null;
@@ -32,10 +26,10 @@ class FileRecordPolicy
 
     /**
      * View a file:
-     * - creator
-     * - current holder
-     * - departmental admin for files transferred to/from their department
-     * - anyone who appeared in transfer history
+     * - Records department (global system access)
+     * - Super Admin (system audit access)
+     * - Creator / Current holder
+     * - Departmental users for files currently in, created in, or transferred to/from their department
      */
     public function view(User $user, FileRecord $file): bool
     {
@@ -54,7 +48,7 @@ class FileRecordPolicy
     }
 
     /**
-     * Transfer: ownership-based, not role-based.
+     * Transfer: ownership-based.
      * Whoever currently holds the file can transfer it.
      * Archived and pending_assignment files cannot be transferred.
      */
@@ -68,16 +62,24 @@ class FileRecordPolicy
     }
 
     /**
-     * Create: Directors can create files.
-     * Any authenticated user with can_create_file = true can create files.
+     * Create: ONLY users in the Records department can create files.
+     * Super Admin ONLY manages user accounts (does not create files).
+     * Other departments cannot create files — they only receive files from Records.
      */
     public function create(User $user): bool
     {
         if ($user->role === 'super_admin') {
-            return true;
+            return false;
         }
 
-        return (bool) ($user->can_create_file ?? true);
+        if (! $user->department) {
+            return false;
+        }
+
+        $code = strtoupper((string) $user->department->code);
+        $name = Str::lower((string) $user->department->name);
+
+        return $code === 'REC' || $name === 'records' || Str::contains($name, 'record');
     }
 
     // ──────────────────────────────────────────────────────────
@@ -86,9 +88,18 @@ class FileRecordPolicy
 
     private function hasFileAccess(User $user, FileRecord $file): bool
     {
-        // Director (super_admin) sees all
+        // Super Admin (Director) ONLY manages user accounts — blocked from viewing files or file history
         if ($user->role === 'super_admin') {
-            return true;
+            return false;
+        }
+
+        // Records department staff & admin see ALL files system-wide
+        if ($user->department) {
+            $code = strtoupper((string) $user->department->code);
+            $name = Str::lower((string) $user->department->name);
+            if ($code === 'REC' || $name === 'records' || Str::contains($name, 'record')) {
+                return true;
+            }
         }
 
         // Creator
@@ -101,8 +112,8 @@ class FileRecordPolicy
             return true;
         }
 
-        // Departmental admin — can view files currently in, created in, or transferred to/from their department
-        if ($user->role === 'admin' && $user->department_id) {
+        // Departmental access for non-Records departments (created in, currently in, or transferred to/from)
+        if ($user->department_id) {
             if ((int) $user->department_id === (int) ($file->current_department_id ?? $file->department_id)) {
                 return true;
             }

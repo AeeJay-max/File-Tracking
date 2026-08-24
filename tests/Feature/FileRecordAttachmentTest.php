@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Storage;
 it('stores a file record with an attachment', function () {
     Storage::fake('private');
 
-    $department = Department::factory()->create();
+    $department = Department::factory()->create(['code' => 'REC', 'name' => 'Records']);
 
     $user = User::factory()->create([
         'role' => 'user',
@@ -51,7 +51,7 @@ it('stores a file record with an attachment', function () {
 it('downloads a file record attachment', function () {
     Storage::fake('private');
 
-    $department = Department::factory()->create();
+    $department = Department::factory()->create(['code' => 'REC', 'name' => 'Records']);
 
     $user = User::factory()->create([
         'role' => 'user',
@@ -80,7 +80,7 @@ it('downloads a file record attachment', function () {
 });
 
 it('blocks duplicate file numbers in the same department', function () {
-    $department = Department::factory()->create();
+    $department = Department::factory()->create(['code' => 'REC', 'name' => 'Records']);
 
     $user = User::factory()->create([
         'role' => 'user',
@@ -107,12 +107,13 @@ it('blocks duplicate file numbers in the same department', function () {
 });
 
 it('allows the same file number in different departments', function () {
+    $recDept = Department::factory()->create(['name' => 'Records', 'code' => 'REC']);
     $deptA = Department::factory()->create(['name' => 'Department A']);
     $deptB = Department::factory()->create(['name' => 'Department B']);
 
     $user = User::factory()->create([
         'role' => 'user',
-        'department_id' => $deptA->id,
+        'department_id' => $recDept->id,
         'can_create_file' => true,
     ]);
 
@@ -132,13 +133,13 @@ it('allows the same file number in different departments', function () {
 });
 
 it('allows creating a file for any department', function () {
-    $deptA = Department::factory()->create(['name' => 'Dept A']);
+    $recDept = Department::factory()->create(['name' => 'Records', 'code' => 'REC']);
     $deptB = Department::factory()->create(['name' => 'Dept B']);
 
-    // User is in deptA but creates a file for deptB
+    // Records user creates a file for deptB
     $user = User::factory()->create([
         'role' => 'user',
-        'department_id' => $deptA->id,
+        'department_id' => $recDept->id,
         'can_create_file' => true,
     ]);
 

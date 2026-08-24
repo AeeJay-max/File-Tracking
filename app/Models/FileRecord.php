@@ -12,8 +12,10 @@ class FileRecord extends Model
 
     protected $fillable = [
         'uuid',
+        'folder_id',
         'department_id',
         'current_department_id',
+        'recommended_department_id',
         'file_name',
         'file_number',
         'remarks',
@@ -23,6 +25,17 @@ class FileRecord extends Model
         'created_by',
         'current_user_id',
         'status',
+        'has_permsec_reviewed',
+        'completed_at',
+        'return_deadline',
+        'is_urgent',
+    ];
+
+    protected $casts = [
+        'has_permsec_reviewed' => 'boolean',
+        'completed_at' => 'datetime',
+        'return_deadline' => 'datetime',
+        'is_urgent' => 'boolean',
     ];
 
     protected static function boot(): void
@@ -41,6 +54,11 @@ class FileRecord extends Model
     public function getRouteKeyName(): string
     {
         return 'uuid';
+    }
+
+    public function folder()
+    {
+        return $this->belongsTo(Folder::class, 'folder_id');
     }
 
     public function creator()
@@ -72,6 +90,11 @@ class FileRecord extends Model
     public function currentDepartment()
     {
         return $this->belongsTo(Department::class, 'current_department_id');
+    }
+
+    public function recommendedDepartment()
+    {
+        return $this->belongsTo(Department::class, 'recommended_department_id');
     }
 
     /**
@@ -115,5 +138,21 @@ class FileRecord extends Model
     public function movements()
     {
         return $this->hasMany(FileMovement::class, 'file_id');
+    }
+
+    /**
+     * Check if the file has been submitted to or reviewed by the Permanent Secretary.
+     */
+    public function hasBeenToPermSec(): bool
+    {
+        if ($this->has_permsec_reviewed) {
+            return true;
+        }
+
+        return $this->movements()->whereHas('toUser', function ($q) {
+            $q->whereHas('designation', function ($d) {
+                $d->where('name', 'Permanent Secretary');
+            })->orWhere('email', 'permsec@filetrack.local');
+        })->exists();
     }
 }

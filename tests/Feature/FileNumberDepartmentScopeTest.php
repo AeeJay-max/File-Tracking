@@ -37,6 +37,19 @@ function makeUser(Department $dept, array $attrs = []): User
     ], $attrs));
 }
 
+function makeRecordsUser(): User
+{
+    $recDept = Department::firstOrCreate(['code' => 'REC'], ['name' => 'Records', 'is_active' => true]);
+
+    return User::factory()->create([
+        'role'             => 'user',
+        'department_id'    => $recDept->id,
+        'is_active'        => true,
+        'can_create_file'  => true,
+        'email_verified_at'=> now(),
+    ]);
+}
+
 /**
  * Directly insert a FileRecord row (bypasses HTTP) and seed its creation movement.
  * Uses (department_id, file_number) as the identity key.
@@ -51,6 +64,7 @@ function seedFile(Department $dept, User $user, string $fileNumber, string $file
         'file_name'             => $fileName,
         'file_number'           => strtoupper(trim($fileNumber)),
         'status'                => 'active',
+        'has_permsec_reviewed'  => true,
     ]);
 
     FileMovement::create([
@@ -70,7 +84,7 @@ function seedFile(Department $dept, User $user, string $fileNumber, string $file
 
 it('rejects duplicate file numbers within the same department via HTTP', function () {
     $dept = Department::factory()->create();
-    $user = makeUser($dept);
+    $user = makeRecordsUser();
 
     // First creation — should succeed
     $this->actingAs($user)
@@ -120,7 +134,7 @@ it('rejects duplicate file numbers at the database level (composite unique const
 it('allows the same file number in different departments via HTTP', function () {
     $deptA = Department::factory()->create(['name' => 'Department A']);
     $deptB = Department::factory()->create(['name' => 'Department B']);
-    $user  = makeUser($deptA, ['can_create_file' => true]);
+    $user  = makeRecordsUser();
 
     // File in Dept A
     $this->actingAs($user)
@@ -164,7 +178,7 @@ it('allows the same file number in different departments at the database level',
 // ── Test 3: Cross-department transfer does NOT cause a file-number conflict ────
 
 it('allows transferring a file to a department that already holds the same file number', function () {
-    $deptA = Department::factory()->create(['name' => 'Origin Dept']);
+    $deptA = Department::factory()->create(['name' => 'Records Department', 'code' => 'REC']);
     $deptB = Department::factory()->create(['name' => 'Destination Dept']);
 
     $sender        = makeUser($deptA, ['is_active' => true]);
@@ -201,8 +215,8 @@ it('allows transferring a file to a department that already holds the same file 
 });
 
 it('preserves origin department_id after transfer', function () {
-    $deptA = Department::factory()->create();
-    $deptB = Department::factory()->create();
+    $deptA = Department::factory()->create(['name' => 'Records Department', 'code' => 'REC']);
+    $deptB = Department::factory()->create(['name' => 'Destination Dept']);
     $user  = makeUser($deptA, ['is_active' => true]);
 
     $file = seedFile($deptA, $user, 'FILE-XYZ');

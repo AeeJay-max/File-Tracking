@@ -17,8 +17,10 @@ class AdminFileController extends Controller
         $user = Auth::user();
         $query = FileRecord::with(['department', 'currentDepartment', 'creator', 'currentHolder']);
 
-        // Department isolation — admin sees only their dept (current ownership, not origin)
-        if ($user->role !== 'super_admin') {
+        // SuperAdmin is strictly for user account management — no file access
+        if ($user->role === 'super_admin') {
+            $query->whereRaw('1 = 0');
+        } else {
             $query->where('current_department_id', $user->department_id);
         }
 

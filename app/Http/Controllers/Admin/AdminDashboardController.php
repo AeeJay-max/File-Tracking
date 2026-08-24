@@ -17,20 +17,11 @@ class AdminDashboardController extends Controller
 
         if ($isSuper) {
             $stats = $this->dashboard->superAdminStats();
-            $mvStats = $this->dashboard->superAdminMovementStats();
-            $depts = $this->dashboard->departmentFileCounts();
-            $recent = $this->dashboard->superAdminRecentData();
 
             return view('super_admin.dashboard', [
-                'totalFiles' => $stats['total_files'],
                 'totalDepartments' => $stats['total_departments'],
-                'totalUsers' => $stats['total_users'],
-                'totalTransfers' => $stats['total_transfers'],
-                'totalAdmins' => $stats['total_admins'],
-                'movementStats' => $mvStats,
-                'departmentFileCounts' => $depts,
-                'recentTransfers' => $recent['recentTransfers'],
-                'recentMovements' => $recent['recentMovements'],
+                'totalUsers'       => $stats['total_users'],
+                'totalAdmins'      => $stats['total_admins'],
             ]);
         }
 

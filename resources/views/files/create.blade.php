@@ -47,6 +47,62 @@
             @enderror
         </div>
 
+        {{-- Folder Selection (Folder Number & Auto-Filled Folder Name) --}}
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label class="form-label fw-600">
+                    Folder Number <span class="required-star">*</span>
+                </label>
+                <div class="input-group">
+                    <select name="folder_number"
+                            id="folderNumberSelect"
+                            class="form-select @error('folder_number') is-invalid @enderror"
+                            required>
+                        <option value="" disabled {{ old('folder_number') ? '' : 'selected' }}>— Select Folder Number —</option>
+                        @foreach($folders as $f)
+                        <option value="{{ $f->folder_number }}" data-name="{{ $f->folder_name }}" {{ old('folder_number') == $f->folder_number ? 'selected' : '' }}>
+                            {{ $f->folder_number }} — {{ $f->folder_name }}
+                        </option>
+                        @endforeach
+                    </select>
+                    <button type="button"
+                            class="btn btn-outline-primary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#createFolderModal"
+                            title="Add New Folder">
+                        <i class="fa-solid fa-folder-plus me-1"></i>New
+                    </button>
+                </div>
+                <div class="form-text text-muted">
+                    <i class="fa-solid fa-circle-info me-1"></i>
+                    Pick a Folder Number or create a new folder.
+                </div>
+                @error('folder_number')
+                <div class="invalid-feedback d-block">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label fw-600">
+                    Folder Name <span class="required-star">*</span>
+                </label>
+                <input type="text"
+                       name="folder_name"
+                       id="folderNameInput"
+                       class="form-control @error('folder_name') is-invalid @enderror"
+                       value="{{ old('folder_name') }}"
+                       placeholder="Folder name auto-fills when number is selected"
+                       required>
+                <div class="form-text text-muted">
+                    <i class="fa-solid fa-magic me-1"></i>
+                    Auto-filled upon selecting Folder Number.
+                </div>
+                @error('folder_name')
+                <div class="invalid-feedback d-block">{{ $message }}</div>
+                @enderror
+            </div>
+        </div>
+
         {{-- File Name --}}
         <div class="mb-3">
             <label class="form-label">
@@ -253,11 +309,156 @@
         </div>
     </div>
 </div>
-@endsection
+
+{{-- ═══════════════════════════════════════════════════════════
+     CREATE FOLDER MODAL  (all authenticated users)
+═══════════════════════════════════════════════════════════ --}}
+<div class="modal fade"
+     id="createFolderModal"
+     tabindex="-1"
+     aria-labelledby="createFolderModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:460px;">
+        <div class="modal-content" style="border-radius:16px;border:none;box-shadow:0 12px 40px rgba(15,23,42,.18);">
+
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-800" id="createFolderModalLabel">
+                    <i class="fa-solid fa-folder-plus me-2 text-primary"></i>Create New Folder
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body pt-3">
+                <div id="folderModalAlert" class="alert d-none mb-3" role="alert"></div>
+
+                <form id="createFolderForm" novalidate>
+                    <div class="mb-3">
+                        <label for="newFolderNumber" class="form-label fw-600">
+                            Folder Number <span class="required-star">*</span>
+                        </label>
+                        <input type="text"
+                               id="newFolderNumber"
+                               class="form-control"
+                               placeholder="e.g. FOLD-2026-001"
+                               maxlength="100"
+                               autocomplete="off">
+                        <div id="newFolderNumberError" class="invalid-feedback"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="newFolderName" class="form-label fw-600">
+                            Folder Name <span class="required-star">*</span>
+                        </label>
+                        <input type="text"
+                               id="newFolderName"
+                               class="form-control"
+                               placeholder="e.g. Executive Directives 2026"
+                               maxlength="255"
+                               autocomplete="off">
+                        <div id="newFolderNameError" class="invalid-feedback"></div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="saveFolderBtn" class="btn btn-primary px-4 fw-600">
+                    <i class="fa-solid fa-floppy-disk me-1"></i>Save Folder
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
 
 @push('scripts')
 <script>
 (function () {
+    // ── Folder Auto-Fill & Inline Creation ───────────────────────
+    var folderSelect    = document.getElementById('folderNumberSelect');
+    var folderNameInput = document.getElementById('folderNameInput');
+    var saveFolderBtn   = document.getElementById('saveFolderBtn');
+    var newFolderNumInp = document.getElementById('newFolderNumber');
+    var newFolderNamInp = document.getElementById('newFolderName');
+    var folderModalAlert = document.getElementById('folderModalAlert');
+
+    if (folderSelect && folderNameInput) {
+        folderSelect.addEventListener('change', function () {
+            var selectedOpt = folderSelect.options[folderSelect.selectedIndex];
+            if (selectedOpt && selectedOpt.dataset && selectedOpt.dataset.name) {
+                folderNameInput.value = selectedOpt.dataset.name;
+            }
+        });
+    }
+
+    if (saveFolderBtn && newFolderNumInp && newFolderNamInp) {
+        saveFolderBtn.addEventListener('click', function () {
+            var fNum = newFolderNumInp.value.trim();
+            var fName = newFolderNamInp.value.trim();
+
+            if (!fNum || !fName) {
+                if (folderModalAlert) {
+                    folderModalAlert.className = 'alert alert-danger mb-3';
+                    folderModalAlert.textContent = 'Both Folder Number and Folder Name are required.';
+                }
+                return;
+            }
+
+            saveFolderBtn.disabled = true;
+            saveFolderBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving…';
+
+            fetch('{{ route("ajax.folders.create") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept':       'application/json',
+                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') || {}).content || '',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ folder_number: fNum, folder_name: fName }),
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                saveFolderBtn.disabled = false;
+                saveFolderBtn.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Save Folder';
+
+                if (res.success) {
+                    var f = res.folder;
+                    var opt = document.createElement('option');
+                    opt.value = f.folder_number;
+                    opt.dataset.name = f.folder_name;
+                    opt.textContent = f.folder_number + ' — ' + f.folder_name;
+                    opt.selected = true;
+                    folderSelect.appendChild(opt);
+
+                    folderNameInput.value = f.folder_name;
+
+                    var modalEl = document.getElementById('createFolderModal');
+                    var modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) modal.hide();
+
+                    newFolderNumInp.value = '';
+                    newFolderNamInp.value = '';
+                    if (folderModalAlert) folderModalAlert.className = 'alert d-none mb-3';
+                } else {
+                    if (folderModalAlert) {
+                        folderModalAlert.className = 'alert alert-danger mb-3';
+                        folderModalAlert.textContent = res.message || 'Error saving folder.';
+                    }
+                }
+            })
+            .catch(function () {
+                saveFolderBtn.disabled = false;
+                saveFolderBtn.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Save Folder';
+                if (folderModalAlert) {
+                    folderModalAlert.className = 'alert alert-danger mb-3';
+                    folderModalAlert.textContent = 'Failed to create folder. Please try again.';
+                }
+            });
+        });
+    }
+
     /*
      * Departments are embedded from the server on initial load.
      * After inline creation, we push the new dept into this array.

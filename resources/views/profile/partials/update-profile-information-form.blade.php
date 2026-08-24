@@ -41,7 +41,7 @@
             <input id="pi-phone" name="phone" type="text"
                 class="form-control @error('phone') is-invalid @enderror"
                 value="{{ old('phone', $user->phone) }}"
-                placeholder="+1 234 567 8900">
+                placeholder="+263 780 000 111">
             @error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
         </div>
 

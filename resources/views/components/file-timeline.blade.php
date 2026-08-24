@@ -108,7 +108,7 @@
             /* ── Duration calculation (time spent with this person) ── */
             $startTime = $move->created_at;
             $nextMove  = $moves->get($idx + 1);
-            $endTime   = $nextMove ? $nextMove->created_at : now();
+            $endTime   = $nextMove ? $nextMove->created_at : ($file->completed_at ?? now());
             $diffSecs  = $startTime->diffInSeconds($endTime);
 
             if ($diffSecs < 60) {
@@ -183,7 +183,7 @@
             {{-- Time Spent with Person --}}
             <div class="tl-duration-badge my-1" style="font-size:.72rem;background:#fef3c7;color:#854d0e;padding:3px 8px;border-radius:6px;font-weight:700;display:inline-flex;align-items:center;gap:4px;">
                 <i class="fa-regular fa-hourglass-half fa-xs"></i>
-                <span>{{ $isCurrent ? 'Held so far: ' : 'Time with person: ' }}{{ $durationLabel }}</span>
+                <span>{{ $isCurrent ? ($file->completed_at ? 'Final duration: ' : 'Held so far: ') : 'Time with person: ' }}{{ $durationLabel }}</span>
             </div>
 
             {{-- Date + Time --}}

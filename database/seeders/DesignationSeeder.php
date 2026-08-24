@@ -12,6 +12,8 @@ class DesignationSeeder extends Seeder
     {
         // Map of department code → designations
         $map = [
+            'REC' => ['Records Admin', 'Records Officer', 'Records Clerk'],
+            'EXEC' => ['Permanent Secretary', 'Deputy Permanent Secretary'],
             'ADMIN' => ['Department Head', 'Senior Officer', 'Officer', 'Clerk'],
             'HR' => ['HR Manager', 'HR Officer', 'Recruitment Officer', 'HR Clerk'],
             'FIN' => ['Finance Manager', 'Accounts Officer', 'Finance Clerk', 'Auditor'],

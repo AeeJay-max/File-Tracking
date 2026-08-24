@@ -6,6 +6,7 @@ use App\Models\Department;
 use App\Models\FileMovement;
 use App\Models\FileRecord;
 use App\Models\FileTransfer;
+use App\Models\Folder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -17,30 +18,55 @@ class FileRecordController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $query = FileRecord::with(['department', 'creator', 'currentHolder']);
+        $query = FileRecord::with(['department', 'currentDepartment', 'creator', 'currentHolder', 'folder']);
 
-        if ($user->role === 'user') {
-            $involvedFileIds = FileTransfer::where(fn ($q) => $q
-                ->where('sender_id', $user->id)
-                ->orWhere('receiver_id', $user->id))
-                ->pluck('file_id')->unique()->values();
-
-            $query->where(fn ($q) => $q
-                ->where('created_by', $user->id)
-                ->orWhere('current_user_id', $user->id)
-                ->orWhereIn('id', $involvedFileIds));
-        } elseif ($user->role === 'admin') {
-            // Departmental Admin sees all files currently in, created in, or transferred to/from their department
-            $deptFileIds = FileMovement::where('from_department', $user->department_id)
-                ->orWhere('to_department', $user->department_id)
-                ->pluck('file_id')->unique()->values();
-
-            $query->where(fn ($q) => $q
-                ->where('current_department_id', $user->department_id)
-                ->orWhere('department_id', $user->department_id)
-                ->orWhereIn('id', $deptFileIds));
+        // Check if user belongs to Records department
+        $isRecordsDept = false;
+        if ($user->department) {
+            $code = strtoupper((string) $user->department->code);
+            $name = Str::lower((string) $user->department->name);
+            if ($code === 'REC' || $name === 'records' || Str::contains($name, 'record')) {
+                $isRecordsDept = true;
+            }
         }
-        // super_admin sees all
+
+        // Folder filtering
+        $selectedFolder = null;
+        if ($request->filled('folder_id')) {
+            $selectedFolder = Folder::find($request->folder_id);
+            if ($selectedFolder) {
+                $query->where('folder_id', $selectedFolder->id);
+            }
+        }
+
+        if ($user->role === 'super_admin') {
+            // SuperAdmin is strictly for user account management — no file access
+            $query->whereRaw('1 = 0');
+        } elseif (! $isRecordsDept) {
+            // Non-Records department users can ONLY see files created in, currently in, or transferred to/from their department
+            if ($user->department_id) {
+                $deptFileIds = FileMovement::where('from_department', $user->department_id)
+                    ->orWhere('to_department', $user->department_id)
+                    ->pluck('file_id')->unique()->values();
+
+                $involvedFileIds = FileTransfer::where(fn ($q) => $q
+                    ->where('sender_id', $user->id)
+                    ->orWhere('receiver_id', $user->id))
+                    ->pluck('file_id')->unique()->values();
+
+                $query->where(fn ($q) => $q
+                    ->where('current_department_id', $user->department_id)
+                    ->orWhere('department_id', $user->department_id)
+                    ->orWhere('created_by', $user->id)
+                    ->orWhere('current_user_id', $user->id)
+                    ->orWhereIn('id', $deptFileIds)
+                    ->orWhereIn('id', $involvedFileIds));
+            } else {
+                $query->where(fn ($q) => $q
+                    ->where('created_by', $user->id)
+                    ->orWhere('current_user_id', $user->id));
+            }
+        }
 
         if ($request->filled('search')) {
             $s = $request->string('search')->trim()->value();
@@ -63,9 +89,22 @@ class FileRecordController extends Controller
             $query->whereDate('created_at', '<=', $request->date('to_date'));
         }
 
-        $files = $query->latest()->paginate(20)->withQueryString();
+        // For Records department: if no specific folder or search query is requested, show Folders overview
+        $showFoldersView = $isRecordsDept && !$request->filled('folder_id') && !$request->filled('search') && !$request->filled('status');
 
-        return view('files.index', compact('files'));
+        $folders = collect();
+        if ($showFoldersView) {
+            $folders = Folder::withCount('files')->latest()->paginate(20)->withQueryString();
+        }
+
+        // Sort urgent files first, then files with upcoming return_deadline, then latest created
+        $files = $query->orderBy('is_urgent', 'desc')
+                       ->orderByRaw('CASE WHEN return_deadline IS NULL THEN 1 ELSE 0 END, return_deadline ASC')
+                       ->latest()
+                       ->paginate(20)
+                       ->withQueryString();
+
+        return view('files.index', compact('files', 'folders', 'isRecordsDept', 'showFoldersView', 'selectedFolder'));
     }
 
     public function create()
@@ -73,8 +112,9 @@ class FileRecordController extends Controller
         // Any authenticated user with can_create_file permission may create
         $this->authorize('create', FileRecord::class);
         $departments = Department::where('is_active', true)->orderBy('name')->get();
+        $folders = Folder::orderBy('folder_number')->get();
 
-        return view('files.create', compact('departments'));
+        return view('files.create', compact('departments', 'folders'));
     }
 
     public function store(Request $request)
@@ -82,7 +122,13 @@ class FileRecordController extends Controller
         $this->authorize('create', FileRecord::class);
 
         $normalizedFileNumber = strtoupper(trim((string) $request->input('file_number', '')));
-        $request->merge(['file_number' => $normalizedFileNumber]);
+        $normalizedFolderNumber = strtoupper(trim((string) $request->input('folder_number', '')));
+        $folderName = trim((string) $request->input('folder_name', ''));
+
+        $request->merge([
+            'file_number' => $normalizedFileNumber,
+            'folder_number' => $normalizedFolderNumber,
+        ]);
 
         $request->validate([
             'file_number' => [
@@ -93,6 +139,8 @@ class FileRecordController extends Controller
                 Rule::unique('file_records', 'file_number')
                     ->where(fn ($query) => $query->where('department_id', (int) $request->input('department_id'))),
             ],
+            'folder_number' => 'required|string|max:100',
+            'folder_name' => 'required|string|max:255',
             'file_name' => 'required|string|max:255',
             'department_id' => 'required|exists:departments,id',
             'remarks' => 'nullable|string|max:1000',
@@ -100,15 +148,28 @@ class FileRecordController extends Controller
         ], [
             'file_number.unique' => 'This File Number already exists in this department. Use a different file number or select a different department.',
             'file_number.regex' => 'File number may only contain letters, numbers, hyphens, slashes, dots and spaces.',
+            'folder_number.required' => 'Please select or enter a Folder Number for this file.',
+            'folder_name.required' => 'Please enter or select a Folder Name.',
         ]);
 
         $deptId = (int) $request->department_id;
+
+        // Find or create folder
+        $folder = Folder::firstOrCreate(
+            ['folder_number' => $normalizedFolderNumber],
+            [
+                'folder_name' => $folderName,
+                'department_id' => $deptId,
+                'created_by' => Auth::id(),
+            ]
+        );
 
         $file = FileRecord::create([
             'created_by' => Auth::id(),
             'current_user_id' => Auth::id(),
             'department_id' => $deptId,
             'current_department_id' => $deptId,
+            'folder_id' => $folder->id,
             'file_name' => $request->string('file_name')->trim()->value(),
             'file_number' => $normalizedFileNumber,
             'remarks' => $request->string('remarks')->trim()->value() ?: null,
@@ -134,10 +195,10 @@ class FileRecordController extends Controller
             'from_department' => $deptId,
             'to_department' => $deptId,
             'action' => 'created',
-            'remarks' => 'File created by '.Auth::user()->name,
+            'remarks' => 'File created by '.Auth::user()->name.' in folder '.$folder->folder_number,
         ]);
 
-        return redirect()->route('files.index')->with('success', 'File "'.$file->file_number.'" created successfully.');
+        return redirect()->route('files.index')->with('success', 'File "'.$file->file_number.'" created successfully in folder "'.$folder->folder_number.'".');
     }
 
     public function edit(FileRecord $file)

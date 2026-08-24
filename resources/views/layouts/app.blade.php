@@ -12,6 +12,10 @@
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
     <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
     <link rel="stylesheet" href="{{ asset('css/portal.css') }}">
+    <style>
+        .modal { z-index: 1065 !important; }
+        .modal-backdrop { z-index: 1055 !important; }
+    </style>
     @stack('styles')
 </head>
 
@@ -53,11 +57,19 @@
                 <i class="fa-solid fa-house"></i><span>Dashboard</span>
             </a>
 
+            @if(! $isSuper)
             <a href="{{ route('files.index') }}"
                 class="sidebar-link {{ request()->routeIs('files.index','files.show','files.create') ? 'active' : '' }}">
                 <i class="fa-solid fa-file-lines"></i>
                 <span>{{ $isUser ? 'My Files' : 'Files' }}</span>
             </a>
+
+            <a href="{{ route('folders.index') }}"
+                class="sidebar-link {{ request()->routeIs('folders.*') ? 'active' : '' }}">
+                <i class="fa-solid fa-folder"></i>
+                <span>Folders</span>
+            </a>
+            @endif
 
             <a href="{{ route('notifications.index') }}"
                 class="sidebar-link {{ request()->routeIs('notifications.*') ? 'active' : '' }}">
@@ -69,8 +81,8 @@
                 @endif
             </a>
 
-            {{-- ── ADMIN SECTION ───────────────────────────────── --}}
-            @if($isAdmin || $isSuper)
+            {{-- ── DEPARTMENTAL ADMIN SECTION ──────────────────── --}}
+            @if($isAdmin && ! $isSuper)
             <div class="nav-section-label mt-2">Administration</div>
 
             <a href="{{ route('admin.files') }}"
@@ -83,39 +95,34 @@
                 <i class="fa-solid fa-right-left"></i><span>Transfer History</span>
             </a>
 
-            {{-- Admin: User Management (dept users only) --}}
-            @if($isAdmin)
             <a href="{{ route('admin.users.index') }}"
                 class="sidebar-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
                 <i class="fa-solid fa-users"></i><span>User Management</span>
             </a>
-            @endif
 
             <a href="{{ route('admin.designations.index') }}"
                 class="sidebar-link {{ request()->routeIs('admin.designations.*') ? 'active' : '' }}">
                 <i class="fa-solid fa-id-badge"></i><span>Designations</span>
             </a>
-
-            @if($isSuper)
-            <a href="{{ route('admin.backup.index') }}"
-                class="sidebar-link {{ request()->routeIs('admin.backup.*') ? 'active' : '' }}">
-                <i class="fa-solid fa-database"></i><span>Backup</span>
-            </a>
-            @endif
             @endif
 
             {{-- ── SUPER ADMIN ONLY ────────────────────────────── --}}
             @if($isSuper)
-            <div class="nav-section-label mt-2">System</div>
+            <div class="nav-section-label mt-2">System Management</div>
+
+            <a href="{{ route('users.index') }}"
+                class="sidebar-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
+                <i class="fa-solid fa-users-gear"></i><span>User Accounts</span>
+            </a>
 
             <a href="{{ route('departments.index') }}"
                 class="sidebar-link {{ request()->routeIs('departments.*') ? 'active' : '' }}">
                 <i class="fa-solid fa-building-columns"></i><span>Departments</span>
             </a>
 
-            <a href="{{ route('users.index') }}"
-                class="sidebar-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
-                <i class="fa-solid fa-users-gear"></i><span>User &amp; Officer Management</span>
+            <a href="{{ route('admin.backup.index') }}"
+                class="sidebar-link {{ request()->routeIs('admin.backup.*') ? 'active' : '' }}">
+                <i class="fa-solid fa-database"></i><span>Backup</span>
             </a>
             @endif
 
@@ -318,6 +325,45 @@
 
             @yield('content')
         </main>
+
+        <!-- Toast Notifications (Bottom Right Corner) -->
+        <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1090;" id="portalToastContainer">
+            @if(session('success'))
+            <div class="toast align-items-center text-white bg-success border-0 show shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="6000">
+                <div class="d-flex">
+                    <div class="toast-body d-flex align-items-center gap-2" style="font-size:.9rem;font-weight:600;">
+                        <i class="fa-solid fa-circle-check fa-lg"></i>
+                        <div>{{ session('success') }}</div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+            @endif
+
+            @if(session('error'))
+            <div class="toast align-items-center text-white bg-danger border-0 show shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="8000">
+                <div class="d-flex">
+                    <div class="toast-body d-flex align-items-center gap-2" style="font-size:.9rem;font-weight:600;">
+                        <i class="fa-solid fa-circle-xmark fa-lg"></i>
+                        <div>{{ session('error') }}</div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+            @endif
+
+            @if(session('info'))
+            <div class="toast align-items-center text-white bg-primary border-0 show shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="6000">
+                <div class="d-flex">
+                    <div class="toast-body d-flex align-items-center gap-2" style="font-size:.9rem;font-weight:600;">
+                        <i class="fa-solid fa-circle-info fa-lg"></i>
+                        <div>{{ session('info') }}</div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+            @endif
+        </div>
 
         <!-- FOOTER -->
         <footer class="portal-footer">
@@ -660,13 +706,39 @@
                 });
             }
 
-            // ── Initial poll after short delay ────────────────────────────
-            setTimeout(function() {
-                poll();
-            }, FIRST_MS);
-
+        // ── Auto logout interceptor for session/token expiration ─────
+        (function() {
+            var originalFetch = window.fetch;
+            if (originalFetch) {
+                window.fetch = function() {
+                    return originalFetch.apply(this, arguments).then(function(response) {
+                        if (response.status === 419 || response.status === 401) {
+                            window.location.href = "{{ route('login') }}?expired=1";
+                        }
+                        return response;
+                    });
+                };
+            }
         })();
+
+        // ── Initial poll after short delay ────────────────────────────
+        setTimeout(function() {
+            poll();
+        }, FIRST_MS);
+
+    })();
+</script>
+    <script>
+        document.addEventListener('show.bs.modal', function (e) {
+            if (e.target && e.target.parentNode !== document.body) {
+                document.body.appendChild(e.target);
+            }
+        });
     </script>
+    @auth
+    @include('partials.create-file-modal')
+    @endauth
+    @yield('modals')
     @stack('scripts')
 </body>
 

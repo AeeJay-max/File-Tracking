@@ -10,22 +10,21 @@ class SuperAdminSeeder extends Seeder
 {
     public function run(): void
     {
-        $dept = \App\Models\Department::first();
-
-        User::firstOrCreate(
-            ['email' => 'superadmin@filetrack.local'],
+        User::updateOrCreate(
+            ['email' => 'filetrack@mosrac.gov.zw'],
             [
-                'name' => 'Director General',
-                'password' => Hash::make('Admin@1234'),
+                'name' => 'Super Admin',
+                'password' => Hash::make('Ministry@2018'),
                 'role' => 'super_admin',
-                'department_id' => $dept?->id,
+                'department_id' => null,
                 'designation_id' => null,
                 'is_active' => true,
                 'can_create_file' => true,
+                'must_change_password' => false,
                 'email_verified_at' => now(),
             ]
         );
 
-        $this->command->info('Director seeded: superadmin@filetrack.local / Admin@1234');
+        $this->command->info('Super Admin seeded: filetrack@mosrac.gov.zw / Ministry@2018');
     }
 }

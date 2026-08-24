@@ -65,7 +65,7 @@ class FileTimelineController extends Controller
         /** @var User $user */
         $user = Auth::user();
         if ($user->role === 'super_admin') {
-            return;
+            abort(403, 'SuperAdmin is restricted from viewing file details or history.');
         }
 
         // Allow access if the admin's department currently holds the file

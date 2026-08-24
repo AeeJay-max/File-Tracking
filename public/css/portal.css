@@ -804,3 +804,20 @@ select.form-select {
     .rfm-right { flex-direction: row; align-items: center; gap: 8px; width: 100%; }
     .rfm-file-name { max-width: 140px; }
 }
+
+/* ============================================================ MODAL FIXES */
+.modal {
+    z-index: 1060 !important;
+}
+.modal-backdrop {
+    z-index: 1050 !important;
+}
+.modal-dialog {
+    z-index: 1065 !important;
+    pointer-events: auto !important;
+}
+.modal-content {
+    background-color: #ffffff !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
