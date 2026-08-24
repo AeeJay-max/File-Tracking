@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -40,9 +41,14 @@ class RegisteredUserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'email_verified_at' => app()->environment('local', 'testing') ? now() : null,
         ]);
 
-        event(new Registered($user));
+        try {
+            event(new Registered($user));
+        } catch (\Throwable $e) {
+            Log::error('Mail transport error during registration event: '.$e->getMessage());
+        }
 
         Auth::login($user);
 

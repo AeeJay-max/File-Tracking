@@ -26,8 +26,8 @@ class AppServiceProvider extends ServiceProvider
         $this->configureRateLimiting();
         Paginator::useBootstrapFive();
 
-        // Share departments & folders globally with all views for authenticated users
-        View::composer('*', function ($view) {
+        // Share departments & folders for create-file-modal overlay for authenticated users
+        View::composer('partials.create-file-modal', function ($view) {
             if (auth()->check()) {
                 $view->with('globalDepartments', Department::where('is_active', true)->orderBy('name')->get());
                 $view->with('globalFolders', Folder::orderBy('folder_number')->get());

@@ -41,11 +41,21 @@
             </div>
             <div class="col-md-6">
                 <label class="form-label">New Password <span class="text-muted">(leave blank to keep current)</span></label>
-                <input type="password" name="password" class="form-control">
+                <div class="input-group">
+                    <input type="password" name="password" class="form-control">
+                    <button type="button" class="btn btn-outline-secondary toggle-password-btn" tabindex="-1" title="Toggle Password Visibility">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Confirm Password</label>
-                <input type="password" name="password_confirmation" class="form-control">
+                <div class="input-group">
+                    <input type="password" name="password_confirmation" class="form-control">
+                    <button type="button" class="btn btn-outline-secondary toggle-password-btn" tabindex="-1" title="Toggle Password Visibility">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Role <span class="required-star">*</span></label>

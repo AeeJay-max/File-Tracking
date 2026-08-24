@@ -31,16 +31,19 @@
         </div>
 
         <div class="mb-3">
-            <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex justify-content-between align-items-center mb-1">
                 <label class="form-label mb-0" for="password">Password</label>
                 @if (Route::has('password.request'))
                 <a href="{{ route('password.request') }}" class="small text-primary">Forgot password?</a>
                 @endif
             </div>
-            <div class="input-group mt-1">
+            <div class="input-group">
                 <span class="input-group-text"><i class="fa-solid fa-lock text-muted"></i></span>
                 <input id="password" type="password" name="password" class="form-control"
                     required autocomplete="current-password" placeholder="Enter password">
+                <button type="button" class="btn btn-outline-secondary toggle-password-btn" tabindex="-1" title="Toggle Password Visibility">
+                    <i class="fa-solid fa-eye"></i>
+                </button>
             </div>
         </div>
 

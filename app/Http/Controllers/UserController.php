@@ -70,6 +70,7 @@ class UserController extends Controller
         $data['password'] = Hash::make('Password@123');
         $data['can_create_file'] = true;
         $data['must_change_password'] = true;
+        $data['email_verified_at'] = now();
 
         if ($request->hasFile('photo')) {
             $data['photo'] = $this->storePhoto($request);

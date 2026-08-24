@@ -734,6 +734,76 @@
                 document.body.appendChild(e.target);
             }
         });
+
+        // ── Eye Toggle Handler ──────────────────────────────────────
+        document.addEventListener('click', function (e) {
+            var toggleBtn = e.target.closest('.toggle-password-btn');
+            if (!toggleBtn) return;
+
+            var inputGroup = toggleBtn.closest('.input-group');
+            if (!inputGroup) return;
+
+            var input = inputGroup.querySelector('input[type="password"], input[type="text"]');
+            if (!input) return;
+
+            var icon = toggleBtn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                if (icon) { icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash'); }
+            } else {
+                input.type = 'password';
+                if (icon) { icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye'); }
+            }
+        });
+
+        // ── Password Confirmation Match Handler ─────────────────────
+        document.querySelectorAll('form').forEach(function (form) {
+            var pwd = form.querySelector('input[name="password"]');
+            var pwdConfirm = form.querySelector('input[name="password_confirmation"]');
+
+            if (!pwd || !pwdConfirm) return;
+
+            var targetContainer = pwdConfirm.closest('.input-group') || pwdConfirm.parentNode;
+            var errDiv = document.createElement('div');
+            errDiv.className = 'invalid-feedback password-mismatch-msg fw-600 mt-1';
+            errDiv.style.display = 'none';
+            errDiv.innerHTML = '<i class="fa-solid fa-circle-xmark me-1"></i>Passwords do not match!';
+            targetContainer.parentNode.insertBefore(errDiv, targetContainer.nextSibling);
+
+            function validateMatch() {
+                if (!pwdConfirm.value && !pwd.value) {
+                    pwdConfirm.classList.remove('is-invalid');
+                    errDiv.style.display = 'none';
+                    return true;
+                }
+
+                if (pwd.value !== pwdConfirm.value) {
+                    pwdConfirm.classList.add('is-invalid');
+                    errDiv.style.display = 'block';
+                    return false;
+                } else {
+                    pwdConfirm.classList.remove('is-invalid');
+                    errDiv.style.display = 'none';
+                    return true;
+                }
+            }
+
+            pwd.addEventListener('input', function() {
+                if (pwdConfirm.value) validateMatch();
+            });
+
+            pwdConfirm.addEventListener('input', validateMatch);
+
+            form.addEventListener('submit', function (e) {
+                if (pwd.value || pwdConfirm.value) {
+                    if (!validateMatch()) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        pwdConfirm.focus();
+                    }
+                }
+            });
+        });
     </script>
     @auth
     @include('partials.create-file-modal')

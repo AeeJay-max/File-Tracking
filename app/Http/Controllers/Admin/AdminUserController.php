@@ -82,6 +82,7 @@ class AdminUserController extends Controller
             'contact_number' => $request->contact_number,
             'can_create_file' => $request->has('can_create_file') ? $request->boolean('can_create_file') : true,
             'must_change_password' => true,
+            'email_verified_at' => now(),
         ];
 
         if ($request->hasFile('photo')) {

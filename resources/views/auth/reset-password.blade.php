@@ -20,14 +20,24 @@
 
         <div class="mb-3">
             <label class="form-label" for="password">New Password</label>
-            <input id="password" type="password" name="password" class="form-control"
-                required autocomplete="new-password" placeholder="Minimum 8 characters">
+            <div class="input-group">
+                <input id="password" type="password" name="password" class="form-control"
+                    required autocomplete="new-password" placeholder="Minimum 8 characters">
+                <button type="button" class="btn btn-outline-secondary toggle-password-btn" tabindex="-1" title="Toggle Password Visibility">
+                    <i class="fa-solid fa-eye"></i>
+                </button>
+            </div>
         </div>
 
         <div class="mb-3">
             <label class="form-label" for="password_confirmation">Confirm New Password</label>
-            <input id="password_confirmation" type="password" name="password_confirmation" class="form-control"
-                required autocomplete="new-password" placeholder="Repeat new password">
+            <div class="input-group">
+                <input id="password_confirmation" type="password" name="password_confirmation" class="form-control"
+                    required autocomplete="new-password" placeholder="Repeat new password">
+                <button type="button" class="btn btn-outline-secondary toggle-password-btn" tabindex="-1" title="Toggle Password Visibility">
+                    <i class="fa-solid fa-eye"></i>
+                </button>
+            </div>
         </div>
 
         <button type="submit" class="btn btn-primary btn-auth">
