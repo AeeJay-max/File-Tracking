@@ -24,10 +24,10 @@
                       novalidate>
                     @csrf
 
-                    {{-- Government File Number --}}
+                    {{-- Folio Number --}}
                     <div class="mb-3">
                         <label class="form-label fw-600">
-                            Government File Number <span class="text-danger">*</span>
+                            Folio Number <span class="text-danger">*</span>
                         </label>
                         <input type="text"
                                name="file_number"
@@ -93,10 +93,10 @@
                         </div>
                     </div>
 
-                    {{-- File Name / Subject --}}
+                    {{-- File Name--}}
                     <div class="mb-3">
                         <label class="form-label fw-600">
-                            File Name / Subject <span class="text-danger">*</span>
+                            File Name<span class="text-danger">*</span>
                         </label>
                         <input type="text"
                                name="file_name"
@@ -122,7 +122,7 @@
                     {{-- General Document Contents --}}
                     <div class="mb-3">
                         <label class="form-label fw-600">
-                            General Document Contents / Subject Details <span class="text-danger">*</span>
+                            Reference <span class="text-danger">*</span>
                         </label>
                         <textarea name="remarks"
                                   class="form-control"

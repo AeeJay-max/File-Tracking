@@ -101,9 +101,9 @@ The portal interface features an executive left sidebar, a topbar context header
 ### Workflow 1: Creating a New Document Dispatch
 
 1. Navigate to **Files** in the sidebar and click **New File** (or click **New File** on the Dashboard).
-2. Enter the **File Name / Subject Title** (e.g. *Q3 National Sports Equipment Budget Requisition*).
+2. Enter the **File NameTitle** (e.g. *Q3 National Sports Equipment Budget Requisition*).
 3. Select the **Department** that owns or originated the document.
-4. Write the **General Document Contents / Subject Details** in the text area.
+4. Write the **Reference** in the text area.
    - *Note: Physical file upload is optional. You do not need to attach a file to create or send a document.*
 5. Click **Save File**. The system registers the document with a unique File Number (e.g. `FILE-2026-0817-001`) and sets you as the initial creator and holder.
 

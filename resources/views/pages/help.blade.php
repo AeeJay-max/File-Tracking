@@ -150,7 +150,7 @@
                         <hr style="border-color:rgba(255,255,255,.12);">
                         <ol class="lh-lg mb-0" style="color:rgba(255,255,255,.88);font-size:1.02rem;">
                             <li>Click the <strong>"+ New File"</strong> button from the header or dashboard.</li>
-                            <li>Enter the <strong>Government File Number</strong> (e.g. <code>HR/FIN/2026/089</code>).</li>
+                            <li>Enter the <strong>Folio Number</strong> (e.g. <code>HR/FIN/2026/089</code>).</li>
                             <li>Select the <strong>Folder Number</strong> from the dropdown list. The <strong>Folder Name automatically populates!</strong></li>
                             <li>If the target folder does not exist yet, click the <strong>"+ New"</strong> button next to the dropdown to create it on the spot.</li>
                             <li>Fill in the File Title, Department, Subject Details/Remarks, attach an optional physical document, and click <strong>"Save &amp; Register File"</strong>.</li>
