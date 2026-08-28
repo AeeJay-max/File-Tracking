@@ -221,6 +221,7 @@
         <x-file-timeline
             :movements="$timelineMovements"
             :current-user-id="$file->current_user_id"
+            :completed-at="$file->completed_at"
             :viewer-dept-id="$viewerDeptId ?? auth()->user()->department_id"
             :is-super-admin="$isSuperAdmin ?? (auth()->user()->role === 'super_admin')" />
     </div>
