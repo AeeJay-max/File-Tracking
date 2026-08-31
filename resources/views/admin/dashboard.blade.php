@@ -150,7 +150,7 @@
                                 </td>
                                 <td>@include('partials.status-badge', ['status' => $f->status])</td>
                                 <td>
-                                    <a href="{{ route('admin.files.timeline', $f->uuid) }}"
+                                    <a href="{{ route('files.timeline', $f->uuid) }}"
                                        class="btn btn-sm btn-portal-outline" title="Timeline">
                                         <i class="fa-solid fa-timeline"></i>
                                     </a>
@@ -204,7 +204,7 @@
         @forelse($recentActivity as $item)
         @php
             $fileUuid = $item->file?->uuid;
-            $cardUrl  = $fileUuid ? route('admin.files.timeline', $fileUuid) : '#';
+            $cardUrl  = $fileUuid ? route('files.timeline', $fileUuid) : '#';
             $isDept   = $item->fromDept && $item->toDept
                         && (int)$item->fromDept->id !== (int)$item->toDept->id;
         @endphp

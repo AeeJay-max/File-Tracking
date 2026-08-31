@@ -89,8 +89,62 @@
                     <input type="hidden" name="department_id"    id="department_id"    value="{{ old('department_id') }}">
 
                     @php
-                        $needsPermSec = ! $file->hasBeenToPermSec();
+                        $needsPermSec  = ! $file->hasBeenToPermSec();
+                        $authUser      = auth()->user();
+                        $isRecordsUser = ($authUser->department?->code === 'REC'
+                            || \Illuminate\Support\Str::contains(
+                                \Illuminate\Support\Str::lower($authUser->department?->name ?? ''), 'record'));
+                        // Lock destination when PermSec has set a recommended dept AND current user is from Records
+                        $permsecLockedDept = (!$needsPermSec && $file->recommended_department_id && $isRecordsUser)
+                            ? $file->recommendedDepartment
+                            : null;
                     @endphp
+
+                    {{-- ════════════════════════════════════════════════════════
+                         LOCKED DESTINATION — shown only when PermSec has already
+                         assigned a department and the current user is from Records
+                    ══════════════════════════════════════════════════════════ --}}
+                    @if($permsecLockedDept)
+
+                        {{-- Force department mode with the PermSec-assigned dept --}}
+                        <script>document.getElementById('destination_type').value='department';</script>
+                        <input type="hidden" name="destination_type" value="department">
+                        <input type="hidden" name="department_id"    value="{{ $permsecLockedDept->id }}">
+
+                        <div class="alert d-flex align-items-start gap-3 mb-3"
+                             style="background:rgba(234,179,8,.08);border:1px solid rgba(234,179,8,.35);border-radius:10px;color:#713f12;">
+                            <i class="fa-solid fa-lock fa-lg mt-1" style="color:#ca8a04;"></i>
+                            <div>
+                                <div class="fw-700 mb-1" style="font-size:.9rem;">
+                                    Destination Locked by Permanent Secretary
+                                </div>
+                                <div class="text-muted" style="font-size:.82rem;">
+                                    The Permanent Secretary has directed this file to a specific department.
+                                    Records cannot change the destination.
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Read-only department display --}}
+                        <div class="mb-4">
+                            <label class="form-label fw-600">Destination Department</label>
+                            <div class="d-flex align-items-center gap-3 px-3 py-3"
+                                 style="background:#f0fdf4;border:2px solid #16a34a;border-radius:10px;">
+                                <i class="fa-solid fa-building-columns fa-lg text-success"></i>
+                                <div>
+                                    <div class="fw-700" style="font-size:1rem;">{{ $permsecLockedDept->name }}</div>
+                                    @if($permsecLockedDept->code)
+                                    <div class="text-muted" style="font-size:.8rem;">Code: {{ $permsecLockedDept->code }}</div>
+                                    @endif
+                                </div>
+                                <span class="ms-auto badge text-white fw-600 px-2 py-1"
+                                      style="background:#16a34a;font-size:.75rem;border-radius:6px;">
+                                    <i class="fa-solid fa-circle-check me-1"></i>PermSec Assigned
+                                </span>
+                            </div>
+                        </div>
+
+                    @else
 
                     {{-- ── Mode Switcher ────────────────────────────────────── --}}
                     <div class="mb-3">
@@ -200,6 +254,8 @@
                         @enderror
                     </div>
 
+                    @endif {{-- end permsecLockedDept --}}
+
                     {{-- ── General Content Body / Message ──────────────────── --}}
                     <div class="mb-4">
                         <label for="remarksInput" class="form-label fw-600">
@@ -220,9 +276,7 @@
                     </div>
 
                     @php
-                        $authUser = auth()->user();
-                        $isPermSecUser = ($authUser->designation?->name === 'Permanent Secretary' || $authUser->email === 'permsec@filetrack.local');
-                        $isRecordsUser = ($authUser->department?->code === 'REC' || \Illuminate\Support\Str::contains(\Illuminate\Support\Str::lower($authUser->department?->name ?? ''), 'record'));
+                        $isPermSecUser  = ($authUser->designation?->name === 'Permanent Secretary' || $authUser->email === 'permsec@filetrack.local');
                         $canSetDeadline = $isPermSecUser || $isRecordsUser;
                     @endphp
 

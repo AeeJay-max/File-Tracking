@@ -102,6 +102,11 @@ class FileRecordPolicy
             }
         }
 
+        // Permanent Secretary sees ALL files system-wide
+        if ($user->designation?->name === 'Permanent Secretary' || $user->email === 'permsec@filetrack.local') {
+            return true;
+        }
+
         // Creator
         if ((int) $file->created_by === $user->id) {
             return true;

@@ -82,7 +82,7 @@
                 @endphp
                 <tr>
                     <td>
-                        <a href="{{ route('admin.files.timeline', $file->uuid) }}"
+                        <a href="{{ route('files.timeline', $file->uuid) }}"
                            class="fw-700 text-portal-primary text-decoration-none">
                             {{ $file->file_number }}
                         </a>
@@ -132,7 +132,7 @@
                         </form>
                     </td>
                     <td>
-                        <a href="{{ route('admin.files.timeline', $file->uuid) }}"
+                        <a href="{{ route('files.timeline', $file->uuid) }}"
                            class="btn btn-sm btn-outline-primary"
                            title="View Timeline">
                             <i class="fa-solid fa-timeline"></i>

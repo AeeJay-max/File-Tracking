@@ -257,12 +257,10 @@
                             </span>
                         @endif
 
-                        @if(in_array(auth()->user()->role, ['admin', 'super_admin']) || $isRecordsDept)
-                        <a href="{{ route('admin.files.timeline', $file->uuid) }}"
+                        <a href="{{ route('files.timeline', $file->uuid) }}"
                            class="btn btn-sm btn-outline-success" title="Timeline">
                             <i class="fa-solid fa-timeline"></i>
                         </a>
-                        @endif
                     </div>
                 </td>
             </tr>

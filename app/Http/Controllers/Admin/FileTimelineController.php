@@ -62,22 +62,7 @@ class FileTimelineController extends Controller
 
     private function authorizeFile(FileRecord $file): void
     {
-        /** @var User $user */
-        $user = Auth::user();
-        if ($user->role === 'super_admin') {
-            abort(403, 'SuperAdmin is restricted from viewing file details or history.');
-        }
-
-        // Allow access if the admin's department currently holds the file
-        // OR if the file originated from their department.
-        // current_department_id tracks the live ownership; department_id is the origin.
-        $dept = (int) $user->department_id;
-        $isCurrentDept = (int) ($file->current_department_id ?? $file->department_id) === $dept;
-        $isOriginDept = (int) $file->department_id === $dept;
-
-        if (! $isCurrentDept && ! $isOriginDept) {
-            abort(403, 'You do not have access to this file.');
-        }
+        $this->authorize('view', $file);
     }
 
     /** Returns viewer context for dept-scoped timeline rendering. */

@@ -113,7 +113,7 @@
                     </td>
                     <td>
                         @if($move->file)
-                        <a href="{{ route('admin.files.timeline', $move->file->uuid) }}"
+                        <a href="{{ route('files.timeline', $move->file->uuid) }}"
                            class="btn btn-sm btn-outline-primary" title="View Timeline">
                             <i class="fa-solid fa-timeline"></i>
                         </a>

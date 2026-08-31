@@ -114,7 +114,7 @@
                     <td>@include('partials.status-badge', ['status' => $file->status])</td>
                     <td class="text-muted fs-sm">{{ $file->created_at->format('d M Y') }}</td>
                     <td>
-                        <a href="{{ route('admin.files.timeline', $file->uuid) }}"
+                        <a href="{{ route('files.timeline', $file->uuid) }}"
                            class="btn btn-sm btn-outline-primary" title="View Timeline">
                             <i class="fa-solid fa-timeline me-1"></i>Timeline
                         </a>

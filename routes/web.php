@@ -60,6 +60,7 @@ Route::middleware(['auth', 'verified', 'no.cache', 'force.pwd.change'])->group(f
     Route::get('/files/{file}/edit', [FileRecordController::class, 'edit'])->name('files.edit');
     Route::put('/files/{file}', [FileRecordController::class, 'update'])->name('files.update');
     Route::get('/files/{file}/download', [FileRecordController::class, 'download'])->name('files.download');
+    Route::get('/files/{uuid}/timeline', [FileTimelineController::class, 'show'])->name('files.timeline');
 
     // Transfer (immediate — no approval)
     Route::get('/files/{file}/transfer', [FileTransferController::class, 'create'])->name('files.transfer.create');
@@ -160,8 +161,6 @@ Route::prefix('admin')
         Route::post('/files/pending/{uuid}/assign', [AdminFileAssignmentController::class, 'assign'])->name('files.pending.assign');
 
         Route::get('/files', [AdminFileController::class, 'index'])->name('files');
-        Route::get('/files/{uuid}/timeline', [FileTimelineController::class, 'show'])->name('files.timeline');
-        Route::get('/files/{uuid}', [FileTimelineController::class, 'fileDetails'])->name('files.show');
 
         // Transfer history — read-only monitoring
         Route::get('/transfers', [AdminTransferController::class, 'index'])->name('transfers');

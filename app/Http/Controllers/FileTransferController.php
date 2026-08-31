@@ -109,6 +109,13 @@ class FileTransferController extends Controller
         $remarks = $request->string('remarks')->trim()->value() ?: null;
         $isRecordsStaff = ($currentUser->department?->code === 'REC' || Str::contains(Str::lower($currentUser->department?->name ?? ''), 'record'));
 
+        // RULE: If PermSec has assigned a recommended department, Records MUST send it there.
+        if ($isRecordsStaff && $file->hasBeenToPermSec() && $file->recommended_department_id) {
+            if ($request->destination_type !== 'department' || (int) $request->department_id !== (int) $file->recommended_department_id) {
+                return back()->with('error', 'The Permanent Secretary has locked the destination to a specific department. You cannot override it.');
+            }
+        }
+
         // RULE 0: General users in Records are ONLY permitted to send files to their Records Department Admin.
         if ($isRecordsStaff && $currentUser->role === 'user') {
             $targetUser = $request->filled('to_user_id') ? User::find((int) $request->to_user_id) : null;
