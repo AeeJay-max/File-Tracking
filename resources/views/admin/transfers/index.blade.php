@@ -46,7 +46,7 @@
         <a href="{{ route('admin.transfers') }}" class="btn btn-outline-secondary btn-sm px-3">Reset</a>
     </form>
 
-    <div class="table-responsive">
+    <div>
         <table class="portal-table">
             <thead>
                 <tr>

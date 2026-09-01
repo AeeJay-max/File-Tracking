@@ -141,20 +141,19 @@
     </form>
 
     {{-- ── TABLE ──────────────────────────────────────────────── --}}
-    <div class="table-responsive">
         <table class="portal-table">
             <thead>
                 <tr>
-                    <th>#</th>
+                    <th class="d-none d-md-table-cell">#</th>
                     <th>File &amp; Folder</th>
                     <th>File Name</th>
-                    <th>Origin Dept</th>
+                    <th class="d-none d-lg-table-cell">Origin Dept</th>
                     <th>Current Holder / Dept</th>
                     @if($isRecordsDept)
-                    <th>Assigned Admin &amp; Officer</th>
+                    <th class="d-none d-lg-table-cell">Assigned Admin &amp; Officer</th>
                     @endif
                     <th>Status &amp; Urgency</th>
-                    <th>Created</th>
+                    <th class="d-none d-md-table-cell">Created</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -166,7 +165,7 @@
                 $isOverdue = $hasDeadline && now()->greaterThan($file->return_deadline);
             @endphp
             <tr class="{{ $isUrgent || $isOverdue ? 'table-danger border-start border-danger border-4' : '' }}">
-                <td class="text-muted">{{ $files->firstItem() + $i }}</td>
+                <td class="text-muted d-none d-md-table-cell">{{ $files->firstItem() + $i }}</td>
                 <td>
                     <span class="fw-700 text-portal-primary d-block">{{ $file->file_number }}</span>
                     @if($file->folder)
@@ -183,7 +182,7 @@
                     </span>
                     @endif
                 </td>
-                <td class="text-muted">{{ $file->department->name ?? 'N/A' }}</td>
+                <td class="text-muted d-none d-lg-table-cell">{{ $file->department->name ?? 'N/A' }}</td>
 
                 {{-- CURRENT HOLDER (Includes Department Name) --}}
                 <td>
@@ -208,7 +207,7 @@
                 @php
                     $lastAssignMovement = $file->movements()->whereIn('action', ['assigned', 'transferred'])->latest()->first();
                 @endphp
-                <td>
+                <td class="d-none d-lg-table-cell">
                     @if($lastAssignMovement)
                     <div class="fs-xs">
                         <span class="d-block text-muted">Admin: <strong class="text-dark">{{ $lastAssignMovement->fromUser->name ?? 'System' }}</strong></span>
@@ -238,9 +237,9 @@
                     @endif
                 </td>
 
-                <td class="text-muted fs-sm">{{ $file->created_at->format('d M Y') }}</td>
+                <td class="text-muted fs-sm d-none d-md-table-cell">{{ $file->created_at->format('d M Y') }}</td>
                 <td>
-                    <div class="d-flex gap-1 align-items-center">
+                    <div class="d-flex align-items-center gap-1 flex-wrap">
                         <a href="{{ route('files.show', $file->uuid) }}"
                            class="btn btn-sm btn-outline-primary" title="View">
                             <i class="fa-solid fa-eye"></i>
@@ -276,7 +275,6 @@
             @endforelse
             </tbody>
         </table>
-    </div>
 
     @if($files->hasPages())
     <div class="px-4 py-3 border-top">

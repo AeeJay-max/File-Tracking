@@ -15,7 +15,7 @@
 </div>
 
 <div class="portal-table-wrap">
-    <div class="table-responsive">
+    <div>
         <table class="portal-table">
             <thead>
                 <tr>

@@ -30,10 +30,21 @@ class AdminTransferController extends Controller
         if ($user->role === 'super_admin') {
             $query->whereRaw('1 = 0');
         } else {
-            $query->where(function ($q) use ($user) {
-                $q->where('from_department', $user->department_id)
-                    ->orWhere('to_department', $user->department_id);
-            });
+            $isRecordsDept = false;
+            if ($user->department) {
+                $code = strtoupper((string) $user->department->code);
+                $name = \Illuminate\Support\Str::lower((string) $user->department->name);
+                if ($code === 'REC' || $name === 'records' || \Illuminate\Support\Str::contains($name, 'record')) {
+                    $isRecordsDept = true;
+                }
+            }
+
+            if (!$isRecordsDept) {
+                $query->where(function ($q) use ($user) {
+                    $q->where('from_department', $user->department_id)
+                        ->orWhere('to_department', $user->department_id);
+                });
+            }
         }
 
         // Super admin: optionally filter by department

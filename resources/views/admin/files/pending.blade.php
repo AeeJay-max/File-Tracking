@@ -61,7 +61,7 @@
         <span class="text-muted fs-sm">Assign each file to a user in {{ $deptName }}</span>
     </div>
 
-    <div class="table-responsive">
+    <div>
         <table class="portal-table">
             <thead>
                 <tr>

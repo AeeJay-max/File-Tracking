@@ -21,7 +21,23 @@ class AdminFileController extends Controller
         if ($user->role === 'super_admin') {
             $query->whereRaw('1 = 0');
         } else {
-            $query->where('current_department_id', $user->department_id);
+            $isRecordsDept = false;
+            if ($user->department) {
+                $code = strtoupper((string) $user->department->code);
+                $name = \Illuminate\Support\Str::lower((string) $user->department->name);
+                if ($code === 'REC' || $name === 'records' || \Illuminate\Support\Str::contains($name, 'record')) {
+                    $isRecordsDept = true;
+                }
+            }
+
+            if (!$isRecordsDept) {
+                // Non-records admins see files currently in or originally from their department
+                $query->where(fn($q) => $q
+                    ->where('current_department_id', $user->department_id)
+                    ->orWhere('department_id', $user->department_id)
+                );
+            }
+            // If isRecordsDept, they see everything (no filter applied)
         }
 
         // Super admin can filter by department UUID

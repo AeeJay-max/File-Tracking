@@ -50,21 +50,21 @@
         <a href="{{ route('admin.files') }}" class="btn btn-outline-secondary btn-sm px-3">Reset</a>
     </form>
 
-    <div class="table-responsive">
+    <div>
         <table class="portal-table">
             <thead>
                 <tr>
-                    <th>#</th>
+                    <th class="d-none d-md-table-cell">#</th>
                     <th>File Number</th>
                     <th>File Name</th>
                     @if(auth()->user()->role === 'super_admin')
-                    <th>Department</th>
+                    <th class="d-none d-lg-table-cell">Department</th>
                     @endif
                     <th>Current Holder</th>
-                    <th>Previous Holder</th>
-                    <th>Movements</th>
+                    <th class="d-none d-lg-table-cell">Previous Holder</th>
+                    <th class="d-none d-md-table-cell">Movements</th>
                     <th>Status</th>
-                    <th>Created</th>
+                    <th class="d-none d-md-table-cell">Created</th>
                     <th></th>
                 </tr>
             </thead>
@@ -75,7 +75,7 @@
                     $prevHolder = $prevUserId ? ($prevHolderCache[$prevUserId] ?? null) : null;
                 @endphp
                 <tr>
-                    <td class="text-muted">{{ $files->firstItem() + $i }}</td>
+                    <td class="text-muted d-none d-md-table-cell">{{ $files->firstItem() + $i }}</td>
                     <td><span class="fw-700 text-portal-primary">{{ $file->file_number }}</span></td>
                     <td>
                         <div class="fw-600">{{ $file->file_name }}</div>
@@ -84,7 +84,7 @@
                         @endif
                     </td>
                     @if(auth()->user()->role === 'super_admin')
-                    <td class="text-muted">{{ $file->department->name ?? 'N/A' }}</td>
+                    <td class="text-muted d-none d-lg-table-cell">{{ $file->department->name ?? 'N/A' }}</td>
                     @endif
                     <td>
                         @if($file->currentHolder)
@@ -109,10 +109,10 @@
                         <span class="text-muted fs-sm">—</span>
                         @endif
                     </td>
-                    <td class="text-muted fs-sm">{{ $prevHolder->name ?? '—' }}</td>
-                    <td class="text-muted fs-sm text-center">{{ $file->movements_count ?? $file->movements->count() }}</td>
+                    <td class="text-muted fs-sm d-none d-lg-table-cell">{{ $prevHolder->name ?? '—' }}</td>
+                    <td class="text-muted fs-sm text-center d-none d-md-table-cell">{{ $file->movements_count ?? $file->movements->count() }}</td>
                     <td>@include('partials.status-badge', ['status' => $file->status])</td>
-                    <td class="text-muted fs-sm">{{ $file->created_at->format('d M Y') }}</td>
+                    <td class="text-muted fs-sm d-none d-md-table-cell">{{ $file->created_at->format('d M Y') }}</td>
                     <td>
                         <a href="{{ route('files.timeline', $file->uuid) }}"
                            class="btn btn-sm btn-outline-primary" title="View Timeline">

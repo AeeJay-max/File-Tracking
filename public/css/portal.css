@@ -422,10 +422,10 @@ body.portal-body.sidebar-open { overflow: hidden; }
 .stat-kpi-label { font-size: .82rem; color: #334155; font-weight: 700; }
 .stat-kpi-value { font-size: 1.85rem; font-weight: 800; color: #0f172a; line-height: 1; }
 
-/* ============================================================ TABLES */
 .portal-table {
     width: 100%;
-    min-width: 720px;
+    table-layout: fixed;
+    word-wrap: break-word;
     border-collapse: collapse;
     font-size: .855rem;
     color: #0f172a;
@@ -439,7 +439,6 @@ body.portal-body.sidebar-open { overflow: hidden; }
     font-size: .78rem;
     text-transform: uppercase;
     letter-spacing: .04em;
-    white-space: nowrap;
 }
 .portal-table tbody td {
     padding: 13px 14px;
@@ -447,6 +446,8 @@ body.portal-body.sidebar-open { overflow: hidden; }
     vertical-align: middle;
     font-weight: 600;
     color: #0f172a;
+    overflow-wrap: anywhere;
+    white-space: normal !important;
 }
 .portal-table tbody tr:last-child td { border-bottom: none; }
 .portal-table tbody tr:hover { background: rgba(241, 245, 249, 0.7); }
@@ -820,4 +821,33 @@ select.form-select {
     background-color: #ffffff !important;
     opacity: 1 !important;
     pointer-events: auto !important;
+}
+
+/* ============================================================
+   RESPONSIVE LAYOUT OVERRIDES (<= 991.98px)
+   ============================================================ */
+@media (max-width: 991.98px) {
+    /* Hide sidebar by default, show when .sidebar-open is on body */
+    .portal-sidebar {
+        transform: translateX(-100%);
+    }
+    body.portal-body.sidebar-open .portal-sidebar {
+        transform: translateX(0);
+    }
+    
+    /* Main area takes full width */
+    .portal-main, .portal-main.expanded {
+        margin-left: 0;
+    }
+    
+    /* Topbar adjusts padding */
+    .portal-topbar {
+        padding: 0 16px;
+    }
+    
+    /* Center the background watermark */
+    .portal-main::before, .portal-main.expanded::before {
+        left: 50%;
+        top: 50%;
+    }
 }

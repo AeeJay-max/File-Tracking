@@ -533,9 +533,8 @@
 .tl-empty p { font-size: .9rem; margin: 0; }
 
 /* ================================================================
-   MOBILE — convert to vertical stacked timeline (≤ 768 px)
+   VERTICAL STACKED TIMELINE (DEFAULT)
    ================================================================ */
-@media (max-width: 768px) {
     .tl-outer {
         overflow-x: visible;
         padding: 1rem .25rem;
@@ -597,7 +596,6 @@
     .tl-datetime { flex-direction: row; gap: 12px; }
     .tl-date, .tl-time { justify-content: flex-start; }
     .tl-action-badge { margin-top: 6px; }
-}
 </style>
 @endpush
 @endonce

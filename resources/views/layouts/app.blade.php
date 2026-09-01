@@ -783,6 +783,27 @@
                 }
             });
         });
+
+        // ── Mobile Sidebar Toggle Handler ──────────────────────────────
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+        const portalBody = document.body;
+
+        if (sidebarToggle && sidebarBackdrop) {
+            sidebarToggle.addEventListener('click', function() {
+                portalBody.classList.toggle('sidebar-open');
+                if (portalBody.classList.contains('sidebar-open')) {
+                    sidebarBackdrop.classList.add('show');
+                } else {
+                    sidebarBackdrop.classList.remove('show');
+                }
+            });
+
+            sidebarBackdrop.addEventListener('click', function() {
+                portalBody.classList.remove('sidebar-open');
+                sidebarBackdrop.classList.remove('show');
+            });
+        }
     </script>
     @auth
     @include('partials.create-file-modal')
