@@ -160,8 +160,8 @@
                     <col style="width: 15%;">
                     <col style="width: 13%;">
                     <col style="width: 12%;">
-                    <col style="width: 13%;">
-                    <col style="width: 28%;">
+                    <col style="width: 15%;">
+                    <col style="width: 26%;">
                 </colgroup>
                 <thead>
                     <tr>
@@ -202,9 +202,10 @@
                         <td class="text-muted fs-sm">{{ $m->toDept->name ?? ($m->fromDept->name ?? '—') }}</td>
                         <td class="fs-sm">{{ $m->created_at->format('d M Y, h:i A') }}</td>
                         <td>
-                            <span class="badge {{ $isLast ? 'bg-success' : 'bg-warning text-dark' }} py-1 px-2">
+                            <span class="badge {{ $isLast ? 'bg-success' : 'bg-warning text-dark' }} py-1 px-2" style="white-space: normal; max-width: 100%; text-align: left; line-height: 1.4;">
                                 <i class="fa-regular fa-clock me-1"></i>
-                                {{ $isLast ? 'Held so far: ' : 'Time spent: ' }}{{ $durText }}
+                                {{ $isLast ? 'Held so far: ' : 'Time spent: ' }}<br>
+                                {{ $durText }}
                             </span>
                         </td>
                         <td class="text-break fs-sm">
