@@ -141,19 +141,44 @@
     </form>
 
     {{-- ── TABLE ──────────────────────────────────────────────── --}}
-        <table class="portal-table">
+    <div class="table-responsive">
+        <table class="portal-table" style="table-layout: fixed; width: 100%; min-width: 1000px;">
+            @if($isRecordsDept)
+            <colgroup>
+                <col style="width: 4%;">
+                <col style="width: 11%;">
+                <col style="width: 14%;">
+                <col style="width: 12%;">
+                <col style="width: 14%;">
+                <col style="width: 14%;">
+                <col style="width: 13%;">
+                <col style="width: 9%;">
+                <col style="width: 9%;">
+            </colgroup>
+            @else
+            <colgroup>
+                <col style="width: 4%;">
+                <col style="width: 12%;">
+                <col style="width: 15%;">
+                <col style="width: 13%;">
+                <col style="width: 17%;">
+                <col style="width: 17%;">
+                <col style="width: 10%;">
+                <col style="width: 12%;">
+            </colgroup>
+            @endif
             <thead>
                 <tr>
-                    <th class="d-none d-md-table-cell">#</th>
+                    <th>#</th>
                     <th>File &amp; Folder</th>
                     <th>File Name</th>
-                    <th class="d-none d-lg-table-cell">Origin Dept</th>
-                    <th>Current Holder / Dept</th>
+                    <th>Origin Dept</th>
+                    <th>Current Holder<br>/ Dept</th>
                     @if($isRecordsDept)
-                    <th class="d-none d-lg-table-cell">Assigned Admin &amp; Officer</th>
+                    <th>Assigned Admin<br>&amp; Officer</th>
                     @endif
-                    <th>Status &amp; Urgency</th>
-                    <th class="d-none d-md-table-cell">Created</th>
+                    <th>Status &amp;<br>Urgency</th>
+                    <th>Created</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -165,7 +190,7 @@
                 $isOverdue = $hasDeadline && now()->greaterThan($file->return_deadline);
             @endphp
             <tr class="{{ $isUrgent || $isOverdue ? 'table-danger border-start border-danger border-4' : '' }}">
-                <td class="text-muted d-none d-md-table-cell">{{ $files->firstItem() + $i }}</td>
+                <td class="text-muted">{{ $files->firstItem() + $i }}</td>
                 <td>
                     <span class="fw-700 text-portal-primary d-block">{{ $file->file_number }}</span>
                     @if($file->folder)
@@ -182,7 +207,7 @@
                     </span>
                     @endif
                 </td>
-                <td class="text-muted d-none d-lg-table-cell">{{ $file->department->name ?? 'N/A' }}</td>
+                <td class="text-muted">{{ $file->department->name ?? 'N/A' }}</td>
 
                 {{-- CURRENT HOLDER (Includes Department Name) --}}
                 <td>
@@ -207,7 +232,7 @@
                 @php
                     $lastAssignMovement = $file->movements()->whereIn('action', ['assigned', 'transferred'])->latest()->first();
                 @endphp
-                <td class="d-none d-lg-table-cell">
+                <td>
                     @if($lastAssignMovement)
                     <div class="fs-xs">
                         <span class="d-block text-muted">Admin: <strong class="text-dark">{{ $lastAssignMovement->fromUser->name ?? 'System' }}</strong></span>
@@ -237,7 +262,7 @@
                     @endif
                 </td>
 
-                <td class="text-muted fs-sm d-none d-md-table-cell">{{ $file->created_at->format('d M Y') }}</td>
+                <td class="text-muted fs-sm">{{ $file->created_at->format('d M Y') }}</td>
                 <td>
                     <div class="d-flex align-items-center gap-1 flex-wrap">
                         <a href="{{ route('files.show', $file->uuid) }}"
@@ -275,6 +300,7 @@
             @endforelse
             </tbody>
         </table>
+    </div>
 
     @if($files->hasPages())
     <div class="px-4 py-3 border-top">

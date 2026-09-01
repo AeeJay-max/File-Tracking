@@ -31,7 +31,7 @@ class FileTransferredNotification extends Notification
             && (int) $sender->department_id !== (int) $receiver->department_id;
 
         $url = $isDepartmentTransfer && in_array($notifiable->role ?? null, ['admin', 'super_admin'], true)
-            ? route('admin.files.timeline', $file->uuid, false)
+            ? route('files.timeline', $file->uuid, false)
             : route('files.show', $file->uuid, false);
 
         return [
