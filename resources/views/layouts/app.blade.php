@@ -233,7 +233,7 @@
 
                         <div class="d-none d-md-block text-start">
                             <div class="topbar-user-name">{{ auth()->user()->name }}</div>
-                            <div class="topbar-user-role">{{ match($role) { 'super_admin' => 'Super Admin', 'admin' => 'Departmental Admin', default => 'User' } }}</div>
+                            <div class="topbar-user-role">{{ auth()->user()->designation?->name ?? match($role) { 'super_admin' => 'Super Admin', 'admin' => 'Departmental Admin', default => 'User' } }}</div>
                         </div>
                         <i class="fa-solid fa-chevron-down ms-1 small"></i>
                     </button>
