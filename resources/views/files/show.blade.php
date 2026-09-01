@@ -236,7 +236,16 @@
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="portal-table">
+            <table class="portal-table" style="table-layout: fixed; min-width: 900px;">
+                <colgroup>
+                    <col style="width: 4%;">
+                    <col style="width: 15%;">
+                    <col style="width: 15%;">
+                    <col style="width: 13%;">
+                    <col style="width: 12%;">
+                    <col style="width: 13%;">
+                    <col style="width: 28%;">
+                </colgroup>
                 <thead>
                     <tr>
                         <th>#</th>
@@ -281,8 +290,8 @@
                                 {{ $isLast ? 'Held so far: ' : 'Time spent: ' }}{{ $durText }}
                             </span>
                         </td>
-                        <td class="text-break fs-sm" style="max-width:280px;">
-                            {{ $m->remarks ? Str::limit($m->remarks, 100) : '—' }}
+                        <td class="text-break fs-sm">
+                            {{ $m->remarks ?: '—' }}
                         </td>
                     </tr>
                     @endforeach

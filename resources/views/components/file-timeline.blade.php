@@ -62,7 +62,9 @@
 @else
 
 {{-- ── Horizontal scrollable track ────────────────────────── --}}
-<div class="tl-outer" role="region" aria-label="File Journey Timeline">
+<div class="tl-wrapper">
+    <button type="button" class="tl-scroll-btn left" aria-label="Scroll left"><i class="fa-solid fa-chevron-left"></i></button>
+    <div class="tl-outer" role="region" aria-label="File Journey Timeline">
     <div class="tl-track">
 
         @foreach($moves as $idx => $move)
@@ -225,7 +227,9 @@
 
         @endforeach
     </div>{{-- /.tl-track --}}
-</div>{{-- /.tl-outer --}}
+    </div>{{-- /.tl-outer --}}
+    <button type="button" class="tl-scroll-btn right" aria-label="Scroll right"><i class="fa-solid fa-chevron-right"></i></button>
+</div>{{-- /.tl-wrapper --}}
 
 {{-- ── Step count label ──────────────────────────────────── --}}
 <div class="tl-footer">
@@ -247,13 +251,50 @@
    ================================================================ */
 
 /* ── Outer scroll container ─────────────────────────────────────── */
+.tl-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+}
+.tl-scroll-btn {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin: 0 4px;
+    transition: all 0.2s ease;
+}
+.tl-scroll-btn:hover {
+    background: #f8fafc;
+    color: #0f172a;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.tl-scroll-btn:active {
+    transform: scale(0.95);
+}
 .tl-outer {
+    flex-grow: 1;
+    min-width: 0;
+    width: 100%;
     overflow-x: auto;
     overflow-y: visible;
-    padding: 2.5rem 1rem 1.5rem;
-    /* custom scrollbar */
+    padding: 2.5rem 0 1.5rem;
     scrollbar-width: thin;
     scrollbar-color: #cbd5e1 transparent;
+    scroll-behavior: smooth;
 }
 .tl-outer::-webkit-scrollbar { height: 5px; }
 .tl-outer::-webkit-scrollbar-track { background: transparent; }
@@ -531,71 +572,42 @@
     opacity: .4;
 }
 .tl-empty p { font-size: .9rem; margin: 0; }
-
-/* ================================================================
-   VERTICAL STACKED TIMELINE (DEFAULT)
-   ================================================================ */
-    .tl-outer {
-        overflow-x: visible;
-        padding: 1rem .25rem;
-    }
-    .tl-track {
-        flex-direction: column;
-        align-items: stretch;
-        min-width: unset;
-        gap: 0;
-    }
-
-    /* Vertical arrow */
-    .tl-arrow {
-        flex-direction: column;
-        align-items: center;
-        align-self: flex-start;
-        margin-top: 0;
-        margin-left: 34px;   /* align under avatar centre */
-        padding: 0;
-    }
-    .tl-arrow-line {
-        width: 2px;
-        height: 32px;
-        background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
-    }
-    .tl-arrow-line::after {
-        width: 6px;
-        height: 12px;
-        top: 0; left: -2px;
-        animation: tl-pulse-v 2.4s ease-in-out infinite;
-    }
-    @keyframes tl-pulse-v {
-        0%   { top: -12px; opacity: 0; }
-        20%  { opacity: .8; }
-        80%  { opacity: .5; }
-        100% { top: calc(100% + 4px); opacity: 0; }
-    }
-    .tl-arrow-head {
-        transform: rotate(90deg);
-        margin-left: 0;
-        margin-top: -2px;
-    }
-
-    /* Full-width horizontal card layout on mobile */
-    .tl-card {
-        width: 100%;
-        flex-direction: row;
-        align-items: flex-start;
-        text-align: left;
-        min-height: unset;
-        padding: 14px;
-        gap: 14px;
-    }
-    .tl-avatar-wrap  { margin-bottom: 0; flex-shrink: 0; }
-    .tl-current-badge {
-        top: -11px; left: 16px; transform: none;
-    }
-    .tl-step-num { top: 8px; left: 8px; }
-    .tl-datetime { flex-direction: row; gap: 12px; }
-    .tl-date, .tl-time { justify-content: flex-start; }
-    .tl-action-badge { margin-top: 6px; }
 </style>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const wrappers = document.querySelectorAll('.tl-wrapper');
+    wrappers.forEach(wrapper => {
+        const outer = wrapper.querySelector('.tl-outer');
+        const leftBtn = wrapper.querySelector('.tl-scroll-btn.left');
+        const rightBtn = wrapper.querySelector('.tl-scroll-btn.right');
+        
+        if (!outer || !leftBtn || !rightBtn) return;
+        
+        const scrollAmount = 250;
+        
+        leftBtn.addEventListener('click', () => {
+            outer.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+        });
+        
+        rightBtn.addEventListener('click', () => {
+            outer.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        });
+        
+        const updateButtons = () => {
+            leftBtn.style.opacity = outer.scrollLeft > 0 ? '1' : '0.3';
+            leftBtn.style.cursor = outer.scrollLeft > 0 ? 'pointer' : 'default';
+            
+            const maxScrollLeft = outer.scrollWidth - outer.clientWidth;
+            rightBtn.style.opacity = outer.scrollLeft >= maxScrollLeft - 1 ? '0.3' : '1';
+            rightBtn.style.cursor = outer.scrollLeft >= maxScrollLeft - 1 ? 'default' : 'pointer';
+        };
+        
+        outer.addEventListener('scroll', updateButtons);
+        // Delay to allow layout to settle
+        setTimeout(updateButtons, 150);
+        window.addEventListener('resize', updateButtons);
+    });
+});
+</script>
 @endpush
 @endonce
