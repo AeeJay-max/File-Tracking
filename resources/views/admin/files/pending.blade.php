@@ -79,6 +79,7 @@
                     $lastMove = $file->movements->first();
                     $fromUser = $lastMove?->fromUser;
                     $fromDept = $lastMove?->fromDept;
+                    $displayRemarks = $file->remarks ?: ($lastMove?->remarks);
                 @endphp
                 <tr>
                     <td>
@@ -89,10 +90,10 @@
                     </td>
                     <td>
                         <div class="fw-600">{{ $file->file_name }}</div>
-                        @if($file->remarks)
-                        <div class="text-muted fs-sm text-truncate" style="max-width:220px;"
-                             title="{{ $file->remarks }}">
-                            <i class="fa-solid fa-comment-dots fa-xs me-1"></i>{{ Str::limit($file->remarks, 60) }}
+                        @if($displayRemarks)
+                        <div class="text-muted fs-sm text-truncate" style="max-width:260px;"
+                             title="{{ $displayRemarks }}">
+                            <i class="fa-solid fa-comment-dots fa-xs me-1 text-primary"></i>{{ Str::limit($displayRemarks, 70) }}
                         </div>
                         @endif
                     </td>

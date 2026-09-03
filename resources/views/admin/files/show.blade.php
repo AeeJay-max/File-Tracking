@@ -98,10 +98,16 @@
                         <span class="text-muted">N/A</span>
                         @endif
                     </div>
-                    @if($file->remarks)
+                    @php
+                        $latestMoveRemarks = $file->movements->where('remarks', '!=', null)->where('remarks', '!=', '')->last()?->remarks;
+                        $showRemarks = $file->remarks ?: $latestMoveRemarks;
+                    @endphp
+                    @if($showRemarks)
                     <div class="col-12">
-                        <div class="text-muted fs-sm mb-1">Remarks</div>
-                        <div>{{ $file->remarks }}</div>
+                        <div class="text-muted fs-sm mb-1 fw-600">
+                            <i class="fa-solid fa-comment-dots text-primary me-1"></i>Departmental Remarks &amp; Directives
+                        </div>
+                        <div class="p-3 bg-light rounded border text-break" style="white-space: pre-line; font-size:.9rem; line-height:1.5;">{{ $showRemarks }}</div>
                     </div>
                     @endif
                     @if($file->attachment_name)

@@ -408,6 +408,7 @@ class FileTransferController extends Controller
             $updateData = [
                 'current_user_id' => null,
                 'current_department_id' => $targetDept->id,
+                'remarks' => $remarks ?? $file->remarks,
                 'status' => 'pending_assignment',
                 'is_urgent' => $isUrgent || $file->is_urgent,
             ];
@@ -584,7 +585,12 @@ class FileTransferController extends Controller
         $targetDeptId = (int) $file->recommended_department_id;
         $file->update(['recommended_department_id' => null]);
 
-        return $this->transferToDepartment($file, $currentUser, $targetDeptId, 'Records Admin dispatched file to recommended handling department.');
+        $dispatchRemarks = 'Records Admin dispatched file to recommended handling department.';
+        if ($file->remarks && !Str::contains($file->remarks, 'Records Admin dispatched file')) {
+            $dispatchRemarks = $file->remarks . "\n[Records Admin]: Dispatched to department.";
+        }
+
+        return $this->transferToDepartment($file, $currentUser, $targetDeptId, $dispatchRemarks);
     }
 
     private function getRecordsAdmin(): User
