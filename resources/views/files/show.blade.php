@@ -88,6 +88,23 @@
     </div>
 </div>
 
+@if($file->status === 'completed')
+<div class="alert alert-success d-flex align-items-center justify-content-between mb-4 p-3 shadow-sm" style="border-radius:12px;background:#ecfdf5;border:1px solid #10b981;color:#065f46;">
+    <div class="d-flex align-items-center gap-3">
+        <div style="width:40px;height:40px;border-radius:10px;background:#10b981;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <div>
+            <div style="font-weight:700;font-size:1rem;">File Operations Completed &amp; Closed</div>
+            <div class="small">All file handling operations were marked as completed on {{ $file->completed_at?->format('d M Y, h:i A') ?? $file->updated_at->format('d M Y, h:i A') }}. Time duration tracking is closed.</div>
+        </div>
+    </div>
+    <span class="badge bg-success px-3 py-2 fw-700" style="font-size:.85rem;border-radius:8px;">
+        <i class="fa-solid fa-lock me-1"></i>Completed / Done
+    </span>
+</div>
+@endif
+
 @if($file->recommendedDepartment && $isRecordsDept)
 <div class="alert alert-warning d-flex align-items-center justify-content-between mb-4 p-3" style="border-radius:12px;background:rgba(217,119,6,.1);border:1px solid rgba(217,119,6,.3);color:#92400e;">
     <div class="d-flex align-items-center gap-3">
@@ -258,15 +275,20 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @php $movesList = $file->movements->sortBy('created_at')->values(); @endphp
+                    @php
+                        $movesList = $file->movements->sortBy('created_at')->values();
+                        $lastMove = $movesList->last();
+                        $isCompletedFile = ($file->status === 'completed') || ($file->completed_at !== null) || ($lastMove && $lastMove->action === 'completed');
+                        $fileCompletedAt = $file->completed_at ?? ($lastMove && $lastMove->action === 'completed' ? $lastMove->created_at : null);
+                    @endphp
                     @foreach($movesList as $i => $m)
                     @php
                         $startT = $m->created_at;
                         $nextM = $movesList->get($i + 1);
-                        $endT = $nextM ? $nextM->created_at : now();
+                        $isLast = ($i === count($movesList) - 1);
+                        $endT = $nextM ? $nextM->created_at : ($isCompletedFile ? ($fileCompletedAt ?? $m->created_at) : now());
                         $durSec = $startT->diffInSeconds($endT);
                         $durText = $durSec < 60 ? 'Less than 1 min' : $startT->diffForHumans($endT, ['parts' => 2, 'short' => false, 'syntax' => \Carbon\CarbonInterface::DIFF_ABSOLUTE]);
-                        $isLast = ($i === count($movesList) - 1);
                     @endphp
                     <tr>
                         <td class="text-muted fw-600">{{ $i + 1 }}</td>
@@ -285,11 +307,18 @@
                         <td class="text-muted fs-sm">{{ $m->toDept->name ?? ($m->fromDept->name ?? '—') }}</td>
                         <td class="fs-sm">{{ $m->created_at->format('d M Y, h:i A') }}</td>
                         <td>
-                            <span class="badge {{ $isLast ? 'bg-success' : 'bg-warning text-dark' }} py-1 px-2" style="white-space: normal; max-width: 100%; text-align: left; line-height: 1.4;">
-                                <i class="fa-regular fa-clock me-1"></i>
-                                {{ $isLast ? 'Held so far: ' : 'Time spent: ' }}<br>
-                                {{ $durText }}
-                            </span>
+                            @if($m->action === 'completed')
+                                <span class="badge bg-success py-1 px-2" style="white-space: normal; max-width: 100%; text-align: left; line-height: 1.4;">
+                                    <i class="fa-solid fa-circle-check me-1"></i>
+                                    Operations Completed
+                                </span>
+                            @else
+                                <span class="badge {{ ($isLast && !$isCompletedFile) ? 'bg-success' : 'bg-warning text-dark' }} py-1 px-2" style="white-space: normal; max-width: 100%; text-align: left; line-height: 1.4;">
+                                    <i class="fa-regular fa-clock me-1"></i>
+                                    {{ ($isLast && !$isCompletedFile) ? 'Held so far: ' : 'Time spent: ' }}<br>
+                                    {{ $durText }}
+                                </span>
+                            @endif
                         </td>
                         <td class="text-break fs-sm">
                             {{ $m->remarks ?: '—' }}
@@ -436,22 +465,6 @@
 </div>
 @endif
 
-@if($file->status === 'completed')
-<div class="alert alert-success d-flex align-items-center justify-content-between mb-4 p-3 shadow-sm" style="border-radius:12px;background:#ecfdf5;border:1px solid #10b981;color:#065f46;">
-    <div class="d-flex align-items-center gap-3">
-        <div style="width:40px;height:40px;border-radius:10px;background:#10b981;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">
-            <i class="fa-solid fa-circle-check"></i>
-        </div>
-        <div>
-            <div style="font-weight:700;font-size:1rem;">File Operations Completed &amp; Closed</div>
-            <div class="small">All file handling operations were marked as completed on {{ $file->completed_at?->format('d M Y, h:i A') ?? $file->updated_at->format('d M Y, h:i A') }}. Time duration tracking is closed.</div>
-        </div>
-    </div>
-    <span class="badge bg-success px-3 py-2 fw-700" style="font-size:.85rem;border-radius:8px;">
-        <i class="fa-solid fa-lock me-1"></i>Completed / Done
-    </span>
-</div>
-@endif
 
 @if($isRecordsDept && $file->status !== 'completed')
 {{-- Modal: Records Mark Operations as Completed --}}

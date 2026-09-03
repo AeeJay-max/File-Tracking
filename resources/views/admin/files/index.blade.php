@@ -38,6 +38,7 @@
             <option value="">All Statuses</option>
             <option value="active"             {{ request('status') === 'active'             ? 'selected' : '' }}>Active</option>
             <option value="pending_assignment" {{ request('status') === 'pending_assignment' ? 'selected' : '' }}>Awaiting Assignment</option>
+            <option value="completed"          {{ request('status') === 'completed'          ? 'selected' : '' }}>Completed / Done</option>
             <option value="archived"           {{ request('status') === 'archived'           ? 'selected' : '' }}>Archived</option>
         </select>
 
@@ -87,7 +88,11 @@
                     <td class="text-muted d-none d-lg-table-cell">{{ $file->department->name ?? 'N/A' }}</td>
                     @endif
                     <td>
-                        @if($file->currentHolder)
+                        @if($file->status === 'completed')
+                        <span class="badge-status badge-completed" style="font-size:.7rem;">
+                            <i class="fa-solid fa-circle-check me-1"></i>Completed / Done
+                        </span>
+                        @elseif($file->currentHolder)
                         <div class="d-flex align-items-center gap-2">
                             @php $holder = $file->currentHolder; @endphp
                             @if($holder->photo_url)

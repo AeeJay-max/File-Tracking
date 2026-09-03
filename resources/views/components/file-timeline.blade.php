@@ -29,6 +29,11 @@
         'fromUser', 'toUser', 'fromDept', 'toDept',
     ])->sortBy('created_at')->values();
 
+    $lastAllMove = $allMoves->last();
+    if (!$completedAt && $lastAllMove && $lastAllMove->action === 'completed') {
+        $completedAt = $lastAllMove->created_at;
+    }
+
     /*
      * ── Department scoping ─────────────────────────────────────────
      * Super Admin   → see everything ($isSuperAdmin = true)

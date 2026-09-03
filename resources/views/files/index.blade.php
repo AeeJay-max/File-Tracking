@@ -126,6 +126,7 @@
             <option value="">All Statuses</option>
             <option value="active"             {{ request('status') === 'active'             ? 'selected' : '' }}>Active</option>
             <option value="pending_assignment" {{ request('status') === 'pending_assignment' ? 'selected' : '' }}>Awaiting Assignment</option>
+            <option value="completed"          {{ request('status') === 'completed'          ? 'selected' : '' }}>Completed / Done</option>
             <option value="archived"           {{ request('status') === 'archived'           ? 'selected' : '' }}>Archived</option>
         </select>
 
@@ -215,7 +216,11 @@
                         <span class="badge bg-primary bg-opacity-10 text-primary fw-600 px-2 py-1" style="border-radius:6px;">
                             <i class="fa-solid fa-building-columns me-1"></i>{{ $file->currentDepartment->name ?? 'N/A' }}
                         </span>
-                        @if($file->currentHolder)
+                        @if($file->status === 'completed')
+                        <small class="text-success fw-600 ms-1">
+                            <i class="fa-solid fa-circle-check me-1"></i>Completed / Done
+                        </small>
+                        @elseif($file->currentHolder)
                         <small class="text-dark fw-600 ms-1">
                             <i class="fa-solid fa-user me-1 text-secondary"></i>{{ $file->currentHolder->name }}
                         </small>

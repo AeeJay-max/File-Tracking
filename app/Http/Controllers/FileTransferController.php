@@ -109,8 +109,16 @@ class FileTransferController extends Controller
         $remarks = $request->string('remarks')->trim()->value() ?: null;
         $isRecordsStaff = ($currentUser->department?->code === 'REC' || Str::contains(Str::lower($currentUser->department?->name ?? ''), 'record'));
 
-        // RULE: If PermSec has assigned a recommended department, Records MUST send it there.
-        if ($isRecordsStaff && $file->hasBeenToPermSec() && $file->recommended_department_id) {
+        // RULE: Only lock destination if Permanent Secretary was the immediate sender who assigned the recommended department.
+        // If file returned to Records from another department, Records staff can assign any department or internal person.
+        $lastMovement = $file->movements()->latest('created_at')->first();
+        $lastSender = $lastMovement?->fromUser;
+        $isLastSenderPermSec = $lastSender && (
+            $lastSender->designation?->name === 'Permanent Secretary' ||
+            $lastSender->email === 'permsec@filetrack.local'
+        );
+
+        if ($isRecordsStaff && $isLastSenderPermSec && $file->recommended_department_id) {
             if ($request->destination_type !== 'department' || (int) $request->department_id !== (int) $file->recommended_department_id) {
                 return back()->with('error', 'The Permanent Secretary has locked the destination to a specific department. You cannot override it.');
             }
@@ -292,6 +300,7 @@ class FileTransferController extends Controller
         $file->update([
             'status' => 'completed',
             'completed_at' => now(),
+            'return_deadline' => null,
         ]);
 
         FileMovement::create([

@@ -94,8 +94,16 @@
                         $isRecordsUser = ($authUser->department?->code === 'REC'
                             || \Illuminate\Support\Str::contains(
                                 \Illuminate\Support\Str::lower($authUser->department?->name ?? ''), 'record'));
-                        // Lock destination when PermSec has set a recommended dept AND current user is from Records
-                        $permsecLockedDept = (!$needsPermSec && $file->recommended_department_id && $isRecordsUser)
+
+                        $lastMove = $file->movements->last();
+                        $lastSender = $lastMove?->fromUser;
+                        $isLastSenderPermSec = $lastSender && (
+                            $lastSender->designation?->name === 'Permanent Secretary' ||
+                            $lastSender->email === 'permsec@filetrack.local'
+                        );
+
+                        // Lock destination ONLY when PermSec was the immediate sender who assigned a recommended dept AND current user is from Records
+                        $permsecLockedDept = ($isLastSenderPermSec && $file->recommended_department_id && $isRecordsUser)
                             ? $file->recommendedDepartment
                             : null;
                     @endphp

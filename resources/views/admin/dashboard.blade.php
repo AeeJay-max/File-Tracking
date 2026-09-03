@@ -1,16 +1,22 @@
 @extends('layouts.app')
-@section('title', 'Departmental Admin Dashboard')
+@php
+    $u = auth()->user();
+    $isPermSec = ($u->designation?->name === 'Permanent Secretary' || $u->email === 'permsec@filetrack.local');
+    $dashTitle = $isPermSec ? 'Permanent Secretary Dashboard' : 'Departmental Admin Dashboard';
+    $deptName = $u->department->name ?? 'Your Department';
+@endphp
+
+@section('title', $dashTitle)
 @section('breadcrumb')
-<li class="breadcrumb-item active">Departmental Admin Dashboard</li>
+<li class="breadcrumb-item active">{{ $dashTitle }}</li>
 @endsection
 
 @section('content')
-@php $deptName = auth()->user()->department->name ?? 'Your Department'; @endphp
 
 <div class="page-header">
     <div>
-        <h1 class="page-title">Departmental Admin Dashboard</h1>
-        <div class="page-subtitle">{{ $deptName }} &mdash; Welcome, {{ auth()->user()->name }}</div>
+        <h1 class="page-title">{{ $dashTitle }}</h1>
+        <div class="page-subtitle">{{ $isPermSec ? 'Executive Overview' : $deptName }} &mdash; Welcome, {{ $u->name }}</div>
     </div>
     <div class="d-flex gap-2">
         <a href="{{ route('admin.files') }}" class="btn-portal-outline">

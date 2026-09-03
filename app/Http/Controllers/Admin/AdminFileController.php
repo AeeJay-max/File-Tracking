@@ -30,14 +30,41 @@ class AdminFileController extends Controller
                 }
             }
 
-            if (!$isRecordsDept) {
-                // Non-records admins see files currently in or originally from their department
-                $query->where(fn($q) => $q
-                    ->where('current_department_id', $user->department_id)
-                    ->orWhere('department_id', $user->department_id)
-                );
+            $isPermSec = ($user->designation?->name === 'Permanent Secretary' || $user->email === 'permsec@filetrack.local');
+
+            if (! $isRecordsDept && ! $isPermSec) {
+                // Non-records admins see files currently in, created in, or interacted with via transfers/movements
+                $userMovementFileIds = FileMovement::where('from_user', $user->id)
+                    ->orWhere('to_user', $user->id)
+                    ->pluck('file_id')->unique()->values();
+
+                $involvedFileIds = FileTransfer::where(fn ($q) => $q
+                    ->where('sender_id', $user->id)
+                    ->orWhere('receiver_id', $user->id))
+                    ->pluck('file_id')->unique()->values();
+
+                if ($user->department_id) {
+                    $deptFileIds = FileMovement::where('from_department', $user->department_id)
+                        ->orWhere('to_department', $user->department_id)
+                        ->pluck('file_id')->unique()->values();
+
+                    $query->where(fn ($q) => $q
+                        ->where('current_department_id', $user->department_id)
+                        ->orWhere('department_id', $user->department_id)
+                        ->orWhere('created_by', $user->id)
+                        ->orWhere('current_user_id', $user->id)
+                        ->orWhereIn('id', $deptFileIds)
+                        ->orWhereIn('id', $userMovementFileIds)
+                        ->orWhereIn('id', $involvedFileIds));
+                } else {
+                    $query->where(fn ($q) => $q
+                        ->where('created_by', $user->id)
+                        ->orWhere('current_user_id', $user->id)
+                        ->orWhereIn('id', $userMovementFileIds)
+                        ->orWhereIn('id', $involvedFileIds));
+                }
             }
-            // If isRecordsDept, they see everything (no filter applied)
+            // If isRecordsDept or isPermSec, they see all files
         }
 
         // Super admin can filter by department UUID
@@ -56,7 +83,7 @@ class AdminFileController extends Controller
         }
 
         if ($request->filled('status')) {
-            $allowed = ['active', 'archived', 'draft', 'pending_assignment'];
+            $allowed = ['active', 'archived', 'draft', 'pending_assignment', 'completed'];
             if (in_array($request->status, $allowed, true)) {
                 $query->where('status', $request->status);
             }
