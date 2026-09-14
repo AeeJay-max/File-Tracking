@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\Department;
 use App\Models\FileMovement;
 use App\Models\FileRecord;
@@ -9,6 +10,7 @@ use App\Models\FileTransfer;
 use App\Models\Folder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -85,8 +87,10 @@ class FileRecordController extends Controller
         }
 
         if ($request->filled('status')) {
-            $allowed = ['active', 'archived', 'draft', 'pending_assignment', 'completed'];
-            if (in_array($request->status, $allowed, true)) {
+            $allowed = ['active', 'archived', 'draft', 'pending_assignment', 'completed', 'overdue'];
+            if ($request->status === 'overdue') {
+                $query->overdue();
+            } elseif (in_array($request->status, $allowed, true)) {
                 $query->where('status', $request->status);
             }
         }
@@ -120,7 +124,7 @@ class FileRecordController extends Controller
     {
         // Any authenticated user with can_create_file permission may create
         $this->authorize('create', FileRecord::class);
-        $departments = Department::where('is_active', true)->orderBy('name')->get();
+        $departments = \App\Services\CacheService::getActiveDepartments();
         $folders = Folder::orderBy('folder_number')->get();
 
         return view('files.create', compact('departments', 'folders'));
@@ -131,12 +135,13 @@ class FileRecordController extends Controller
         $this->authorize('create', FileRecord::class);
 
         $normalizedFileNumber = strtoupper(trim((string) $request->input('file_number', '')));
-        $normalizedFolderNumber = strtoupper(trim((string) $request->input('folder_number', '')));
-        $folderName = trim((string) $request->input('folder_name', ''));
+        $normalizedFolderNumber = strtoupper(trim((string) $request->input('folder_number', 'FLD-GENERAL')));
+        $folderName = trim((string) $request->input('folder_name', 'General Files Folder')) ?: 'General Files Folder';
 
         $request->merge([
             'file_number' => $normalizedFileNumber,
             'folder_number' => $normalizedFolderNumber,
+            'folder_name' => $folderName,
         ]);
 
         $request->validate([
@@ -148,8 +153,8 @@ class FileRecordController extends Controller
                 Rule::unique('file_records', 'file_number')
                     ->where(fn ($query) => $query->where('department_id', (int) $request->input('department_id'))),
             ],
-            'folder_number' => 'required|string|max:100',
-            'folder_name' => 'required|string|max:255',
+            'folder_number' => 'nullable|string|max:100',
+            'folder_name' => 'nullable|string|max:255',
             'file_name' => 'required|string|max:255',
             'department_id' => 'required|exists:departments,id',
             'remarks' => 'nullable|string|max:1000',
@@ -157,8 +162,6 @@ class FileRecordController extends Controller
         ], [
             'file_number.unique' => 'This File Number already exists in this department. Use a different file number or select a different department.',
             'file_number.regex' => 'File number may only contain letters, numbers, hyphens, slashes, dots and spaces.',
-            'folder_number.required' => 'Please select or enter a Folder Number for this file.',
-            'folder_name.required' => 'Please enter or select a Folder Name.',
         ]);
 
         $deptId = (int) $request->department_id;
@@ -189,10 +192,13 @@ class FileRecordController extends Controller
             $uploaded = $request->file('attachment');
             $storedName = Str::uuid()->toString().'.'.$uploaded->extension();
             $path = $uploaded->storeAs('files/'.$file->uuid, $storedName, 'private');
+            $origName = pathinfo($uploaded->getClientOriginalName(), PATHINFO_FILENAME);
+            $origExt  = $uploaded->getClientOriginalExtension();
+            $safeOriginalName = (Str::slug($origName) ?: 'document') . '.' . ($origExt ?: 'bin');
 
             $file->update([
                 'attachment_path' => $path,
-                'attachment_name' => $uploaded->getClientOriginalName(),
+                'attachment_name' => $safeOriginalName,
                 'attachment_mime' => $uploaded->getClientMimeType(),
             ]);
         }
@@ -258,6 +264,8 @@ class FileRecordController extends Controller
             ]);
         }
 
+        Auth::user()?->markFileNotificationsRead($file);
+
         return redirect()->route('files.show', $file->uuid)->with('success', 'Document contents updated successfully.');
     }
 
@@ -276,6 +284,8 @@ class FileRecordController extends Controller
             'movements.toDept',
         ]);
 
+        Auth::user()?->markFileNotificationsRead($file);
+
         return view('files.show', compact('file'));
     }
 
@@ -292,5 +302,43 @@ class FileRecordController extends Controller
             $file->attachment_path,
             $file->attachment_name ?: $file->file_name
         );
+    }
+
+    /**
+     * Toggle public visibility for a file.
+     * Restricted to Head of Department (HOD) of the Records Department.
+     */
+    public function togglePublicVisibility(Request $request, FileRecord $file)
+    {
+        $this->authorize('togglePublicVisibility', $file);
+
+        $newStatus = ! $file->is_public;
+        $file->update(['is_public' => $newStatus]);
+
+        // Invalidate public search cache for this file number
+        Cache::forget('public_file_'.strtoupper((string) $file->file_number));
+
+        // Record Audit Log
+        AuditLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'file.public_visibility_toggled',
+            'auditable_type' => FileRecord::class,
+            'auditable_id' => $file->id,
+            'description' => "File {$file->file_number} was made ".($newStatus ? 'publicly viewable' : 'private').' by '.Auth::user()->name.' on '.now()->format('d M Y, h:i A').'.',
+            'metadata' => [
+                'file_uuid' => $file->uuid,
+                'file_number' => $file->file_number,
+                'is_public' => $newStatus,
+                'ip' => $request->ip(),
+            ],
+        ]);
+
+        $message = $newStatus
+            ? "File '{$file->file_number}' is now publicly viewable in search."
+            : "File '{$file->file_number}' is now private and hidden from public search.";
+
+        Auth::user()?->markFileNotificationsRead($file);
+
+        return back()->with('success', $message);
     }
 }

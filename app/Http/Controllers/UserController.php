@@ -179,6 +179,10 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
+        if (Auth::user()?->role !== 'super_admin') {
+            abort(403, 'Only the Super Admin can delete user accounts.');
+        }
+
         if ($user->id === Auth::id()) {
             return back()->with('error', 'You cannot delete your own account.');
         }
@@ -191,8 +195,8 @@ class UserController extends Controller
     private function storePhoto(Request $request): string
     {
         $file = $request->file('photo');
-        $extension = $file->getClientOriginalExtension();
-        $filename = Str::uuid().'.'.strtolower($extension);
+        $extension = strtolower($file->extension() ?: 'jpg');
+        $filename = Str::uuid().'.'.$extension;
 
         return $file->storeAs('uploads/users', $filename, 'public');
     }

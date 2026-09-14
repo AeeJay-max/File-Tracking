@@ -71,7 +71,7 @@ class FileTransferController extends Controller
             $allUsers = $allUsersQuery->orderBy('name')->get();
         }
 
-        $departments = Department::where('is_active', true)->orderBy('name')->get();
+        $departments = \App\Services\CacheService::getActiveDepartments();
 
         return view('files.transfer', compact('file', 'sameDeptUsers', 'allUsers', 'departments'));
     }
@@ -295,6 +295,16 @@ class FileTransferController extends Controller
             return back()->with('info', 'This file operations have already been completed.');
         }
 
+        // Verify custody: file MUST currently be in Records department
+        $currentDeptCode = strtoupper((string) ($file->currentDepartment?->code ?? ''));
+        $currentDeptName = Str::lower((string) ($file->currentDepartment?->name ?? ''));
+        $isFileInRecords = ($currentDeptCode === 'REC' || Str::contains($currentDeptName, 'record'));
+
+        if (! $isFileInRecords) {
+            $deptName = $file->currentDepartment?->name ?? 'another department';
+            return back()->with('error', "File operations cannot be marked as completed because the file is currently with {$deptName}. The file must first return to the Records Department before operations can be marked as completed.");
+        }
+
         $remarks = $request->string('remarks')->trim()->value() ?: 'File operations completed by Records.';
 
         $file->update([
@@ -312,6 +322,8 @@ class FileTransferController extends Controller
             'action' => 'completed',
             'remarks' => $remarks,
         ]);
+
+        $currentUser->markFileNotificationsRead($file);
 
         return back()->with('success', 'File operations marked as completed. Time counting has been closed.');
     }
@@ -347,6 +359,10 @@ class FileTransferController extends Controller
                 'remarks' => $remarks ?? 'Transferred to '.$targetUser->name,
             ]);
 
+            $targetDeptCode = strtoupper((string) ($targetUser->department?->code ?? ''));
+            $targetDeptName = Str::lower((string) ($targetUser->department?->name ?? ''));
+            $isTargetRecords = ($targetDeptCode === 'REC' || Str::contains($targetDeptName, 'record'));
+
             $updateData = [
                 'current_user_id' => $targetUser->id,
                 'current_department_id' => $targetUser->department_id,
@@ -355,7 +371,10 @@ class FileTransferController extends Controller
                 'is_urgent' => $isUrgent || $file->is_urgent,
             ];
 
-            if ($returnMinutes && $returnMinutes > 0) {
+            if ($isTargetRecords) {
+                // Return to Records department stops the timer countdown
+                $updateData['return_deadline'] = null;
+            } elseif ($returnMinutes && $returnMinutes > 0) {
                 $updateData['return_deadline'] = now()->addMinutes($returnMinutes);
             }
 
@@ -369,6 +388,8 @@ class FileTransferController extends Controller
 
         DashboardService::clearUserCache($currentUser->id);
         DashboardService::clearUserCache($targetUser->id);
+
+        $currentUser->markFileNotificationsRead($file);
 
         return redirect()->route('files.index')
             ->with('success', 'File transferred successfully to '.$targetUser->name.'.');
@@ -405,6 +426,10 @@ class FileTransferController extends Controller
                 'remarks' => $remarks ?? 'Cross-department transfer to '.$targetDept->name,
             ]);
 
+            $targetDeptCode = strtoupper((string) ($targetDept->code ?? ''));
+            $targetDeptName = Str::lower((string) ($targetDept->name ?? ''));
+            $isTargetRecords = ($targetDeptCode === 'REC' || Str::contains($targetDeptName, 'record'));
+
             $updateData = [
                 'current_user_id' => null,
                 'current_department_id' => $targetDept->id,
@@ -413,7 +438,10 @@ class FileTransferController extends Controller
                 'is_urgent' => $isUrgent || $file->is_urgent,
             ];
 
-            if ($returnMinutes && $returnMinutes > 0) {
+            if ($isTargetRecords) {
+                // Return to Records department stops the timer countdown
+                $updateData['return_deadline'] = null;
+            } elseif ($returnMinutes && $returnMinutes > 0) {
                 $updateData['return_deadline'] = now()->addMinutes($returnMinutes);
             }
 
@@ -441,6 +469,8 @@ class FileTransferController extends Controller
         DashboardService::clearAdminCache($currentUser->department_id);
         DashboardService::clearAdminCache($targetDept->id);
         DashboardService::clearSuperAdminCache();
+
+        $currentUser->markFileNotificationsRead($file);
 
         return redirect()->route('files.index')
             ->with('success', 'File transferred to '.$targetDept->name.'. The department admin will assign it to a user.');
@@ -610,5 +640,53 @@ class FileTransferController extends Controller
         }
 
         return $recAdmin;
+    }
+
+    /**
+     * Ping an overdue file (Records Admin only).
+     * Sends immediate high-priority overdue notifications to both the file holder and department HOD.
+     */
+    public function pingOverdue(FileRecord $file, Request $request): RedirectResponse
+    {
+        $currentUser = Auth::user();
+        $isRecordsStaff = ($currentUser->department?->code === 'REC' || Str::contains(Str::lower($currentUser->department?->name ?? ''), 'record'));
+
+        if (! $isRecordsStaff) {
+            return back()->with('error', 'Only Records department staff can ping overdue files.');
+        }
+
+        // Notify current holder if assigned
+        if ($file->currentHolder) {
+            $file->currentHolder->notify(new \App\Notifications\FileOverdueNotification($file, $currentUser));
+        }
+
+        // Notify Department Admin (HOD) of the current holding department
+        $deptAdmins = User::where('department_id', $file->current_department_id)
+            ->where('role', 'admin')
+            ->where('is_active', true)
+            ->get();
+
+        foreach ($deptAdmins as $admin) {
+            if (! $file->currentHolder || $admin->id !== $file->currentHolder->id) {
+                $admin->notify(new \App\Notifications\FileOverdueNotification($file, $currentUser));
+            }
+        }
+
+        FileMovement::create([
+            'file_id' => $file->id,
+            'from_user' => $currentUser->id,
+            'to_user' => $file->current_user_id,
+            'from_department' => $currentUser->department_id,
+            'to_department' => $file->current_department_id,
+            'action' => 'pinged',
+            'remarks' => 'Records Admin pinged file holder & HOD due to overdue status (> 8 hours / return deadline passed).',
+        ]);
+
+        $holderName = $file->currentHolder?->name ?? 'Department HOD';
+        $deptName = $file->currentDepartment?->name ?? 'Department';
+
+        $currentUser->markFileNotificationsRead($file);
+
+        return back()->with('success', "File {$file->file_number} pinged! Overdue notification sent to holder ({$holderName}) and {$deptName} HOD.");
     }
 }

@@ -30,6 +30,7 @@ it('asks for department when multiple files share the same file number', functio
         'file_number' => '1001',
         'file_name' => 'File A',
         'status' => 'active',
+        'is_public' => true,
     ]);
 
     FileRecord::create([
@@ -38,6 +39,7 @@ it('asks for department when multiple files share the same file number', functio
         'file_number' => '1001',
         'file_name' => 'File B',
         'status' => 'active',
+        'is_public' => true,
     ]);
 
     $response = $this->get(route('public.file.search.result', ['file_number' => '1001']));
@@ -55,6 +57,7 @@ it('returns the correct file when department is provided with the file number', 
         'file_number' => '1001',
         'file_name' => 'File A',
         'status' => 'active',
+        'is_public' => true,
     ]);
 
     FileRecord::create([
@@ -63,6 +66,7 @@ it('returns the correct file when department is provided with the file number', 
         'file_number' => '1001',
         'file_name' => 'File B',
         'status' => 'active',
+        'is_public' => true,
     ]);
 
     $response = $this->get(route('public.file.search.result', [

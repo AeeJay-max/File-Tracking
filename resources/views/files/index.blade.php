@@ -122,8 +122,9 @@
             placeholder="Search name or number..."
             value="{{ request('search', '') }}">
 
-        <select name="status" class="form-select" style="max-width:160px;min-width:140px;">
+        <select name="status" class="form-select" style="max-width:170px;min-width:140px;">
             <option value="">All Statuses</option>
+            <option value="overdue"            {{ request('status') === 'overdue'            ? 'selected' : '' }}>⚠️ Overdue (>8 Hours)</option>
             <option value="active"             {{ request('status') === 'active'             ? 'selected' : '' }}>Active</option>
             <option value="pending_assignment" {{ request('status') === 'pending_assignment' ? 'selected' : '' }}>Awaiting Assignment</option>
             <option value="completed"          {{ request('status') === 'completed'          ? 'selected' : '' }}>Completed / Done</option>
@@ -188,7 +189,7 @@
             @php
                 $isUrgent = (bool) $file->is_urgent;
                 $hasDeadline = $file->return_deadline !== null;
-                $isOverdue = $hasDeadline && now()->greaterThan($file->return_deadline);
+                $isOverdue = $file->isOverdue();
             @endphp
             <tr class="{{ $isUrgent || $isOverdue ? 'table-danger border-start border-danger border-4' : '' }}">
                 <td class="text-muted">{{ $files->firstItem() + $i }}</td>
@@ -252,17 +253,17 @@
                 <td>
                     @include('partials.status-badge', ['status' => $file->status])
 
-                    @if($hasDeadline && $file->status !== 'completed' && $file->status !== 'archived')
+                    @if($isOverdue)
                     <div class="mt-1">
-                        @if($isOverdue)
-                        <span class="badge bg-danger text-white">
-                            <i class="fa-solid fa-clock-rotate-left me-1"></i>Return Overdue!
+                        <span class="badge bg-danger text-white" title="Held for over {{ $file->hoursWithCurrentHolder() }} hours in non-records department">
+                            <i class="fa-solid fa-clock-rotate-left me-1"></i>Overdue ({{ $file->hoursWithCurrentHolder() }}h)
                         </span>
-                        @else
+                    </div>
+                    @elseif($hasDeadline && $file->status !== 'completed' && $file->status !== 'archived')
+                    <div class="mt-1">
                         <span class="badge bg-warning text-dark">
                             <i class="fa-solid fa-hourglass-half me-1"></i>Return in {{ $file->return_deadline->diffForHumans(['parts' => 2]) }}
                         </span>
-                        @endif
                     </div>
                     @endif
                 </td>
@@ -274,6 +275,15 @@
                            class="btn btn-sm btn-outline-primary" title="View">
                             <i class="fa-solid fa-eye"></i>
                         </a>
+
+                        @if($isRecordsDept && $isOverdue)
+                            <form action="{{ route('files.pingOverdue', $file->uuid) }}" method="POST" class="d-inline">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Ping File (Send Overdue Notice to Holder & HOD)" onclick="return confirm('Ping file {{ $file->file_number }}? This will send an urgent notification to the file holder and Department HOD.')">
+                                    <i class="fa-solid fa-bell me-1"></i>Ping
+                                </button>
+                            </form>
+                        @endif
 
                         @if($file->status !== 'archived' && (int)$file->current_user_id === auth()->id())
                             <a href="{{ route('files.transfer.create', $file->uuid) }}"

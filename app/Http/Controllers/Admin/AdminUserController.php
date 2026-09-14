@@ -150,6 +150,10 @@ class AdminUserController extends Controller
 
     public function destroy(string $user)
     {
+        if (Auth::user()?->role !== 'super_admin') {
+            abort(403, 'Only the Super Admin can delete user accounts.');
+        }
+
         $userModel = $this->resolveUser($user);
 
         if ($userModel->id === Auth::id()) {

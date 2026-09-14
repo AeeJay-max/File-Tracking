@@ -37,10 +37,22 @@
         </a>
         @endif
 
+        @php
+            $cCode = strtoupper((string) ($file->currentDepartment?->code ?? ''));
+            $cName = Str::lower((string) ($file->currentDepartment?->name ?? ''));
+            $isFileInRecordsCustody = ($cCode === 'REC' || Str::contains($cName, 'record'));
+        @endphp
+
         @if($isRecordsDept && $file->status !== 'completed')
-            <button type="button" class="btn btn-success fw-700 shadow-sm ms-1" data-bs-toggle="modal" data-bs-target="#completeOperationsModal">
-                <i class="fa-solid fa-circle-check me-1"></i>Mark Operations as Done
-            </button>
+            @if($isFileInRecordsCustody)
+                <button type="button" class="btn btn-success fw-700 shadow-sm ms-1" data-bs-toggle="modal" data-bs-target="#completeOperationsModal">
+                    <i class="fa-solid fa-circle-check me-1"></i>Mark Operations as Done
+                </button>
+            @else
+                <button type="button" class="btn btn-outline-secondary fw-600 ms-1 opacity-75" disabled title="File is currently with {{ $file->currentDepartment->name ?? 'another department' }}. It must return to Records before operations can be marked as completed.">
+                    <i class="fa-solid fa-lock me-1"></i>Mark Operations as Done (In {{ $file->currentDepartment->name ?? 'Other Dept' }})
+                </button>
+            @endif
         @endif
 
         @if($file->status !== 'completed')
@@ -102,6 +114,28 @@
     <span class="badge bg-success px-3 py-2 fw-700" style="font-size:.85rem;border-radius:8px;">
         <i class="fa-solid fa-lock me-1"></i>Completed / Done
     </span>
+</div>
+@endif
+
+@if($file->isOverdue())
+<div class="alert alert-danger d-flex align-items-center justify-content-between mb-4 p-3 shadow-sm" style="border-radius:12px;background:#fef2f2;border:1px solid #ef4444;color:#991b1b;">
+    <div class="d-flex align-items-center gap-3">
+        <div style="width:40px;height:40px;border-radius:10px;background:#ef4444;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <div>
+            <div style="font-weight:700;font-size:1rem;">⚠️ Overdue File Notice (Held {{ $file->hoursWithCurrentHolder() }} Hours)</div>
+            <div class="small">This file has been held in {{ $file->currentDepartment->name ?? 'a handling department' }} for over {{ $file->hoursWithCurrentHolder() }} hours or past its return deadline. Immediate action is required and the file must be returned to Records.</div>
+        </div>
+    </div>
+    @if($isRecordsDept)
+    <form action="{{ route('files.pingOverdue', $file->uuid) }}" method="POST">
+        @csrf
+        <button type="submit" class="btn btn-danger fw-700 shadow-sm" onclick="return confirm('Send overdue notification to current holder and Department HOD?')">
+            <i class="fa-solid fa-bell me-1"></i>Ping File Now
+        </button>
+    </form>
+    @endif
 </div>
 @endif
 

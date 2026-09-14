@@ -64,7 +64,7 @@
                 <input type="hidden" name="role" value="super_admin">
                 @else
                 <select name="role" class="form-select @error('role') is-invalid @enderror" required>
-                    <option value="admin" {{ old('role', $user->role) === 'admin' ? 'selected' : '' }}>Departmental Admin</option>
+                    <option value="admin" {{ old('role', $user->role) === 'admin' ? 'selected' : '' }}>Head of Department (HOD)</option>
                     <option value="user" {{ old('role', $user->role) === 'user' ? 'selected' : '' }}>User (Standard Staff)</option>
                 </select>
                 @endif

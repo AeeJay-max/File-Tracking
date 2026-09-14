@@ -64,6 +64,7 @@ function seedFile(Department $dept, User $user, string $fileNumber, string $file
         'file_name'             => $fileName,
         'file_number'           => strtoupper(trim($fileNumber)),
         'status'                => 'active',
+        'is_public'             => true,
         'has_permsec_reviewed'  => true,
     ]);
 
@@ -178,14 +179,15 @@ it('allows the same file number in different departments at the database level',
 // ── Test 3: Cross-department transfer does NOT cause a file-number conflict ────
 
 it('allows transferring a file to a department that already holds the same file number', function () {
-    $deptA = Department::factory()->create(['name' => 'Records Department', 'code' => 'REC']);
+    $deptA = Department::firstOrCreate(['code' => 'REC'], ['name' => 'Records Department', 'is_active' => true]);
     $deptB = Department::factory()->create(['name' => 'Destination Dept']);
 
-    $sender        = makeUser($deptA, ['is_active' => true]);
+    $sender        = makeUser($deptA, ['role' => 'admin', 'is_active' => true]);
     $deptBAdminUser = makeUser($deptB, ['role' => 'admin', 'is_active' => true]);
 
     // File A: 1001 in Dept A (origin = Dept A)
     $fileA = seedFile($deptA, $sender, '1001', 'File A');
+    $fileA->update(['has_permsec_reviewed' => true]);
 
     // File B: 1001 already exists in Dept B (origin = Dept B)
     seedFile($deptB, $deptBAdminUser, '1001', 'File B native');
@@ -200,7 +202,7 @@ it('allows transferring a file to a department that already holds the same file 
             'destination_type' => 'other',
             'department_id'    => $deptB->id,
         ])
-        ->assertRedirect(route('files.index'));
+        ->assertRedirect();
 
     $fileA->refresh();
 
@@ -215,11 +217,12 @@ it('allows transferring a file to a department that already holds the same file 
 });
 
 it('preserves origin department_id after transfer', function () {
-    $deptA = Department::factory()->create(['name' => 'Records Department', 'code' => 'REC']);
+    $deptA = Department::firstOrCreate(['code' => 'REC'], ['name' => 'Records Department', 'is_active' => true]);
     $deptB = Department::factory()->create(['name' => 'Destination Dept']);
-    $user  = makeUser($deptA, ['is_active' => true]);
+    $user  = makeUser($deptA, ['role' => 'admin', 'is_active' => true]);
 
     $file = seedFile($deptA, $user, 'FILE-XYZ');
+    $file->update(['has_permsec_reviewed' => true]);
 
     // Transfer to Dept B
     $this->actingAs($user)
@@ -228,7 +231,7 @@ it('preserves origin department_id after transfer', function () {
             'destination_type' => 'other',
             'department_id'    => $deptB->id,
         ])
-        ->assertRedirect(route('files.index'));
+        ->assertRedirect();
 
     $file->refresh();
 

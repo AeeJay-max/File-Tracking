@@ -110,3 +110,65 @@ it('marks visible notifications as read when the dropdown opens', function () {
         ->assertJsonPath('unread_count', 0);
     $this->assertSame(0, $recipient->fresh()->unreadNotifications->count());
 });
+
+it('automatically removes unread notification badge when acting on or viewing a file', function () {
+    /** @var TestCase $this */
+    $department = Department::create([
+        'name' => 'Records Department',
+        'code' => 'REC',
+        'is_active' => true,
+    ]);
+
+    /** @var User $sender */
+    $sender = User::factory()->create([
+        'role' => 'admin',
+        'department_id' => $department->id,
+    ]);
+
+    /** @var User $recipient */
+    $recipient = User::factory()->create([
+        'role' => 'user',
+        'department_id' => $department->id,
+    ]);
+
+    $file = FileRecord::create([
+        'department_id' => $department->id,
+        'created_by' => $sender->id,
+        'current_user_id' => $recipient->id,
+        'current_department_id' => $department->id,
+        'file_name' => 'Confidential Record',
+        'file_number' => 'REC-101',
+        'status' => 'active',
+    ]);
+
+    $transfer = FileTransfer::create([
+        'file_id' => $file->id,
+        'sender_id' => $sender->id,
+        'receiver_id' => $recipient->id,
+        'remarks' => 'Review file',
+        'transferred_at' => now(),
+    ]);
+
+    $recipient->notify(new FileTransferredNotification($transfer));
+
+    expect($recipient->unreadNotifications()->count())->toBe(1);
+
+    // Recipient views or acts on the file without opening the notification dropdown
+    $this->actingAs($recipient)->get(route('files.show', $file->uuid))->assertOk();
+
+    // The unread notification for that file should now be marked as read automatically
+    expect($recipient->fresh()->unreadNotifications()->count())->toBe(0);
+});
+
+it('uses 5 second delay (5000ms) for toast notifications', function () {
+    /** @var TestCase $this */
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->withSession(['success' => 'Operation completed!'])
+        ->get(route('files.index'));
+
+    $response->assertOk();
+    $response->assertSee('data-bs-delay="5000"', false);
+});
+

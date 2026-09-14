@@ -118,7 +118,7 @@
                         <hr style="border-color:rgba(255,255,255,.12);">
                         <ol class="lh-lg mb-0" style="color:rgba(255,255,255,.88);font-size:1.02rem;">
                             <li>Click the <strong>"Login"</strong> button on the top navigation bar or the <strong>"Open Portal"</strong> button on the homepage hero.</li>
-                            <li>Enter your assigned <strong>Government Email Address</strong> (e.g. <code>filetrack@mosrac.gov.zw</code>) and credentials.</li>
+                            <li>Enter your assigned <strong>Government Email Address</strong> (e.g. <code>officer@ministry.gov.zw</code>) and credentials.</li>
                             <li>If your account has the mandatory password change flag set, you will be prompted automatically to set your new password before accessing department files.</li>
                         </ol>
                     </div>

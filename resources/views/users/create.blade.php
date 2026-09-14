@@ -40,7 +40,7 @@
             <div class="col-md-6">
                 <label class="form-label">Role <span class="required-star">*</span></label>
                 <select name="role" class="form-select @error('role') is-invalid @enderror" required>
-                    <option value="admin" {{ old('role', 'admin') === 'admin' ? 'selected' : '' }}>Departmental Admin</option>
+                    <option value="admin" {{ old('role', 'admin') === 'admin' ? 'selected' : '' }}>Head of Department (HOD)</option>
                     <option value="user" {{ old('role') === 'user' ? 'selected' : '' }}>User (Standard Staff)</option>
                 </select>
                 @error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror

@@ -401,10 +401,6 @@
                         <span class="result-value">{{ $result['current_department'] }}</span>
                     </div>
                     <div class="result-row">
-                        <span class="result-label"><i class="fa-solid fa-user-check me-2 text-primary"></i>Current Holder</span>
-                        <span class="result-value">{{ $result['current_holder'] }}</span>
-                    </div>
-                    <div class="result-row">
                         <span class="result-label"><i class="fa-solid fa-circle-dot me-2 text-primary"></i>Status</span>
                         <span class="result-value">
                             @php $sk = strtolower(str_replace(' ', '-', $result['status'])); @endphp
@@ -475,13 +471,6 @@
                                     <i class="fa-regular fa-clock fa-xs"></i>
                                     {{ $node['time'] }}
                                 </div>
-
-                                @if($node['remark'])
-                                <div class="pjt-remark">
-                                    <i class="fa-solid fa-quote-left fa-xs me-1" style="color:#94a3b8;"></i>{{ $node['remark'] }}
-                                </div>
-                                @endif
-
                             </div>
 
                             @endforeach

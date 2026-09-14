@@ -102,16 +102,6 @@
             </div>
         </div>
 
-        {{-- Danger Zone --}}
-        <div class="portal-card border-danger-subtle">
-            <div class="card-header text-danger">
-                <i class="fa-solid fa-triangle-exclamation me-2"></i>Delete Account
-            </div>
-            <div class="card-body">
-                @include('profile.partials.delete-user-form')
-            </div>
-        </div>
-
     </div>
 
     {{-- ── RIGHT COLUMN ─────────────────────────────────────────────── --}}

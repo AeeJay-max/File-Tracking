@@ -117,6 +117,8 @@ class AdminFileAssignmentController extends Controller
         DashboardService::clearAdminCache($deptId);
         DashboardService::clearSuperAdminCache();
 
+        $admin->markFileNotificationsRead($file);
+
         return redirect()->route('admin.files.pending')
             ->with('success', 'File "'.$file->file_number.'" assigned to '.$targetUser->name.'.');
     }

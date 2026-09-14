@@ -56,11 +56,12 @@ class ProfileController extends Controller
             Storage::disk('public')->delete($user->photo);
         }
 
-        $ext = strtolower($request->file('photo')->getClientOriginalExtension());
-        $filename = 'avatars/'.Str::uuid().'.'.$ext;
-        $request->file('photo')->storeAs('avatars', basename($filename), 'public');
+        $uploaded = $request->file('photo');
+        $ext = strtolower($uploaded->extension() ?: 'jpg');
+        $storedName = Str::uuid().'.'.$ext;
+        $path = $uploaded->storeAs('avatars', $storedName, 'public');
 
-        $user->update(['photo' => $filename]);
+        $user->update(['photo' => 'avatars/'.$storedName]);
 
         return back()->with('status', 'photo-updated');
     }
@@ -100,6 +101,10 @@ class ProfileController extends Controller
 
     public function destroy(Request $request): RedirectResponse
     {
+        if ($request->user()->role !== 'super_admin') {
+            abort(403, 'Only the Super Admin can delete user accounts.');
+        }
+
         $request->validateWithBag('userDeletion', [
             'password' => ['required', 'current_password'],
         ]);

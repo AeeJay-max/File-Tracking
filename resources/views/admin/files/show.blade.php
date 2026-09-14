@@ -158,13 +158,94 @@
                     </div>
                     <div class="d-flex justify-content-between">
                         <span class="text-muted fs-sm">Last Activity</span>
-                        <span class="fw-700">
-                            {{ $allMoves->last()?->created_at?->diffForHumans() ?? 'N/A' }}
-                        </span>
+                        <span class="fw-700">{{ $allMoves->sortBy('created_at')->last()?->created_at?->diffForHumans() ?? 'N/A' }}</span>
                     </div>
                 </div>
             </div>
         </div>
+
+        {{-- Public Visibility Card --}}
+        @can('togglePublicVisibility', $file)
+        <div class="portal-card mt-3">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <div>
+                    <i class="fa-solid fa-globe me-2 text-primary"></i>Public Visibility
+                </div>
+                <div>
+                    @if($file->is_public)
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 fs-xs fw-700">
+                        <i class="fa-solid fa-globe me-1"></i>Public
+                    </span>
+                    @else
+                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1 fs-xs fw-700">
+                        <i class="fa-solid fa-lock me-1"></i>Private
+                    </span>
+                    @endif
+                </div>
+            </div>
+            <div class="card-body">
+                <p class="text-muted fs-sm mb-3" style="line-height:1.4;">
+                    @if($file->is_public)
+                        This file is currently <strong class="text-success">Publicly Searchable</strong>. Only limited, non-sensitive metadata appears in search. The document itself remains private.
+                    @else
+                        This file is currently <strong class="text-secondary">Private</strong> and cannot be discovered in public search.
+                    @endif
+                </p>
+
+                @if($file->is_public)
+                <button type="button" class="btn btn-outline-danger btn-sm w-100 fw-600" data-bs-toggle="modal" data-bs-target="#adminTogglePublicModal">
+                    <i class="fa-solid fa-lock me-1"></i>Make Private
+                </button>
+                @else
+                <button type="button" class="btn btn-outline-success btn-sm w-100 fw-600" data-bs-toggle="modal" data-bs-target="#adminTogglePublicModal">
+                    <i class="fa-solid fa-globe me-1"></i>Make Public
+                </button>
+                @endif
+            </div>
+        </div>
+
+        {{-- Confirmation Modal --}}
+        <div class="modal fade" id="adminTogglePublicModal" tabindex="-1" aria-labelledby="adminTogglePublicModalLabel" aria-hidden="true" style="z-index: 1060;">
+            <div class="modal-dialog modal-dialog-centered">
+                <form action="{{ route('files.togglePublic', $file->uuid) }}" method="POST" class="modal-content shadow-lg border-0" style="border-radius:16px;">
+                    @csrf
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-700" id="adminTogglePublicModalLabel">
+                            @if($file->is_public)
+                            <i class="fa-solid fa-lock text-danger me-2"></i>Make File Private?
+                            @else
+                            <i class="fa-solid fa-globe text-success me-2"></i>Make File Publicly Viewable?
+                            @endif
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body py-3">
+                        @if($file->is_public)
+                        <p class="text-secondary mb-0" style="font-size:.92rem; line-height:1.5;">
+                            Are you sure you want to make <strong>{{ $file->file_number }}</strong> private? This file will immediately be hidden from the public search page.
+                        </p>
+                        @else
+                        <p class="text-secondary mb-2" style="font-size:.92rem; line-height:1.5;">
+                            Make file <strong>{{ $file->file_number }}</strong> publicly viewable in search?
+                        </p>
+                        <div class="alert alert-info border-0 bg-info-subtle text-info-emphasis fs-xs mb-0" style="border-radius:10px;">
+                            <i class="fa-solid fa-shield-halved me-1 fw-700"></i>
+                            Only limited, non-sensitive information (File Number, Title, Origin Department, Status, Date Registered) will appear in public search. The actual file/document will <strong>NOT</strong> be publicly downloadable or accessible.
+                        </div>
+                        @endif
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-light btn-sm px-3" data-bs-dismiss="modal">Cancel</button>
+                        @if($file->is_public)
+                        <button type="submit" class="btn btn-danger btn-sm px-3 fw-600">Make Private</button>
+                        @else
+                        <button type="submit" class="btn btn-success btn-sm px-3 fw-600">Make Public</button>
+                        @endif
+                    </div>
+                </form>
+            </div>
+        </div>
+        @endcan
     </div>
 </div>
 

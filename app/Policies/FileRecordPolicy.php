@@ -82,6 +82,30 @@ class FileRecordPolicy
         return $code === 'REC' || $name === 'records' || Str::contains($name, 'record');
     }
 
+    /**
+     * Toggle public visibility: ONLY Head of Department (HOD) / Admin of Records Department or Super Admin.
+     */
+    public function togglePublicVisibility(User $user, FileRecord $file): bool
+    {
+        if (isset($user->is_active) && ! $user->is_active) {
+            return false;
+        }
+
+        if ($user->role === 'super_admin') {
+            return true;
+        }
+
+        if (! $user->department) {
+            return false;
+        }
+
+        $code = strtoupper((string) $user->department->code);
+        $name = Str::lower((string) $user->department->name);
+        $isRecordsDept = ($code === 'REC' || $name === 'records' || Str::contains($name, 'record'));
+
+        return $isRecordsDept && $user->role === 'admin';
+    }
+
     // ──────────────────────────────────────────────────────────
     // PRIVATE HELPERS
     // ──────────────────────────────────────────────────────────

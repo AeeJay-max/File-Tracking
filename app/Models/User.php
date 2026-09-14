@@ -93,4 +93,30 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->belongsTo(Designation::class)->withDefault(['name' => '—']);
     }
+
+    /**
+     * Mark all unread notifications related to a specific file as read for this user.
+     */
+    public function markFileNotificationsRead(FileRecord|int|string $file): void
+    {
+        $fileId = $file instanceof FileRecord ? $file->id : $file;
+        $fileUuid = $file instanceof FileRecord ? $file->uuid : null;
+
+        $this->unreadNotifications->filter(function ($notification) use ($fileId, $fileUuid) {
+            $data = $notification->data;
+            if (! is_array($data)) {
+                return false;
+            }
+
+            if (isset($data['file_id']) && (int) $data['file_id'] === (int) $fileId) {
+                return true;
+            }
+
+            if ($fileUuid && isset($data['file_uuid']) && $data['file_uuid'] === $fileUuid) {
+                return true;
+            }
+
+            return false;
+        })->each->markAsRead();
+    }
 }

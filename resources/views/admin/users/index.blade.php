@@ -43,14 +43,8 @@
                 <td>
                     <div class="d-flex gap-1">
                         <a href="{{ route('admin.users.edit', $user->uuid) }}" class="btn btn-sm btn-outline-primary">
-                            <i class="fa-solid fa-pen"></i>
-                        <form method="POST" action="{{ route('admin.users.destroy', $user->uuid) }}" class="d-inline">
-                            @csrf @method('DELETE')
-                            <button type="submit" class="btn btn-sm btn-outline-danger"
-                                onclick="return confirm('Delete this user?')">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </form>
+                            <i class="fa-solid fa-pen"></i> Edit
+                        </a>
                     </div>
                 </td>
             </tr>

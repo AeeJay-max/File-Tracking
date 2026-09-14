@@ -19,6 +19,8 @@ class Designation extends Model
                 $model->uuid = Str::uuid()->toString();
             }
         });
+        static::saved(fn () => \App\Services\CacheService::clearDesignationsCache());
+        static::deleted(fn () => \App\Services\CacheService::clearDesignationsCache());
     }
 
     public function getRouteKeyName(): string

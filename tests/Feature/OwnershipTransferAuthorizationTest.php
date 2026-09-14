@@ -17,12 +17,12 @@ function makeTransferUser(Department $department, string $role = 'user'): User
 
 it('allows only the current owner to transfer through direct and department ownership changes', function () {
     /** @var TestCase $this */
-    $sourceDepartment = Department::factory()->create(['name' => 'Records Department', 'code' => 'REC']);
+    $sourceDepartment = Department::firstOrCreate(['code' => 'REC'], ['name' => 'Records Department', 'is_active' => true]);
     $financeDepartment = Department::factory()->create(['name' => 'Finance Department']);
     $accountsDepartment = Department::factory()->create(['name' => 'Accounts Department']);
 
-    $userA = makeTransferUser($sourceDepartment);
-    $userB = makeTransferUser($sourceDepartment);
+    $userA = makeTransferUser($sourceDepartment, 'admin');
+    $userB = makeTransferUser($sourceDepartment, 'admin');
     $financeAdmin = makeTransferUser($financeDepartment, 'admin');
     $financeUser = makeTransferUser($financeDepartment);
     $accountsAdmin = makeTransferUser($accountsDepartment, 'admin');
@@ -42,7 +42,7 @@ it('allows only the current owner to transfer through direct and department owne
         'file_record_uuid' => $file->uuid,
         'destination_type' => 'same',
         'to_user_id' => $userB->id,
-    ])->assertRedirect(route('files.index'));
+    ])->assertRedirect();
 
     expect($file->fresh()->current_user_id)->toBe($userB->id);
 

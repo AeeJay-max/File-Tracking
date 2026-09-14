@@ -4,13 +4,14 @@ namespace App\Notifications;
 
 use App\Models\FileTransfer;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
 /**
  * Sent to the file receiver upon a direct transfer.
  * No approval notifications — all transfers are immediate.
  */
-class FileTransferredNotification extends Notification
+class FileTransferredNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 

@@ -60,23 +60,25 @@ Route::middleware(['auth', 'verified', 'no.cache', 'force.pwd.change'])->group(f
     Route::get('/files/{file}/edit', [FileRecordController::class, 'edit'])->name('files.edit');
     Route::put('/files/{file}', [FileRecordController::class, 'update'])->name('files.update');
     Route::get('/files/{file}/download', [FileRecordController::class, 'download'])->name('files.download');
+    Route::post('/files/{file}/toggle-public', [FileRecordController::class, 'togglePublicVisibility'])->middleware('throttle:30,1')->name('files.togglePublic');
     Route::get('/files/{uuid}/timeline', [FileTimelineController::class, 'show'])->name('files.timeline');
 
-    // Transfer (immediate — no approval)
+    // Transfer (immediate — no approval) with rate limiting
     Route::get('/files/{file}/transfer', [FileTransferController::class, 'create'])->name('files.transfer.create');
-    Route::post('/files/transfer', [FileTransferController::class, 'store'])->name('files.transfer.store');
-    Route::post('/files/{file}/permsec-done', [FileTransferController::class, 'permsecDone'])->name('files.permsecDone');
-    Route::post('/files/{file}/officer-done', [FileTransferController::class, 'officerDone'])->name('files.officerDone');
-    Route::post('/files/{file}/admin-return-records', [FileTransferController::class, 'adminReturnToRecords'])->name('files.adminReturnRecords');
-    Route::post('/files/{file}/dispatch-recommended', [FileTransferController::class, 'dispatchRecommendedDepartment'])->name('files.dispatchRecommended');
-    Route::post('/files/{file}/complete-operations', [FileTransferController::class, 'completeOperations'])->name('files.completeOperations');
+    Route::post('/files/transfer', [FileTransferController::class, 'store'])->middleware('throttle:30,1')->name('files.transfer.store');
+    Route::post('/files/{file}/permsec-done', [FileTransferController::class, 'permsecDone'])->middleware('throttle:30,1')->name('files.permsecDone');
+    Route::post('/files/{file}/officer-done', [FileTransferController::class, 'officerDone'])->middleware('throttle:30,1')->name('files.officerDone');
+    Route::post('/files/{file}/admin-return-records', [FileTransferController::class, 'adminReturnToRecords'])->middleware('throttle:30,1')->name('files.adminReturnRecords');
+    Route::post('/files/{file}/dispatch-recommended', [FileTransferController::class, 'dispatchRecommendedDepartment'])->middleware('throttle:30,1')->name('files.dispatchRecommended');
+    Route::post('/files/{file}/complete-operations', [FileTransferController::class, 'completeOperations'])->middleware('throttle:30,1')->name('files.completeOperations');
+    Route::post('/files/{file}/ping-overdue', [FileTransferController::class, 'pingOverdue'])->middleware('throttle:30,1')->name('files.pingOverdue');
 
-    // AJAX: user & department search for transfer form autocomplete
-    Route::get('/ajax/users/search', [FileTransferController::class, 'searchUsers'])->name('ajax.users.search');
-    Route::get('/ajax/departments/search', [FileTransferController::class, 'searchDepartments'])->name('ajax.departments.search');
+    // AJAX: user & department search for transfer form autocomplete (rate-limited)
+    Route::get('/ajax/users/search', [FileTransferController::class, 'searchUsers'])->middleware('throttle:60,1')->name('ajax.users.search');
+    Route::get('/ajax/departments/search', [FileTransferController::class, 'searchDepartments'])->middleware('throttle:60,1')->name('ajax.departments.search');
 
     // AJAX: inline department creation from File Creation page (any authenticated user)
-    Route::post('/ajax/departments/create', [DepartmentController::class, 'storeAjax'])->name('ajax.departments.create');
+    Route::post('/ajax/departments/create', [DepartmentController::class, 'storeAjax'])->middleware('throttle:30,1')->name('ajax.departments.create');
 
     // Folders management & AJAX
     Route::get('/folders', [FolderController::class, 'index'])->name('folders.index');

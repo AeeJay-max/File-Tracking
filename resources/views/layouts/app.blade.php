@@ -233,7 +233,7 @@
 
                         <div class="d-none d-md-block text-start">
                             <div class="topbar-user-name">{{ auth()->user()->name }}</div>
-                            <div class="topbar-user-role">{{ auth()->user()->designation?->name ?? match($role) { 'super_admin' => 'Super Admin', 'admin' => 'Departmental Admin', default => 'User' } }}</div>
+                            <div class="topbar-user-role">{{ auth()->user()->designation?->name ?? match($role) { 'super_admin' => 'Super Admin', 'admin' => 'Head of Department (HOD)', default => 'User' } }}</div>
                         </div>
                         <i class="fa-solid fa-chevron-down ms-1 small"></i>
                     </button>
@@ -308,7 +308,7 @@
         <!-- Toast Notifications (Bottom Right Corner) -->
         <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1090;" id="portalToastContainer">
             @if(session('success'))
-            <div class="toast align-items-center text-white bg-success border-0 show shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="6000">
+            <div class="toast align-items-center text-white bg-success border-0 show shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
                 <div class="d-flex">
                     <div class="toast-body d-flex align-items-center gap-2" style="font-size:.9rem;font-weight:600;">
                         <i class="fa-solid fa-circle-check fa-lg"></i>
@@ -320,7 +320,7 @@
             @endif
 
             @if(session('error'))
-            <div class="toast align-items-center text-white bg-danger border-0 show shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="8000">
+            <div class="toast align-items-center text-white bg-danger border-0 show shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
                 <div class="d-flex">
                     <div class="toast-body d-flex align-items-center gap-2" style="font-size:.9rem;font-weight:600;">
                         <i class="fa-solid fa-circle-xmark fa-lg"></i>
@@ -332,7 +332,7 @@
             @endif
 
             @if(session('info'))
-            <div class="toast align-items-center text-white bg-primary border-0 show shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="6000">
+            <div class="toast align-items-center text-white bg-primary border-0 show shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
                 <div class="d-flex">
                     <div class="toast-body d-flex align-items-center gap-2" style="font-size:.9rem;font-weight:600;">
                         <i class="fa-solid fa-circle-info fa-lg"></i>
@@ -708,6 +708,15 @@
     })();
 </script>
     <script>
+        // ── Toast Notification Auto-Dismiss (5 seconds) ─────────────────
+        document.addEventListener('DOMContentLoaded', function() {
+            var toastElements = document.querySelectorAll('#portalToastContainer .toast');
+            toastElements.forEach(function(el) {
+                var toast = bootstrap.Toast.getOrCreateInstance(el, { delay: 5000, autohide: true });
+                toast.show();
+            });
+        });
+
         document.addEventListener('show.bs.modal', function (e) {
             if (e.target && e.target.parentNode !== document.body) {
                 document.body.appendChild(e.target);

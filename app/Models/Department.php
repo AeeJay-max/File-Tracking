@@ -21,6 +21,8 @@ class Department extends Model
                 $model->uuid = Str::uuid()->toString();
             }
         });
+        static::saved(fn () => \App\Services\CacheService::clearDepartmentsCache());
+        static::deleted(fn () => \App\Services\CacheService::clearDepartmentsCache());
     }
 
     public function getRouteKeyName(): string

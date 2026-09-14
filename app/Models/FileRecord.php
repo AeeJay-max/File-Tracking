@@ -25,6 +25,7 @@ class FileRecord extends Model
         'created_by',
         'current_user_id',
         'status',
+        'is_public',
         'has_permsec_reviewed',
         'completed_at',
         'return_deadline',
@@ -32,6 +33,7 @@ class FileRecord extends Model
     ];
 
     protected $casts = [
+        'is_public' => 'boolean',
         'has_permsec_reviewed' => 'boolean',
         'completed_at' => 'datetime',
         'return_deadline' => 'datetime',
@@ -154,5 +156,71 @@ class FileRecord extends Model
                 $d->where('name', 'Permanent Secretary');
             })->orWhere('email', 'permsec@filetrack.local');
         })->exists();
+    }
+
+    /**
+     * Scope a query to only include publicly viewable files.
+     */
+    public function scopePubliclyViewable($query)
+    {
+        return $query->where('is_public', true);
+    }
+
+    /**
+     * Calculate hours spent with current holder or department.
+     */
+    public function hoursWithCurrentHolder(): int
+    {
+        $lastMovement = $this->movements()->latest('created_at')->first();
+        $assignedAt = $lastMovement?->created_at ?? $this->updated_at ?? $this->created_at;
+
+        return (int) $assignedAt->diffInHours(now());
+    }
+
+    /**
+     * Check if a file is overdue (> 8 hours in non-records dept OR return_deadline passed).
+     */
+    public function isOverdue(): bool
+    {
+        if ($this->status === 'completed') {
+            return false;
+        }
+
+        $currentDeptCode = strtoupper((string) ($this->currentDepartment?->code ?? ''));
+        $currentDeptName = Str::lower((string) ($this->currentDepartment?->name ?? ''));
+        $isRecordsDept = ($currentDeptCode === 'REC' || Str::contains($currentDeptName, 'record'));
+
+        if ($isRecordsDept) {
+            return false;
+        }
+
+        if ($this->return_deadline && now()->greaterThan($this->return_deadline)) {
+            return true;
+        }
+
+        return $this->hoursWithCurrentHolder() >= 8;
+    }
+
+    /**
+     * Scope query to files that are overdue (> 8 hours or past return_deadline in non-records dept).
+     */
+    public function scopeOverdue($query)
+    {
+        $recordsDeptIds = Department::where('code', 'REC')
+            ->orWhere('name', 'like', '%record%')
+            ->pluck('id');
+
+        $eightHoursAgo = now()->subHours(8);
+
+        return $query->where('status', '!=', 'completed')
+            ->whereNotIn('current_department_id', $recordsDeptIds)
+            ->where(function ($q) use ($eightHoursAgo) {
+                $q->where(function ($sub) {
+                    $sub->whereNotNull('return_deadline')
+                        ->where('return_deadline', '<', now());
+                })->orWhere(function ($sub) use ($eightHoursAgo) {
+                    $sub->where('updated_at', '<=', $eightHoursAgo);
+                });
+            });
     }
 }
