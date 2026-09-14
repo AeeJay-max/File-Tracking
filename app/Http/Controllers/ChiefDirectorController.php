@@ -158,7 +158,7 @@ class ChiefDirectorController extends Controller
             $destLabel = $returnDestination === 'permsec_office' ? "Permanent Secretary's Office" : "Records Department";
 
             // Record FileTransfer
-            FileTransfer::create([
+            $transfer = FileTransfer::create([
                 'file_id'     => $file->id,
                 'sender_id'   => $currentUser->id,
                 'receiver_id' => $recipient->id,
