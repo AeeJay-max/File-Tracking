@@ -162,9 +162,14 @@ class DashboardService
     public function getChiefDirectorStats(int $userId): array
     {
         return Cache::remember("chief_director_stats_{$userId}", self::TTL, function () use ($userId) {
+            $permSecFilter = function ($q) {
+                $q->whereDoesntHave('designation', fn ($d) => $d->where('name', 'Permanent Secretary'))
+                  ->where('email', '!=', 'permsec@filetrack.local');
+            };
+
             return [
-                'total_directors'       => User::where('role', 'admin')->count(),
-                'active_directors'      => User::where('role', 'admin')->where('is_active', true)->count(),
+                'total_directors'       => User::where('role', 'admin')->where($permSecFilter)->count(),
+                'active_directors'      => User::where('role', 'admin')->where('is_active', true)->where($permSecFilter)->count(),
                 'active_assignments'    => \App\Models\ActingAssignment::where('assigned_to', $userId)->where('status', 'active')->count(),
                 'completed_assignments' => \App\Models\ActingAssignment::where('assigned_to', $userId)->where('status', 'completed')->count(),
                 'assigned_files_count'  => FileRecord::where('current_user_id', $userId)->count(),

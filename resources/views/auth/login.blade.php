@@ -3,7 +3,12 @@
     <h2>Sign In</h2>
     <p class="auth-sub">Enter your credentials to access the portal</p>
 
-    @if (session('status'))
+    @if (session('account_disabled'))
+    <div class="alert alert-danger alert-auth d-flex align-items-center gap-2 fw-600">
+        <i class="fa-solid fa-user-slash me-1 fs-5"></i>
+        <div>{{ session('account_disabled') }}</div>
+    </div>
+    @elseif (session('status'))
     <div class="alert alert-info alert-auth">{{ session('status') }}</div>
     @elseif (request()->has('expired'))
     <div class="alert alert-warning alert-auth">Your session or security token has expired. Please log in again.</div>

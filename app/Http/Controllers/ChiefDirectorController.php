@@ -30,8 +30,12 @@ class ChiefDirectorController extends Controller
         // Stats
         $stats = $dashboardService->getChiefDirectorStats($user->id);
 
-        // Departmental Directors (role = admin)
+        // Departmental Directors (role = admin only, excluding Permanent Secretary)
         $directors = User::where('role', 'admin')
+            ->where(function ($q) {
+                $q->whereDoesntHave('designation', fn ($d) => $d->where('name', 'Permanent Secretary'))
+                  ->where('email', '!=', 'permsec@filetrack.local');
+            })
             ->with(['department', 'designation'])
             ->orderBy('name')
             ->get();

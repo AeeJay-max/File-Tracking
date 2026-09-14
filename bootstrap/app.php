@@ -48,6 +48,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->web(append: [
             SecurityHeadersMiddleware::class,
+            \App\Http\Middleware\EnsureUserIsActiveMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

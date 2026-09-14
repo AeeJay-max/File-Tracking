@@ -109,9 +109,51 @@
         </div>
     </div>
 
+    <!-- Toast Notification Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1090;" id="portalToastContainer">
+        @if (session('account_disabled'))
+        <div class="toast align-items-center text-white bg-danger border-0 show shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="10000">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-center gap-2" style="font-size:.9rem;font-weight:600;">
+                    <i class="fa-solid fa-user-slash fs-5"></i>
+                    <span>{{ session('account_disabled') }}</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+        @elseif (session('error'))
+        <div class="toast align-items-center text-white bg-danger border-0 show shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="7000">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-center gap-2" style="font-size:.9rem;font-weight:600;">
+                    <i class="fa-solid fa-circle-exclamation fs-5"></i>
+                    <span>{{ session('error') }}</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+        @elseif (session('success'))
+        <div class="toast align-items-center text-white bg-success border-0 show shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="7000">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-center gap-2" style="font-size:.9rem;font-weight:600;">
+                    <i class="fa-solid fa-circle-check fs-5"></i>
+                    <span>{{ session('success') }}</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+        @endif
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // Auto-show Toast Notifications
+        var toastElements = document.querySelectorAll('#portalToastContainer .toast');
+        toastElements.forEach(function(el) {
+            var toast = bootstrap.Toast.getOrCreateInstance(el, { delay: 10000, autohide: true });
+            toast.show();
+        });
+
         // ── Eye Toggle Handler ──────────────────────────────────────
         document.addEventListener('click', function (e) {
             var toggleBtn = e.target.closest('.toggle-password-btn');

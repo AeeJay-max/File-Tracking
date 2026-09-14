@@ -18,6 +18,10 @@ class ChiefDirectorDirectorController extends Controller
     public function index(Request $request)
     {
         $query = User::where('role', 'admin')
+            ->where(function ($q) {
+                $q->whereDoesntHave('designation', fn ($d) => $d->where('name', 'Permanent Secretary'))
+                  ->where('email', '!=', 'permsec@filetrack.local');
+            })
             ->with(['department', 'designation']);
 
         if ($request->filled('search')) {
@@ -44,8 +48,8 @@ class ChiefDirectorDirectorController extends Controller
      */
     public function show(User $director)
     {
-        // Server-side check: Chief Director can ONLY view Directors (role = admin)
-        if ($director->role !== 'admin') {
+        // Server-side check: Chief Director can ONLY view Directors (role = admin and not PermSec)
+        if ($director->role !== 'admin' || $director->isPermanentSecretary()) {
             abort(403, 'Chief Director can only view departmental Director accounts.');
         }
 
@@ -62,8 +66,8 @@ class ChiefDirectorDirectorController extends Controller
      */
     public function edit(User $director)
     {
-        // Server-side check: Chief Director can ONLY edit Directors (role = admin)
-        if ($director->role !== 'admin') {
+        // Server-side check: Chief Director can ONLY edit Directors (role = admin and not PermSec)
+        if ($director->role !== 'admin' || $director->isPermanentSecretary()) {
             abort(403, 'Chief Director can only manage departmental Director accounts.');
         }
 
@@ -75,8 +79,8 @@ class ChiefDirectorDirectorController extends Controller
      */
     public function update(Request $request, User $director): RedirectResponse
     {
-        // Server-side check: Chief Director can ONLY manage Directors (role = admin)
-        if ($director->role !== 'admin') {
+        // Server-side check: Chief Director can ONLY manage Directors (role = admin and not PermSec)
+        if ($director->role !== 'admin' || $director->isPermanentSecretary()) {
             abort(403, 'Chief Director can only manage departmental Director accounts.');
         }
 
@@ -113,8 +117,8 @@ class ChiefDirectorDirectorController extends Controller
      */
     public function toggleStatus(User $director): RedirectResponse
     {
-        // Server-side check: Chief Director can ONLY manage Directors (role = admin)
-        if ($director->role !== 'admin') {
+        // Server-side check: Chief Director can ONLY manage Directors (role = admin and not PermSec)
+        if ($director->role !== 'admin' || $director->isPermanentSecretary()) {
             abort(403, 'Chief Director can only manage departmental Director accounts.');
         }
 
