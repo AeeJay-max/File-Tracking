@@ -23,7 +23,8 @@
         <select name="role" class="form-select" style="max-width:180px;">
             <option value="">All Roles</option>
             <option value="super_admin" {{ request('role') === 'super_admin' ? 'selected' : '' }}>Super Admin</option>
-            <option value="admin" {{ request('role') === 'admin' ? 'selected' : '' }}>Head of Department (HOD)</option>
+            <option value="chief_director" {{ request('role') === 'chief_director' ? 'selected' : '' }}>Chief Director</option>
+            <option value="admin" {{ request('role') === 'admin' ? 'selected' : '' }}>Director (HOD)</option>
             <option value="user" {{ request('role') === 'user' ? 'selected' : '' }}>User</option>
         </select>
         <select name="department_id" class="form-select" style="max-width:200px;">
@@ -45,7 +46,7 @@
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>Name &amp; Role</th>
+                    <th>Name &amp; Title</th>
                     <th>Email</th>
                     <th>Department</th>
                     <th>Designation</th>
@@ -63,12 +64,13 @@
                                 <div class="fw-700">{{ $user->name }}</div>
                                 <div class="text-muted" style="font-size:.78rem;">
                                     <span class="badge-status badge-role-{{ $user->role }}">
-                                        {{ match($user->role) { 'super_admin' => 'Super Admin', 'admin' => 'Head of Department (HOD)', default => 'User' } }}
+                                        {{ $user->display_title }}
                                     </span>
                                 </div>
                             </div>
                         </div>
                     </td>
+
                     <td class="text-muted">{{ $user->email }}</td>
                     <td class="text-muted">{{ $user->department->name ?? '—' }}</td>
                     <td class="text-muted">{{ $user->designation->name ?? '—' }}</td>

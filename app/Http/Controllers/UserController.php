@@ -59,14 +59,15 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email:rfc,dns|max:255|unique:users,email',
-            'role' => 'required|in:admin,user',
-            'department_id' => 'required|exists:departments,id',
+            'role' => 'required|in:admin,user,chief_director',
+            'department_id' => 'nullable|exists:departments,id',
             'designation_id' => 'nullable|exists:designations,id',
             'contact_number' => ['nullable', 'regex:/^[0-9]{10}$/'],
             'photo' => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
         ], [
             'role.in' => 'Super Admin accounts cannot be created. The seeded Super Admin account is the only Super Admin permitted.',
         ]);
+
 
         if ($request->role === 'user') {
             $dept = Department::find((int) $request->department_id);
@@ -133,13 +134,14 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email:rfc,dns|max:255|unique:users,email,'.$user->id,
-            'role' => 'required|in:super_admin,admin,user',
-            'department_id' => 'required|exists:departments,id',
+            'role' => 'required|in:super_admin,admin,user,chief_director',
+            'department_id' => 'nullable|exists:departments,id',
             'designation_id' => 'nullable|exists:designations,id',
             'contact_number' => ['nullable', 'regex:/^[0-9]{10}$/'],
             'password' => 'nullable|min:8|confirmed',
             'photo' => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
         ]);
+
 
         if ($request->role === 'super_admin' && $user->role !== 'super_admin') {
             return back()->withInput()->withErrors([

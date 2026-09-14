@@ -223,4 +223,15 @@ class FileRecord extends Model
                 });
             });
     }
+
+    public function actingAssignments()
+    {
+        return $this->hasMany(ActingAssignment::class, 'file_id');
+    }
+
+    public function activeActingAssignment()
+    {
+        return $this->hasOne(ActingAssignment::class, 'file_id')->where('status', 'active')->latestOfMany();
+    }
 }
+

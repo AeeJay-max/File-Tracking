@@ -22,6 +22,8 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register file authorization policy
         Gate::policy(FileRecord::class, FileRecordPolicy::class);
+        Gate::policy(\App\Models\ActingAssignment::class, \App\Policies\ActingAssignmentPolicy::class);
+
 
         $this->configureRateLimiting();
         Paginator::useBootstrapFive();

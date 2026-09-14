@@ -119,4 +119,47 @@ class User extends Authenticatable implements MustVerifyEmail
             return false;
         })->each->markAsRead();
     }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'super_admin';
+    }
+
+    public function isChiefDirector(): bool
+    {
+        return $this->role === 'chief_director';
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isOrdinaryUser(): bool
+    {
+        return $this->role === 'user';
+    }
+
+    /**
+     * Get the user's display title for the UI.
+     * E.g. "Director — Finance" for admin role, "Chief Director" for chief_director.
+     */
+    public function getDisplayTitleAttribute(): string
+    {
+        if ($this->role === 'admin') {
+            $deptName = $this->department?->name;
+            return $deptName ? "Director — {$deptName}" : "Director";
+        }
+
+        if ($this->role === 'chief_director') {
+            return "Chief Director";
+        }
+
+        if ($this->role === 'super_admin') {
+            return "Super Admin";
+        }
+
+        return $this->designation?->name ?: 'Officer';
+    }
 }
+

@@ -11,7 +11,7 @@ use Illuminate\Notifications\Notification;
  * Sent to the file receiver upon a direct transfer.
  * No approval notifications — all transfers are immediate.
  */
-class FileTransferredNotification extends Notification implements ShouldQueue
+class FileTransferredNotification extends Notification
 {
     use Queueable;
 

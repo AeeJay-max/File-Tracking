@@ -35,13 +35,7 @@ class NotificationController extends Controller
             ->limit(15)
             ->get(['id', 'type', 'data', 'read_at', 'created_at']);
 
-        // Count unread from the already-fetched collection first,
-        // then fall back to a DB count only if there could be more unread
-        // outside the top 15 (rare but correct).
-        $unreadInLatest = $latest->whereNull('read_at')->count();
-        $unreadCount = $unreadInLatest < $latest->count()
-            ? $unreadInLatest   // all unread items are in the top 15
-            : $user->notifications()->whereNull('read_at')->count(); // may have more
+        $unreadCount = $user->unreadNotifications()->count();
 
         return response()->json([
             'unread_count' => $unreadCount,
@@ -49,6 +43,7 @@ class NotificationController extends Controller
                 ->map(fn ($n) => NotificationPresenter::present($n))
                 ->values(),
         ]);
+
     }
 
     /**

@@ -20,6 +20,7 @@
         $isDeptAdmin = ($u->role === 'admin' && (int) $file->current_department_id === (int) $u->department_id);
         $isOfficer = ($u->role === 'user' && ! $isPermSec && $isHolder);
         $allDepts = \App\Models\Department::where('is_active', true)->orderBy('name')->get();
+        $chiefDirectors = \App\Models\User::where('role', 'chief_director')->where('is_active', true)->get();
     @endphp
 
     <div class="d-flex gap-2 flex-wrap">
@@ -57,10 +58,14 @@
 
         @if($file->status !== 'completed')
         @if($isPermSec && $isHolder)
-            {{-- Permanent Secretary: "Mark as Done & Return to Records" --}}
+            {{-- Permanent Secretary: "Assign to Chief Director" & "Mark as Done & Return to Records" --}}
+            <button type="button" class="btn-portal-outline" data-bs-toggle="modal" data-bs-target="#assignChiefDirectorModal">
+                <i class="fa-solid fa-user-shield me-1"></i>Assign to Chief Director
+            </button>
             <button type="button" class="btn-portal-primary" data-bs-toggle="modal" data-bs-target="#permsecDoneModal">
                 <i class="fa-solid fa-circle-check me-1"></i>Mark as Done (Send to Records)
             </button>
+
         @elseif($isOfficer)
             {{-- Department Officer: "Mark as Done & Send to Dept Admin" --}}
             <button type="button" class="btn-portal-primary" data-bs-toggle="modal" data-bs-target="#officerDoneModal">
@@ -539,4 +544,68 @@
     </div>
 </div>
 @endif
+@if($isPermSec && $isHolder)
+{{-- Modal: Assign to Chief Director (Acting PermSec Delegation) --}}
+<div class="modal fade" id="assignChiefDirectorModal" tabindex="-1" aria-labelledby="assignChiefDirectorModalLabel" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <form action="{{ route('files.assignChiefDirector', $file->uuid) }}" method="POST" class="modal-content shadow-lg border-0" style="border-radius:16px; background:#ffffff;">
+            @csrf
+            <div class="modal-header border-bottom bg-indigo text-white" style="border-top-left-radius:16px; border-top-right-radius:16px; background:#4f46e5;">
+                <h5 class="modal-title fw-700 text-white" id="assignChiefDirectorModalLabel">
+                    <i class="fa-solid fa-user-shield me-2"></i>Assign to Chief Director &amp; Delegate Acting PermSec Authority
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted fs-sm mb-3">
+                    Delegate file action authority to a Chief Director. The Chief Director will receive Acting Permanent Secretary powers strictly for this file.
+                </p>
+
+                <div class="mb-3">
+                    <label class="form-label fw-600" for="chief_director_id">Chief Director <span class="text-danger">*</span></label>
+                    <select name="chief_director_id" id="chief_director_id" class="form-select" required>
+                        <option value="">-- Select Chief Director --</option>
+                        @foreach($chiefDirectors as $cd)
+                        <option value="{{ $cd->id }}">{{ $cd->name }} (Chief Director)</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-600">Delegated Authority</label>
+                    <input type="text" class="form-control bg-light" value="Acting Permanent Secretary" readonly disabled>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-600" for="cd_instructions">Instructions <span class="text-danger">*</span></label>
+                    <textarea name="instructions" id="cd_instructions" rows="3" class="form-control" placeholder="Explain what the Chief Director must do on this file..." required></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-600" for="cd_required_action">Required Action</label>
+                    <textarea name="required_action" id="cd_required_action" rows="2" class="form-control" placeholder="Describe the specific action that must be performed..."></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-600" for="cd_next_step">What Happens Next / Directives</label>
+                    <textarea name="next_step" id="cd_next_step" rows="2" class="form-control" placeholder="Explain expected outcome or next directives..."></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-600" for="cd_return_dest">Return Destination Upon Completion <span class="text-danger">*</span></label>
+                    <select name="return_destination" id="cd_return_dest" class="form-select" required>
+                        <option value="records">Records Department</option>
+                        <option value="permsec_office">Permanent Secretary's Office</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer border-top bg-light" style="border-bottom-left-radius:16px; border-bottom-right-radius:16px;">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn-portal-primary"><i class="fa-solid fa-paper-plane me-1"></i>Delegate &amp; Assign File</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
 @endsection
+

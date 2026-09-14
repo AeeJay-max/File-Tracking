@@ -40,11 +40,13 @@
             <div class="col-md-6">
                 <label class="form-label">Role <span class="required-star">*</span></label>
                 <select name="role" class="form-select @error('role') is-invalid @enderror" required>
-                    <option value="admin" {{ old('role', 'admin') === 'admin' ? 'selected' : '' }}>Head of Department (HOD)</option>
+                    <option value="chief_director" {{ old('role') === 'chief_director' ? 'selected' : '' }}>Chief Director</option>
+                    <option value="admin" {{ old('role', 'admin') === 'admin' ? 'selected' : '' }}>Departmental Director (HOD)</option>
                     <option value="user" {{ old('role') === 'user' ? 'selected' : '' }}>User (Standard Staff)</option>
                 </select>
                 @error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
+
             <div class="col-md-6">
                 <label class="form-label">Department <span class="required-star">*</span></label>
                 <select name="department_id" class="form-select @error('department_id') is-invalid @enderror" required>

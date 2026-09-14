@@ -11,7 +11,7 @@ use Illuminate\Notifications\Notification;
 /**
  * Sent to the current file holder and current department HOD when Records Admin pings an overdue file.
  */
-class FileOverdueNotification extends Notification implements ShouldQueue
+class FileOverdueNotification extends Notification
 {
     use Queueable;
 

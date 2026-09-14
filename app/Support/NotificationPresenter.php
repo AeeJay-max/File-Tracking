@@ -64,6 +64,8 @@ class NotificationPresenter
             'transfer_requested' => 'Transfer Requested',
             'transfer_approved' => 'Transfer Approved',
             'transfer_rejected' => 'Transfer Rejected',
+            'acting_assignment_received' => 'Assigned File — Acting PermSec',
+            'acting_assignment_completed' => 'Delegated Action Completed',
             default => 'Notification',
         };
     }
@@ -75,6 +77,8 @@ class NotificationPresenter
             'transfer_requested' => 'paper-plane',
             'transfer_approved' => 'circle-check',
             'transfer_rejected' => 'circle-xmark',
+            'acting_assignment_received' => 'user-shield',
+            'acting_assignment_completed' => 'circle-check',
             default => 'bell',
         };
     }
@@ -83,7 +87,8 @@ class NotificationPresenter
     {
         return match ($type) {
             'file_received', 'file_transferred' => 'blue',
-            'transfer_requested', 'transfer_approved' => 'green',
+            'transfer_requested', 'transfer_approved', 'acting_assignment_completed' => 'green',
+            'acting_assignment_received' => 'purple',
             'transfer_rejected' => 'red',
             default => 'gray',
         };
@@ -91,6 +96,7 @@ class NotificationPresenter
 
     private static function safeColor(string $color): string
     {
-        return in_array($color, ['blue', 'green', 'red', 'yellow', 'orange', 'gray'], true) ? $color : 'gray';
+        return in_array($color, ['blue', 'green', 'red', 'yellow', 'orange', 'purple', 'indigo', 'gray'], true) ? $color : 'gray';
     }
+
 }

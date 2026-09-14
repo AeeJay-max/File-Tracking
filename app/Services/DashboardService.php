@@ -157,6 +157,22 @@ class DashboardService
     }
 
     /* ──────────────────────────────────────────────────────────────
+     *  CHIEF DIRECTOR — cached stats
+     * ──────────────────────────────────────────────────────────── */
+    public function getChiefDirectorStats(int $userId): array
+    {
+        return Cache::remember("chief_director_stats_{$userId}", self::TTL, function () use ($userId) {
+            return [
+                'total_directors'       => User::where('role', 'admin')->count(),
+                'active_directors'      => User::where('role', 'admin')->where('is_active', true)->count(),
+                'active_assignments'    => \App\Models\ActingAssignment::where('assigned_to', $userId)->where('status', 'active')->count(),
+                'completed_assignments' => \App\Models\ActingAssignment::where('assigned_to', $userId)->where('status', 'completed')->count(),
+                'assigned_files_count'  => FileRecord::where('current_user_id', $userId)->count(),
+            ];
+        });
+    }
+
+    /* ──────────────────────────────────────────────────────────────
      *  CACHE INVALIDATION — call after writes
      * ──────────────────────────────────────────────────────────── */
     public static function clearSuperAdminCache(): void
@@ -166,13 +182,21 @@ class DashboardService
         Cache::forget('dept_file_counts');
     }
 
-    public static function clearAdminCache(int $deptId): void
+    public static function clearAdminCache(?int $deptId = null): void
     {
-        Cache::forget("admin_stats_{$deptId}");
+        if ($deptId) {
+            Cache::forget("admin_stats_{$deptId}");
+        }
     }
 
     public static function clearUserCache(int $userId): void
     {
         Cache::forget("user_stats_{$userId}");
     }
+
+    public static function clearChiefDirectorCache(int $userId): void
+    {
+        Cache::forget("chief_director_stats_{$userId}");
+    }
 }
+

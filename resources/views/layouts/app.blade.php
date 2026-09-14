@@ -25,13 +25,15 @@
     @php
     $role = auth()->user()->role;
     $isSuper = $role === 'super_admin';
+    $isChief = $role === 'chief_director';
     $isAdmin = $role === 'admin';
     $isUser = $role === 'user';
-    $dashRoute = $isSuper ? 'super_admin.dashboard' : ($isAdmin ? 'admin.dashboard' : 'user.dashboard');
+    $dashRoute = $isSuper ? 'super_admin.dashboard' : ($isChief ? 'chief_director.dashboard' : ($isAdmin ? 'admin.dashboard' : 'user.dashboard'));
     $unreadCount = auth()->user()->notifications()->whereNull('read_at')->count();
     $latestNotifications = auth()->user()->notifications()->latest()->limit(15)->get()
         ->map(fn($notification) => \App\Support\NotificationPresenter::present($notification));
     @endphp
+
 
     <!-- ================================================================
      SIDEBAR
@@ -106,8 +108,20 @@
             </a>
             @endif
 
+            {{-- ── CHIEF DIRECTOR SECTION ──────────────────────── --}}
+            @if($isChief)
+            <div class="nav-section-label mt-2">Executive Operations</div>
+
+            <a href="{{ route('chief_director.directors.index') }}"
+                class="sidebar-link {{ request()->routeIs('chief_director.directors.*') ? 'active' : '' }}">
+                <i class="fa-solid fa-users"></i><span>Directors</span>
+            </a>
+            @endif
+
+
             {{-- ── SUPER ADMIN ONLY ────────────────────────────── --}}
             @if($isSuper)
+
             <div class="nav-section-label mt-2">System Management</div>
 
             <a href="{{ route('users.index') }}"
@@ -233,8 +247,9 @@
 
                         <div class="d-none d-md-block text-start">
                             <div class="topbar-user-name">{{ auth()->user()->name }}</div>
-                            <div class="topbar-user-role">{{ auth()->user()->designation?->name ?? match($role) { 'super_admin' => 'Super Admin', 'admin' => 'Head of Department (HOD)', default => 'User' } }}</div>
+                            <div class="topbar-user-role">{{ auth()->user()->display_title }}</div>
                         </div>
+
                         <i class="fa-solid fa-chevron-down ms-1 small"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">

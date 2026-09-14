@@ -12,7 +12,7 @@ use Illuminate\Notifications\Notification;
  * Sent to every admin of a department when a file is transferred TO that
  * department and is waiting to be assigned to a user (pending_assignment).
  */
-class FileAssignmentPendingNotification extends Notification implements ShouldQueue
+class FileAssignmentPendingNotification extends Notification
 {
     use Queueable;
 

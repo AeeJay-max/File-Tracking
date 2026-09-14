@@ -47,6 +47,7 @@ Route::middleware(['auth', 'verified', 'no.cache', 'force.pwd.change'])->group(f
     Route::get('/dashboard', function () {
         return match (auth()->user()->role) {
             'super_admin' => redirect()->route('super_admin.dashboard'),
+            'chief_director' => redirect()->route('chief_director.dashboard'),
             'admin' => redirect()->route('admin.dashboard'),
             default => redirect()->route('user.dashboard'),
         };
@@ -67,7 +68,9 @@ Route::middleware(['auth', 'verified', 'no.cache', 'force.pwd.change'])->group(f
     Route::get('/files/{file}/transfer', [FileTransferController::class, 'create'])->name('files.transfer.create');
     Route::post('/files/transfer', [FileTransferController::class, 'store'])->middleware('throttle:30,1')->name('files.transfer.store');
     Route::post('/files/{file}/permsec-done', [FileTransferController::class, 'permsecDone'])->middleware('throttle:30,1')->name('files.permsecDone');
+    Route::post('/files/{file}/assign-chief-director', [FileTransferController::class, 'assignToChiefDirector'])->middleware('throttle:30,1')->name('files.assignChiefDirector');
     Route::post('/files/{file}/officer-done', [FileTransferController::class, 'officerDone'])->middleware('throttle:30,1')->name('files.officerDone');
+
     Route::post('/files/{file}/admin-return-records', [FileTransferController::class, 'adminReturnToRecords'])->middleware('throttle:30,1')->name('files.adminReturnRecords');
     Route::post('/files/{file}/dispatch-recommended', [FileTransferController::class, 'dispatchRecommendedDepartment'])->middleware('throttle:30,1')->name('files.dispatchRecommended');
     Route::post('/files/{file}/complete-operations', [FileTransferController::class, 'completeOperations'])->middleware('throttle:30,1')->name('files.completeOperations');
@@ -176,4 +179,28 @@ Route::prefix('admin')
         });
     });
 
+/*
+|--------------------------------------------------------------------------
+| CHIEF DIRECTOR — role:chief_director only
+|--------------------------------------------------------------------------
+*/
+Route::prefix('chief-director')
+    ->name('chief_director.')
+    ->middleware(['auth', 'verified', 'no.cache', 'force.pwd.change', 'role:chief_director'])
+    ->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\ChiefDirectorController::class, 'dashboard'])->name('dashboard');
+
+        // Director management (role = admin accounts ONLY)
+        Route::get('/directors', [\App\Http\Controllers\ChiefDirectorDirectorController::class, 'index'])->name('directors.index');
+        Route::get('/directors/{director}', [\App\Http\Controllers\ChiefDirectorDirectorController::class, 'show'])->name('directors.show');
+        Route::get('/directors/{director}/edit', [\App\Http\Controllers\ChiefDirectorDirectorController::class, 'edit'])->name('directors.edit');
+        Route::put('/directors/{director}', [\App\Http\Controllers\ChiefDirectorDirectorController::class, 'update'])->name('directors.update');
+        Route::patch('/directors/{director}/toggle-status', [\App\Http\Controllers\ChiefDirectorDirectorController::class, 'toggleStatus'])->name('directors.toggle-status');
+
+        // Assigned Files & Acting PermSec Actions
+        Route::get('/files/{file}', [\App\Http\Controllers\ChiefDirectorController::class, 'showFile'])->name('files.show');
+        Route::post('/files/{file}/complete-action', [\App\Http\Controllers\ChiefDirectorController::class, 'completeAction'])->middleware('throttle:30,1')->name('files.completeAction');
+    });
+
 require __DIR__.'/auth.php';
+

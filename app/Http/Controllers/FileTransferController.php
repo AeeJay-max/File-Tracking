@@ -689,4 +689,114 @@ class FileTransferController extends Controller
 
         return back()->with('success', "File {$file->file_number} pinged! Overdue notification sent to holder ({$holderName}) and {$deptName} HOD.");
     }
+
+    /**
+     * Delegate Acting Permanent Secretary authority on a file to a Chief Director.
+     */
+    public function assignToChiefDirector(FileRecord $file, Request $request): RedirectResponse
+    {
+        $currentUser = Auth::user();
+        $isPermSec = ($currentUser->designation?->name === 'Permanent Secretary' || $currentUser->email === 'permsec@filetrack.local');
+
+        if (! $isPermSec) {
+            return back()->with('error', 'Only the Permanent Secretary can delegate Acting Permanent Secretary authority.');
+        }
+
+        $validated = $request->validate([
+            'chief_director_id'  => ['required', 'integer', 'exists:users,id'],
+            'instructions'       => ['required', 'string', 'max:2000'],
+            'required_action'    => ['nullable', 'string', 'max:2000'],
+            'next_step'          => ['nullable', 'string', 'max:2000'],
+            'return_destination' => ['required', 'in:records,permsec_office'],
+        ]);
+
+        $chiefDirector = User::where('id', $validated['chief_director_id'])
+            ->where('role', 'chief_director')
+            ->where('is_active', true)
+            ->first();
+
+        if (! $chiefDirector) {
+            return back()->with('error', 'Selected user is not an active Chief Director.');
+        }
+
+        DB::transaction(function () use ($file, $currentUser, $chiefDirector, $validated) {
+            // Expire any existing active assignment on this file
+            \App\Models\ActingAssignment::where('file_id', $file->id)
+                ->where('status', 'active')
+                ->update(['status' => 'expired']);
+
+            // Create new ActingAssignment
+            $assignment = \App\Models\ActingAssignment::create([
+                'file_id'            => $file->id,
+                'assigned_by'        => $currentUser->id,
+                'assigned_to'        => $chiefDirector->id,
+                'authority_type'     => 'acting_permsec',
+                'instructions'       => $validated['instructions'],
+                'required_action'    => $validated['required_action'] ?? null,
+                'next_step'          => $validated['next_step'] ?? null,
+                'return_destination' => $validated['return_destination'],
+                'status'             => 'active',
+                'assigned_at'        => now(),
+            ]);
+
+            // Update file custody & status
+            $file->update([
+                'current_user_id'       => $chiefDirector->id,
+                'current_department_id' => $chiefDirector->department_id ?? $file->current_department_id,
+                'status'                => 'active',
+                'has_permsec_reviewed'  => true,
+            ]);
+
+            // Record FileTransfer
+            $transfer = FileTransfer::create([
+                'file_id'     => $file->id,
+                'sender_id'   => $currentUser->id,
+                'receiver_id' => $chiefDirector->id,
+                'status'      => 'accepted',
+                'remarks'     => 'Assigned to Chief Director with Acting Permanent Secretary authority. Instructions: '.$validated['instructions'],
+            ]);
+
+            // Record FileMovement
+            FileMovement::create([
+                'file_id'         => $file->id,
+                'from_user'       => $currentUser->id,
+                'to_user'         => $chiefDirector->id,
+                'from_department' => $currentUser->department_id,
+                'to_department'   => $chiefDirector->department_id ?? $file->current_department_id,
+                'action'          => 'assigned_to_chief_director',
+                'remarks'         => "Permanent Secretary delegated Acting Permanent Secretary authority to Chief Director ({$chiefDirector->name}).",
+            ]);
+
+            // Record AuditLog
+            \App\Models\AuditLog::create([
+                'user_id'        => $currentUser->id,
+                'action'         => 'assigned_to_chief_director',
+                'auditable_type' => FileRecord::class,
+                'auditable_id'   => $file->id,
+                'description'    => "Delegated Acting Permanent Secretary authority on file {$file->file_number} to Chief Director {$chiefDirector->name}.",
+                'metadata'       => json_encode(['acting_assignment_uuid' => $assignment->uuid]),
+            ]);
+
+            // Notify Chief Director
+            $chiefDirector->notify(new \App\Notifications\ChiefDirectorAssignedNotification($assignment));
+
+            // Broadcast transfer event
+            if ($transfer) {
+                event(new FileTransferred($transfer));
+            }
+
+
+            // Clear caches
+            DashboardService::clearAdminCache();
+            DashboardService::clearSuperAdminCache();
+            DashboardService::clearUserCache($chiefDirector->id);
+            DashboardService::clearUserCache($currentUser->id);
+        });
+
+        $currentUser->markFileNotificationsRead($file);
+
+        return redirect()->route('files.show', $file->uuid)
+            ->with('success', "File {$file->file_number} successfully assigned to Chief Director ({$chiefDirector->name}) with Acting Permanent Secretary authority.");
+    }
 }
+

@@ -141,6 +141,12 @@ class FileRecordPolicy
             return true;
         }
 
+        // Chief Director: only files assigned to them or where they have/had an acting assignment
+        if ($user->role === 'chief_director') {
+            return $file->actingAssignments()->where('assigned_to', $user->id)->exists();
+        }
+
+
         // Departmental access for non-Records departments (created in, currently in, or transferred to/from)
         if ($user->department_id) {
             if ((int) $user->department_id === (int) ($file->current_department_id ?? $file->department_id)) {
