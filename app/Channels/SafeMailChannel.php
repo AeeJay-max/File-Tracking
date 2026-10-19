@@ -22,6 +22,23 @@ class SafeMailChannel extends MailChannel
         try {
             return parent::send($notifiable, $notification);
         } catch (Throwable $e) {
+            // If DNS resolution or IPv6 connection failed, retry with explicit IPv4 resolution
+            $originalHost = config('mail.mailers.smtp.host');
+            if ($originalHost && ! filter_var($originalHost, FILTER_VALIDATE_IP)) {
+                $ipv4 = @gethostbyname($originalHost);
+                if ($ipv4 && $ipv4 !== $originalHost) {
+                    try {
+                        config(['mail.mailers.smtp.host' => $ipv4]);
+                        app('mail.manager')->purge('smtp');
+                        $result = parent::send($notifiable, $notification);
+                        config(['mail.mailers.smtp.host' => $originalHost]);
+                        return $result;
+                    } catch (Throwable $e2) {
+                        config(['mail.mailers.smtp.host' => $originalHost]);
+                    }
+                }
+            }
+
             Log::warning('Email notification failed to deliver via SMTP: '.$e->getMessage(), [
                 'recipient' => method_exists($notifiable, 'routeNotificationFor')
                     ? $notifiable->routeNotificationFor('mail', $notification)
