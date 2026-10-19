@@ -259,4 +259,39 @@ it('sends an email when an overdue file is pinged', function () {
     );
 });
 
+it('gracefully handles SMTP failures without throwing an error and still stores database notification', function () {
+    /** @var TestCase $this */
+    $department = Department::create([
+        'name' => 'Transport',
+        'code' => 'TRN',
+        'is_active' => true,
+    ]);
+
+    $user = User::factory()->create([
+        'department_id' => $department->id,
+        'email' => 'officer@example.com',
+    ]);
+
+    $file = FileRecord::create([
+        'department_id' => $department->id,
+        'created_by' => $user->id,
+        'current_user_id' => $user->id,
+        'current_department_id' => $department->id,
+        'file_name' => 'Vehicle Fleet Report',
+        'file_number' => 'TRN-2026-001',
+        'status' => 'active',
+    ]);
+
+    // Force an invalid SMTP host to trigger network failure
+    config(['mail.mailers.smtp.host' => 'invalid-nonexistent-smtp-host.local']);
+    config(['mail.default' => 'smtp']);
+
+    // Send notification without mocking Notification facade so SafeMailChannel actually executes
+    $user->notify(new \App\Notifications\FileOverdueNotification($file, $user));
+
+    // Assert database notification was still stored successfully
+    expect($user->notifications()->count())->toBe(1);
+    expect($user->notifications()->first()->type)->toBe(\App\Notifications\FileOverdueNotification::class);
+});
+
 

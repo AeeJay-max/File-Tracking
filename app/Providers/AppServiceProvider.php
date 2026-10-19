@@ -16,7 +16,10 @@ use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    public function register(): void {}
+    public function register(): void
+    {
+        $this->app->singleton(\Illuminate\Notifications\Channels\MailChannel::class, \App\Channels\SafeMailChannel::class);
+    }
 
     public function boot(): void
     {
