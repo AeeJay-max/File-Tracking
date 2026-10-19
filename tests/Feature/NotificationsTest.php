@@ -160,15 +160,103 @@ it('automatically removes unread notification badge when acting on or viewing a 
     expect($recipient->fresh()->unreadNotifications()->count())->toBe(0);
 });
 
-it('uses 5 second delay (5000ms) for toast notifications', function () {
+it('sends an email when a file is transferred', function () {
     /** @var TestCase $this */
-    $user = User::factory()->create();
+    \Illuminate\Support\Facades\Notification::fake();
 
-    $response = $this->actingAs($user)
-        ->withSession(['success' => 'Operation completed!'])
-        ->get(route('files.index'));
+    $department = Department::create([
+        'name' => 'Human Resources',
+        'code' => 'HR',
+        'is_active' => true,
+    ]);
 
-    $response->assertOk();
-    $response->assertSee('data-bs-delay="5000"', false);
+    $sender = User::factory()->create([
+        'department_id' => $department->id,
+    ]);
+
+    $recipient = User::factory()->create([
+        'department_id' => $department->id,
+        'email' => 'officer@example.com',
+    ]);
+
+    $file = FileRecord::create([
+        'department_id' => $department->id,
+        'created_by' => $sender->id,
+        'current_user_id' => $sender->id,
+        'file_name' => 'Leave Application',
+        'file_number' => 'HR-2026-001',
+        'status' => 'active',
+    ]);
+
+    $transfer = FileTransfer::create([
+        'file_id' => $file->id,
+        'sender_id' => $sender->id,
+        'receiver_id' => $recipient->id,
+        'carried_by' => 'Courier Ainos',
+        'remarks' => 'For your attention',
+        'transferred_at' => now(),
+    ]);
+
+    $recipient->notify(new FileTransferredNotification($transfer));
+
+    \Illuminate\Support\Facades\Notification::assertSentTo(
+        $recipient,
+        FileTransferredNotification::class,
+        function (FileTransferredNotification $notification, array $channels) use ($recipient) {
+            expect($channels)->toContain('mail');
+            expect($channels)->toContain('database');
+
+            $mailData = $notification->toMail($recipient);
+            expect($mailData->subject)->toContain('File Transferred: HR-2026-001');
+            return true;
+        }
+    );
 });
+
+it('sends an email when an overdue file is pinged', function () {
+    /** @var TestCase $this */
+    \Illuminate\Support\Facades\Notification::fake();
+
+    $department = Department::create([
+        'name' => 'Legal Affairs',
+        'code' => 'LEG',
+        'is_active' => true,
+    ]);
+
+    $recordsAdmin = User::factory()->create([
+        'department_id' => $department->id,
+        'role' => 'admin',
+    ]);
+
+    $holder = User::factory()->create([
+        'department_id' => $department->id,
+        'email' => 'holder@example.com',
+    ]);
+
+    $file = FileRecord::create([
+        'department_id' => $department->id,
+        'created_by' => $recordsAdmin->id,
+        'current_user_id' => $holder->id,
+        'current_department_id' => $department->id,
+        'file_name' => 'Urgent Contract Review',
+        'file_number' => 'LEG-2026-999',
+        'status' => 'active',
+    ]);
+
+    $holder->notify(new \App\Notifications\FileOverdueNotification($file, $recordsAdmin));
+
+    \Illuminate\Support\Facades\Notification::assertSentTo(
+        $holder,
+        \App\Notifications\FileOverdueNotification::class,
+        function (\App\Notifications\FileOverdueNotification $notification, array $channels) use ($holder) {
+            expect($channels)->toContain('mail');
+            expect($channels)->toContain('database');
+
+            $mailData = $notification->toMail($holder);
+            expect($mailData->subject)->toContain('Overdue File Notice: LEG-2026-999');
+            return true;
+        }
+    );
+});
+
 

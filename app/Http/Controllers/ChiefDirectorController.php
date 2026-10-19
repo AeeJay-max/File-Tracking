@@ -151,13 +151,20 @@ class ChiefDirectorController extends Controller
                 'return_destination'  => $returnDestination,
             ]);
 
-            // Update file custody
-            $file->update([
+            $updateData = [
                 'current_user_id'       => $recipient->id,
                 'current_department_id' => $recipient->department_id,
                 'status'                => 'active',
                 'remarks'               => "Action completed by Chief Director: {$validated['action_taken']}",
-            ]);
+            ];
+
+            if ($returnDestination !== 'permsec_office') {
+                $updateData['is_urgent'] = false;
+                $updateData['return_deadline'] = null;
+            }
+
+            // Update file custody
+            $file->update($updateData);
 
             $destLabel = $returnDestination === 'permsec_office' ? "Permanent Secretary's Office" : "Records Department";
 

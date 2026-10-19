@@ -63,6 +63,16 @@ class FileRecord extends Model
         return $this->belongsTo(Folder::class, 'folder_id');
     }
 
+    public function attachments()
+    {
+        return $this->hasMany(FileAttachment::class, 'file_record_id')->orderBy('version', 'asc');
+    }
+
+    public function latestAttachment()
+    {
+        return $this->hasOne(FileAttachment::class, 'file_record_id')->where('is_latest', true);
+    }
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');

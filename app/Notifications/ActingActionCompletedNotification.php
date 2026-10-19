@@ -4,7 +4,7 @@ namespace App\Notifications;
 
 use App\Models\ActingAssignment;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class ActingActionCompletedNotification extends Notification
@@ -15,7 +15,26 @@ class ActingActionCompletedNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database'];
+        $channels = ['database'];
+        if (!empty($notifiable->email)) {
+            $channels[] = 'mail';
+        }
+        return $channels;
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        $file = $this->assignment->file;
+        $actor = $this->assignment->assignedTo;
+        $dest = $this->assignment->return_destination === 'permsec_office' ? "Permanent Secretary's Office" : "Records Department";
+        $url = route('files.show', $file->uuid ?? '');
+
+        return (new MailMessage)
+            ->subject('[File Tracking] Delegated Action Completed: ' . ($file->file_number ?? 'File'))
+            ->greeting('Hello ' . ($notifiable->name ?? 'Officer') . ',')
+            ->line('Chief Director ' . ($actor->name ?? '') . ' has completed the delegated action on file **' . ($file->file_number ?? '') . '** and returned it to ' . $dest . '.')
+            ->line('**Action Taken:** ' . $this->actionTaken)
+            ->action('View File', $url);
     }
 
     public function toDatabase(object $notifiable): array

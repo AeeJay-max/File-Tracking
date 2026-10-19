@@ -382,12 +382,13 @@ class FileTransferController extends Controller
                 'current_department_id' => $targetUser->department_id,
                 'remarks' => $remarks ?? $file->remarks,
                 'status' => 'active',
-                'is_urgent' => $isUrgent || $file->is_urgent,
+                'is_urgent' => $isTargetRecords ? false : ($isUrgent || $file->is_urgent),
             ];
 
             if ($isTargetRecords) {
-                // Return to Records department stops the timer countdown
+                // Return to Records department stops the timer countdown and removes urgent status
                 $updateData['return_deadline'] = null;
+                $updateData['is_urgent'] = false;
             } elseif ($returnMinutes && $returnMinutes > 0) {
                 $updateData['return_deadline'] = now()->addMinutes($returnMinutes);
             }
@@ -457,12 +458,13 @@ class FileTransferController extends Controller
                 'current_department_id' => $targetDept->id,
                 'remarks' => $remarks ?? $file->remarks,
                 'status' => 'pending_assignment',
-                'is_urgent' => $isUrgent || $file->is_urgent,
+                'is_urgent' => $isTargetRecords ? false : ($isUrgent || $file->is_urgent),
             ];
 
             if ($isTargetRecords) {
-                // Return to Records department stops the timer countdown
+                // Return to Records department stops the timer countdown and removes urgent status
                 $updateData['return_deadline'] = null;
+                $updateData['is_urgent'] = false;
             } elseif ($returnMinutes && $returnMinutes > 0) {
                 $updateData['return_deadline'] = now()->addMinutes($returnMinutes);
             }
@@ -553,6 +555,7 @@ class FileTransferController extends Controller
             'recommended_department_id' => 'nullable|exists:departments,id',
             'carried_by' => 'nullable|string|max:255',
             'remarks' => 'nullable|string|max:1000',
+            'attachment' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png|max:10240',
         ]);
 
         $deptAdmin = User::where('department_id', $currentUser->department_id)
@@ -562,6 +565,48 @@ class FileTransferController extends Controller
 
         if (! $deptAdmin) {
             return back()->with('error', 'Department Admin not found for your department.');
+        }
+
+        if ($request->hasFile('attachment')) {
+            $uploaded = $request->file('attachment');
+            $storedName = Str::uuid()->toString().'.'.$uploaded->extension();
+            $path = $uploaded->storeAs('files/'.$file->uuid, $storedName, 'private');
+            $origName = pathinfo($uploaded->getClientOriginalName(), PATHINFO_FILENAME);
+            $origExt  = $uploaded->getClientOriginalExtension();
+            $safeOriginalName = (Str::slug($origName) ?: 'document') . '.' . ($origExt ?: 'bin');
+
+            $file->attachments()->update(['is_latest' => false]);
+
+            $nextVersion = ((int) $file->attachments()->max('version')) + 1;
+            $label = $nextVersion === 1 ? 'Original File' : "Version {$nextVersion} (Updated)";
+
+            \App\Models\FileAttachment::create([
+                'file_record_id' => $file->id,
+                'user_id' => $currentUser->id,
+                'attachment_path' => $path,
+                'attachment_name' => $safeOriginalName,
+                'attachment_mime' => $uploaded->getClientMimeType(),
+                'version' => $nextVersion,
+                'version_label' => $label,
+                'is_latest' => true,
+                'notes' => 'Updated document attached by officer upon task completion',
+            ]);
+
+            $file->update([
+                'attachment_path' => $path,
+                'attachment_name' => $safeOriginalName,
+                'attachment_mime' => $uploaded->getClientMimeType(),
+            ]);
+
+            FileMovement::create([
+                'file_id' => $file->id,
+                'from_user' => $currentUser->id,
+                'to_user' => $currentUser->id,
+                'from_department' => $currentUser->department_id,
+                'to_department' => $currentUser->department_id,
+                'action' => 'attachment_updated',
+                'remarks' => "Updated document ({$safeOriginalName}, {$label}) attached by officer upon completing action.",
+            ]);
         }
 
         $targetDept = $request->filled('recommended_department_id')

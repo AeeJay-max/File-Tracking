@@ -4,7 +4,7 @@ namespace App\Notifications;
 
 use App\Models\FileTransfer;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 /**
@@ -19,7 +19,36 @@ class FileTransferredNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database'];
+        $channels = ['database'];
+        if (!empty($notifiable->email)) {
+            $channels[] = 'mail';
+        }
+        return $channels;
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        $file = $this->transfer->file;
+        $sender = $this->transfer->sender;
+        $url = route('files.show', $file->uuid ?? '');
+
+        $mail = (new MailMessage)
+            ->subject('[File Tracking] File Transferred: ' . ($file->file_number ?? 'Document'))
+            ->greeting('Hello ' . ($notifiable->name ?? 'Officer') . ',')
+            ->line('A file has been transferred to you by ' . ($sender->name ?? 'System') . '.')
+            ->line('**File Number:** ' . ($file->file_number ?? 'N/A'))
+            ->line('**File Title:** ' . ($file->file_name ?? 'N/A'));
+
+        if (!empty($this->transfer->carried_by)) {
+            $mail->line('**Carried By:** ' . $this->transfer->carried_by);
+        }
+
+        if (!empty($this->transfer->remarks)) {
+            $mail->line('**Remarks / Notes:** ' . $this->transfer->remarks);
+        }
+
+        return $mail->action('View File in System', $url)
+            ->line('Please review and take any necessary actions.');
     }
 
     public function toDatabase(object $notifiable): array

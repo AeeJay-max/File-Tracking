@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\TransferRequest;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 /**
@@ -18,7 +19,26 @@ class TransferRequestNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database'];
+        $channels = ['database'];
+        if (!empty($notifiable->email)) {
+            $channels[] = 'mail';
+        }
+        return $channels;
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        $file = $this->transferReq->file;
+        $sender = $this->transferReq->sender;
+        $url = route('admin.transfers');
+
+        return (new MailMessage)
+            ->subject('[File Tracking] Transfer Request: ' . ($file->file_number ?? 'Document'))
+            ->greeting('Hello ' . ($notifiable->name ?? 'Department Admin') . ',')
+            ->line('A new transfer request has been submitted by ' . ($sender->name ?? 'an officer') . '.')
+            ->line('**File:** ' . ($file->file_number ?? '') . ' - ' . ($file->file_name ?? ''))
+            ->line('**From:** ' . ($this->transferReq->fromDept->name ?? 'N/A') . ' to ' . ($this->transferReq->toDept->name ?? 'N/A'))
+            ->action('Review Transfer Requests', $url);
     }
 
     public function toDatabase(object $notifiable): array

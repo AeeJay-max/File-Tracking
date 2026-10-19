@@ -32,10 +32,19 @@
             <i class="fa-solid fa-pencil"></i> Edit
         </a>
         @endcan
-        @if($file->attachment_path)
+        @if($file->attachment_path || $file->attachments->isNotEmpty())
         <a href="{{ route('files.download', $file->uuid) }}" class="btn btn-success">
-            <i class="fa-solid fa-download"></i> Download
+            <i class="fa-solid fa-download me-1"></i>
+            {{ (! $isRecordsDept && ! $isPermSec && $file->attachments->count() > 1) ? 'Download Updated File' : 'Download Document' }}
         </a>
+        @endif
+
+        @if($file->status !== 'completed' && $file->status !== 'archived')
+            @can('view', $file)
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadUpdatedAttachmentModal">
+                <i class="fa-solid fa-cloud-arrow-up me-1"></i>Attach Updated File
+            </button>
+            @endcan
         @endif
 
         @php
@@ -119,7 +128,7 @@
 </div>
 @endif
 
-@if($file->isOverdue())
+@if($file->isOverdue() && ! $isFileInRecordsCustody)
 <div class="alert alert-danger d-flex align-items-center justify-content-between mb-4 p-3 shadow-sm" style="border-radius:12px;background:#fef2f2;border:1px solid #ef4444;color:#991b1b;">
     <div class="d-flex align-items-center gap-3">
         <div style="width:40px;height:40px;border-radius:10px;background:#ef4444;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">
@@ -284,6 +293,144 @@
     </div>
 </div>
 
+{{-- DOCUMENT ATTACHMENTS & SIDE-BY-SIDE VERSIONS --}}
+@php
+    $attachmentsList = $file->attachments->sortBy('version')->values();
+@endphp
+
+@if($attachmentsList->isNotEmpty() || $file->attachment_path)
+<div class="portal-card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+            <i class="fa-solid fa-paperclip text-primary fs-5"></i>
+            <span class="fw-700">Document Attachments &amp; Side-by-Side Versions</span>
+            <span class="badge bg-secondary">{{ $attachmentsList->count() ?: 1 }} {{ Str::plural('Version', $attachmentsList->count() ?: 1) }}</span>
+        </div>
+        @if($file->status !== 'completed' && $file->status !== 'archived')
+            @can('view', $file)
+            <button type="button" class="btn btn-sm btn-primary fw-600 shadow-sm" data-bs-toggle="modal" data-bs-target="#uploadUpdatedAttachmentModal">
+                <i class="fa-solid fa-cloud-arrow-up me-1"></i>Attach Updated File
+            </button>
+            @endcan
+        @endif
+    </div>
+    <div class="card-body">
+        {{-- Department Actioning Notice --}}
+        @if(! $isRecordsDept && ! $isPermSec)
+            <div class="alert alert-warning border-warning d-flex align-items-center gap-2 mb-3 py-2 px-3 rounded" style="background: rgba(245, 158, 11, 0.1); color: #92400e;">
+                <i class="fa-solid fa-circle-exclamation fs-5 flex-shrink-0"></i>
+                <div class="fs-sm">
+                    <strong>Actioning Notice:</strong> Actioning is strictly on the <strong>Updated File</strong>. Earlier versions move side-by-side for reference and audit history.
+                </div>
+            </div>
+        @else
+            <div class="alert alert-info border-info d-flex align-items-center gap-2 mb-3 py-2 px-3 rounded" style="background: rgba(14, 165, 233, 0.1); color: #0369a1;">
+                <i class="fa-solid fa-shield-halved fs-5 flex-shrink-0"></i>
+                <div class="fs-sm">
+                    <strong>Executive &amp; Records Oversight:</strong> The {{ $isPermSec ? 'Permanent Secretary' : 'Records Department' }} has full actioning and comparison access over both the Original File and all Updated File versions.
+                </div>
+            </div>
+        @endif
+
+        {{-- Side-by-Side Attachment Cards --}}
+        <div class="row g-3">
+            @forelse($attachmentsList as $att)
+                @php
+                    $isOriginal = ($att->version === 1);
+                    $isUpdated = $att->is_latest && ($attachmentsList->count() > 1 || ! $isOriginal);
+                    $canAction = ($isRecordsDept || $isPermSec) ? true : $att->is_latest;
+                @endphp
+                <div class="col-md-6 col-lg-{{ $attachmentsList->count() === 2 ? '6' : '4' }}">
+                    <div class="card h-100 {{ $att->is_latest ? 'border-primary shadow-sm' : 'border-secondary bg-light bg-opacity-25' }}" style="border-radius:12px; border-width: {{ $att->is_latest ? '2px' : '1px' }};">
+                        <div class="card-header d-flex justify-content-between align-items-center py-2 px-3 {{ $att->is_latest ? 'bg-primary bg-opacity-10 text-primary' : 'bg-light text-secondary' }}">
+                            <div class="d-flex align-items-center gap-1">
+                                @if($isOriginal)
+                                    <span class="badge bg-secondary text-white fw-600">
+                                        <i class="fa-solid fa-file-lines me-1"></i>Original File
+                                    </span>
+                                @elseif($isUpdated)
+                                    <span class="badge bg-success text-white fw-600">
+                                        <i class="fa-solid fa-star me-1"></i>Updated File
+                                    </span>
+                                @else
+                                    <span class="badge bg-info text-dark fw-600">
+                                        <i class="fa-solid fa-code-branch me-1"></i>Version {{ $att->version }}
+                                    </span>
+                                @endif
+                            </div>
+                            <span class="fs-xs fw-700 text-muted">v{{ $att->version }}</span>
+                        </div>
+                        <div class="card-body p-3 d-flex flex-column">
+                            {{-- Actioning Status Badge --}}
+                            <div class="mb-2">
+                                @if(! $isRecordsDept && ! $isPermSec)
+                                    @if($att->is_latest)
+                                        <span class="badge bg-success bg-opacity-15 text-success border border-success d-inline-flex align-items-center fs-xs py-1 px-2">
+                                            <i class="fa-solid fa-circle-check me-1"></i>Active for Departmental Actioning
+                                        </span>
+                                    @else
+                                        <span class="badge bg-secondary bg-opacity-10 text-muted border border-secondary d-inline-flex align-items-center fs-xs py-1 px-2">
+                                            <i class="fa-solid fa-lock me-1"></i>Reference Only (Action on Updated File)
+                                        </span>
+                                    @endif
+                                @else
+                                    <span class="badge bg-primary bg-opacity-15 text-primary border border-primary d-inline-flex align-items-center fs-xs py-1 px-2">
+                                        <i class="fa-solid fa-user-shield me-1"></i>Full Access (Actionable by {{ $isPermSec ? 'PermSec' : 'Records' }})
+                                    </span>
+                                @endif
+                            </div>
+
+                            <div class="fw-700 text-break mb-1" style="font-size: .95rem;">
+                                <i class="fa-solid fa-paperclip text-muted me-1"></i>{{ $att->attachment_name }}
+                            </div>
+
+                            <div class="text-muted fs-xs mb-2">
+                                <div><i class="fa-solid fa-user me-1"></i>Uploaded by: <strong>{{ $att->uploader->name ?? 'System' }}</strong> ({{ $att->uploader->department->name ?? 'Records' }})</div>
+                                <div><i class="fa-solid fa-clock me-1"></i>{{ $att->created_at->format('d M Y, h:i A') }}</div>
+                            </div>
+
+                            @if($att->notes)
+                            <div class="p-2 rounded bg-light border text-break fs-xs text-secondary mb-3" style="max-height: 80px; overflow-y: auto;">
+                                <strong>Notes:</strong> {{ $att->notes }}
+                            </div>
+                            @endif
+
+                            <div class="mt-auto pt-2">
+                                @can('download', $file)
+                                <a href="{{ route('files.attachments.download', [$file->uuid, $att->uuid]) }}"
+                                   class="btn btn-sm {{ $att->is_latest ? 'btn-primary' : 'btn-outline-primary' }} w-100 fw-600">
+                                    <i class="fa-solid fa-download me-1"></i>Download {{ $isOriginal ? 'Original File' : 'Updated File (v'.$att->version.')' }}
+                                </a>
+                                @endcan
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @empty
+                {{-- Fallback if legacy attachment --}}
+                <div class="col-md-6">
+                    <div class="card h-100 border-primary" style="border-radius:12px;">
+                        <div class="card-header bg-primary bg-opacity-10 text-primary py-2 px-3 fw-600">
+                            <span class="badge bg-secondary text-white me-1">Original File</span> Attachment
+                        </div>
+                        <div class="card-body p-3 d-flex flex-column">
+                            <div class="fw-700 text-break mb-2">{{ $file->attachment_name }}</div>
+                            <div class="mt-auto">
+                                @can('download', $file)
+                                <a href="{{ route('files.download', $file->uuid) }}" class="btn btn-sm btn-primary w-100 fw-600">
+                                    <i class="fa-solid fa-download me-1"></i>Download Attachment
+                                </a>
+                                @endcan
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endforelse
+        </div>
+    </div>
+</div>
+@endif
+
 {{-- MOVEMENT & TIME SPENT HISTORY TABLE --}}
 <div class="portal-card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
@@ -444,7 +591,7 @@
 {{-- Modal: Department Officer Done & Send to Dept Admin --}}
 <div class="modal fade" id="officerDoneModal" tabindex="-1" aria-labelledby="officerDoneModalLabel" aria-hidden="true" style="z-index: 1060;">
     <div class="modal-dialog modal-dialog-centered">
-        <form action="{{ route('files.officerDone', $file->uuid) }}" method="POST" class="modal-content shadow-lg border-0" style="border-radius:16px; background:#ffffff; overflow:visible;">
+        <form action="{{ route('files.officerDone', $file->uuid) }}" method="POST" enctype="multipart/form-data" class="modal-content shadow-lg border-0" style="border-radius:16px; background:#ffffff; overflow:visible;">
             @csrf
             <div class="modal-header border-bottom">
                 <h5 class="modal-title fw-700" id="officerDoneModalLabel">
@@ -468,6 +615,13 @@
                 <div class="mb-3">
                     <label class="form-label fw-600" for="officer_remarks">Completion Notes / Action Summary</label>
                     <textarea name="remarks" id="officer_remarks" rows="3" class="form-control" placeholder="Summarize the action taken on this file..."></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-600" for="officer_attachment">
+                        <i class="fa-solid fa-cloud-arrow-up text-primary me-1"></i>Attach Updated File (Optional)
+                    </label>
+                    <input type="file" name="attachment" id="officer_attachment" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png">
+                    <div class="form-text text-muted">Upload the updated version after completing your action. It moves side-by-side without overwriting existing versions.</div>
                 </div>
             </div>
             <div class="modal-footer border-top bg-light" style="border-bottom-left-radius:16px; border-bottom-right-radius:16px;">
@@ -663,5 +817,42 @@
     </div>
 </div>
 @endif
+
+{{-- Modal: Upload Updated Document Attachment (Side-by-Side Versioning) --}}
+<div class="modal fade" id="uploadUpdatedAttachmentModal" tabindex="-1" aria-labelledby="uploadUpdatedAttachmentModalLabel" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered">
+        <form action="{{ route('files.attachments.upload', $file->uuid) }}" method="POST" enctype="multipart/form-data" class="modal-content shadow-lg border-0" style="border-radius:16px; background:#ffffff;">
+            @csrf
+            <div class="modal-header border-bottom bg-primary text-white" style="border-top-left-radius:16px; border-top-right-radius:16px;">
+                <h5 class="modal-title fw-700 text-white" id="uploadUpdatedAttachmentModalLabel">
+                    <i class="fa-solid fa-cloud-arrow-up me-2"></i>Attach Updated File (Side-by-Side Version)
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="alert alert-info py-2 px-3 fs-sm mb-3">
+                    <i class="fa-solid fa-circle-info me-1"></i>
+                    <strong>Note:</strong> Uploading an updated file will <strong>not</strong> overwrite existing versions. It moves side-by-side with previous versions and is marked as the <strong>Updated File</strong> for subsequent actioning.
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-600" for="updated_attachment_input">Select Updated File <span class="text-danger">*</span></label>
+                    <input type="file" name="attachment" id="updated_attachment_input" class="form-control" required accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png">
+                    <div class="form-text text-muted">Allowed formats: PDF, Word (DOC/DOCX), Excel (XLS/XLSX), PPT, Images (Max 10MB)</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-600" for="updated_attachment_notes">Notes on Changes / Updates (Optional)</label>
+                    <textarea name="notes" id="updated_attachment_notes" rows="3" class="form-control" placeholder="Describe the updates or edits made to this document..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer border-top bg-light" style="border-bottom-left-radius:16px; border-bottom-right-radius:16px;">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary fw-700 px-4">
+                    <i class="fa-solid fa-cloud-arrow-up me-1"></i>Upload &amp; Mark as Updated File
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 @endsection
 

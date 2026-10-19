@@ -61,6 +61,8 @@ Route::middleware(['auth', 'verified', 'no.cache', 'force.pwd.change'])->group(f
     Route::get('/files/{file}/edit', [FileRecordController::class, 'edit'])->name('files.edit');
     Route::put('/files/{file}', [FileRecordController::class, 'update'])->name('files.update');
     Route::get('/files/{file}/download', [FileRecordController::class, 'download'])->name('files.download');
+    Route::post('/files/{file}/attachments', [FileRecordController::class, 'uploadAttachment'])->middleware('throttle:30,1')->name('files.attachments.upload');
+    Route::get('/files/{file}/attachments/{attachment}', [FileRecordController::class, 'downloadAttachment'])->name('files.attachments.download');
     Route::post('/files/{file}/toggle-public', [FileRecordController::class, 'togglePublicVisibility'])->middleware('throttle:30,1')->name('files.togglePublic');
     Route::get('/files/{uuid}/timeline', [FileTimelineController::class, 'show'])->name('files.timeline');
 

@@ -201,6 +201,18 @@ class FileRecordController extends Controller
                 'attachment_name' => $safeOriginalName,
                 'attachment_mime' => $uploaded->getClientMimeType(),
             ]);
+
+            \App\Models\FileAttachment::create([
+                'file_record_id' => $file->id,
+                'user_id' => Auth::id(),
+                'attachment_path' => $path,
+                'attachment_name' => $safeOriginalName,
+                'attachment_mime' => $uploaded->getClientMimeType(),
+                'version' => 1,
+                'version_label' => 'Original File',
+                'is_latest' => true,
+                'notes' => 'Original document attached during file creation',
+            ]);
         }
 
         FileMovement::create([
@@ -249,17 +261,34 @@ class FileRecordController extends Controller
         ]);
 
         if ($request->hasFile('attachment')) {
-            if ($file->attachment_path && Storage::disk('private')->exists($file->attachment_path)) {
-                Storage::disk('private')->delete($file->attachment_path);
-            }
-
             $uploaded = $request->file('attachment');
             $storedName = Str::uuid()->toString().'.'.$uploaded->extension();
             $path = $uploaded->storeAs('files/'.$file->uuid, $storedName, 'private');
+            $origName = pathinfo($uploaded->getClientOriginalName(), PATHINFO_FILENAME);
+            $origExt  = $uploaded->getClientOriginalExtension();
+            $safeOriginalName = (Str::slug($origName) ?: 'document') . '.' . ($origExt ?: 'bin');
+
+            // Do not delete existing attachment — move side by side
+            $file->attachments()->update(['is_latest' => false]);
+
+            $nextVersion = ((int) $file->attachments()->max('version')) + 1;
+            $label = $nextVersion === 1 ? 'Original File' : "Version {$nextVersion} (Updated)";
+
+            \App\Models\FileAttachment::create([
+                'file_record_id' => $file->id,
+                'user_id' => Auth::id(),
+                'attachment_path' => $path,
+                'attachment_name' => $safeOriginalName,
+                'attachment_mime' => $uploaded->getClientMimeType(),
+                'version' => $nextVersion,
+                'version_label' => $label,
+                'is_latest' => true,
+                'notes' => 'Updated document attached during file update',
+            ]);
 
             $file->update([
                 'attachment_path' => $path,
-                'attachment_name' => $uploaded->getClientOriginalName(),
+                'attachment_name' => $safeOriginalName,
                 'attachment_mime' => $uploaded->getClientMimeType(),
             ]);
         }
@@ -278,6 +307,7 @@ class FileRecordController extends Controller
             'currentDepartment',
             'creator',
             'currentHolder',
+            'attachments.uploader.department',
             'movements.fromUser',
             'movements.toUser',
             'movements.fromDept',
@@ -293,14 +323,96 @@ class FileRecordController extends Controller
     {
         $this->authorize('download', $file);
 
-        if (! $file->attachment_path || ! Storage::disk('private')->exists($file->attachment_path)) {
+        $latest = $file->latestAttachment;
+        $path = $latest?->attachment_path ?? $file->attachment_path;
+        $name = $latest?->attachment_name ?? $file->attachment_name ?? $file->file_name;
+
+        if (! $path || ! Storage::disk('private')->exists($path)) {
             return redirect()->route('files.show', $file->uuid)
                 ->with('error', 'Attachment not found.');
         }
 
+        return Storage::disk('private')->download($path, $name);
+    }
+
+    /**
+     * Upload an updated document attachment without overriding the existing one.
+     * Attachments move side by side, with the new one marked as the updated file for actioning.
+     */
+    public function uploadAttachment(Request $request, FileRecord $file)
+    {
+        $this->authorize('view', $file);
+
+        $request->validate([
+            'attachment' => 'required|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png|max:10240',
+            'notes' => 'nullable|string|max:1000',
+        ]);
+
+        $uploaded = $request->file('attachment');
+        $storedName = Str::uuid()->toString().'.'.$uploaded->extension();
+        $path = $uploaded->storeAs('files/'.$file->uuid, $storedName, 'private');
+        $origName = pathinfo($uploaded->getClientOriginalName(), PATHINFO_FILENAME);
+        $origExt  = $uploaded->getClientOriginalExtension();
+        $safeOriginalName = (Str::slug($origName) ?: 'document') . '.' . ($origExt ?: 'bin');
+
+        // Mark existing attachments as not latest
+        $file->attachments()->update(['is_latest' => false]);
+
+        $nextVersion = ((int) $file->attachments()->max('version')) + 1;
+        $label = $nextVersion === 1 ? 'Original File' : "Version {$nextVersion} (Updated)";
+
+        \App\Models\FileAttachment::create([
+            'file_record_id' => $file->id,
+            'user_id' => Auth::id(),
+            'attachment_path' => $path,
+            'attachment_name' => $safeOriginalName,
+            'attachment_mime' => $uploaded->getClientMimeType(),
+            'version' => $nextVersion,
+            'version_label' => $label,
+            'is_latest' => true,
+            'notes' => $request->string('notes')->trim()->value() ?: 'Updated file attached after actioning',
+        ]);
+
+        // Keep file_records table synchronized with latest version
+        $file->update([
+            'attachment_path' => $path,
+            'attachment_name' => $safeOriginalName,
+            'attachment_mime' => $uploaded->getClientMimeType(),
+        ]);
+
+        FileMovement::create([
+            'file_id' => $file->id,
+            'from_user' => Auth::id(),
+            'to_user' => $file->current_user_id,
+            'from_department' => Auth::user()->department_id,
+            'to_department' => $file->current_department_id,
+            'action' => 'attachment_updated',
+            'remarks' => "Updated file attachment ({$safeOriginalName}, {$label}) uploaded by ".Auth::user()->name,
+        ]);
+
+        return redirect()->route('files.show', $file->uuid)
+            ->with('success', "Updated attachment '{$safeOriginalName}' uploaded successfully. It is now marked as the active file for actioning.");
+    }
+
+    /**
+     * Download a specific version of a file attachment.
+     */
+    public function downloadAttachment(FileRecord $file, \App\Models\FileAttachment $attachment)
+    {
+        $this->authorize('download', $file);
+
+        if ((int) $attachment->file_record_id !== (int) $file->id) {
+            abort(404, 'Attachment does not belong to this file.');
+        }
+
+        if (! $attachment->attachment_path || ! Storage::disk('private')->exists($attachment->attachment_path)) {
+            return redirect()->route('files.show', $file->uuid)
+                ->with('error', 'Attachment file not found on disk.');
+        }
+
         return Storage::disk('private')->download(
-            $file->attachment_path,
-            $file->attachment_name ?: $file->file_name
+            $attachment->attachment_path,
+            $attachment->attachment_name ?: $file->file_name
         );
     }
 

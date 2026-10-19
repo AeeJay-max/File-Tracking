@@ -4,7 +4,7 @@ namespace App\Notifications;
 
 use App\Models\ActingAssignment;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class ChiefDirectorAssignedNotification extends Notification
@@ -15,7 +15,25 @@ class ChiefDirectorAssignedNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database'];
+        $channels = ['database'];
+        if (!empty($notifiable->email)) {
+            $channels[] = 'mail';
+        }
+        return $channels;
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        $file = $this->assignment->file;
+        $assigner = $this->assignment->assignedBy;
+        $url = route('chief_director.files.show', $file->uuid ?? '');
+
+        return (new MailMessage)
+            ->subject('[File Tracking] Delegated Acting PermSec Authority: ' . ($file->file_number ?? 'File'))
+            ->greeting('Hello ' . ($notifiable->name ?? 'Chief Director') . ',')
+            ->line('The ' . ($assigner->name ?? 'Permanent Secretary') . ' has delegated Acting Permanent Secretary authority to you on file **' . ($file->file_number ?? '') . '**.')
+            ->line('**Instructions:** ' . $this->assignment->instructions)
+            ->action('Open File & Take Action', $url);
     }
 
     public function toDatabase(object $notifiable): array

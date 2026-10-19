@@ -5,7 +5,7 @@ namespace App\Notifications;
 use App\Models\Department;
 use App\Models\FileTransfer;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 /**
@@ -23,7 +23,37 @@ class FileAssignmentPendingNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database'];
+        $channels = ['database'];
+        if (!empty($notifiable->email)) {
+            $channels[] = 'mail';
+        }
+        return $channels;
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        $file = $this->transfer->file;
+        $sender = $this->transfer->sender;
+        $url = route('admin.files.pending');
+
+        $mail = (new MailMessage)
+            ->subject('[File Tracking] File Assignment Pending: ' . ($file->file_number ?? 'Document'))
+            ->greeting('Hello ' . ($notifiable->name ?? 'Department Admin') . ',')
+            ->line('A file has been dispatched to your department (' . $this->targetDept->name . ') and is awaiting assignment to an officer.')
+            ->line('**File Number:** ' . ($file->file_number ?? 'N/A'))
+            ->line('**File Title:** ' . ($file->file_name ?? 'N/A'))
+            ->line('**Transferred By:** ' . ($sender->name ?? 'System'));
+
+        if (!empty($this->transfer->carried_by)) {
+            $mail->line('**Carried By:** ' . $this->transfer->carried_by);
+        }
+
+        if (!empty($this->transfer->remarks)) {
+            $mail->line('**Remarks / Directives:** ' . $this->transfer->remarks);
+        }
+
+        return $mail->action('Assign File to Officer', $url)
+            ->line('Please log in and assign this file to a handling officer.');
     }
 
     public function toDatabase(object $notifiable): array

@@ -376,9 +376,12 @@
             <tbody>
             @forelse($files as $i => $file)
             @php
-                $isUrgent = (bool) $file->is_urgent;
-                $hasDeadline = $file->return_deadline !== null;
-                $isOverdue = $file->isOverdue();
+                $cDeptCode = strtoupper((string) ($file->currentDepartment?->code ?? ''));
+                $cDeptName = \Illuminate\Support\Str::lower((string) ($file->currentDepartment?->name ?? ''));
+                $isInRecords = ($cDeptCode === 'REC' || \Illuminate\Support\Str::contains($cDeptName, 'record'));
+                $isUrgent = (bool) $file->is_urgent && ! $isInRecords;
+                $hasDeadline = $file->return_deadline !== null && ! $isInRecords;
+                $isOverdue = $file->isOverdue() && ! $isInRecords;
             @endphp
             <tr class="{{ $isUrgent || $isOverdue ? 'table-danger border-start border-danger border-4' : '' }}">
                 <td class="col-num text-muted text-center fw-600">{{ $files->firstItem() + $i }}</td>
