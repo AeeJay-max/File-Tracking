@@ -83,12 +83,9 @@
             @endcan
         @elseif($isRecordsDept && $file->recommendedDepartment)
             {{-- Records Admin: Send to Recommended Department --}}
-            <form action="{{ route('files.dispatchRecommended', $file->uuid) }}" method="POST" class="d-inline">
-                @csrf
-                <button type="submit" class="btn-portal-primary">
-                    <i class="fa-solid fa-paper-plane me-1"></i>Send to {{ $file->recommendedDepartment->name }}
-                </button>
-            </form>
+            <button type="button" class="btn-portal-primary" data-bs-toggle="modal" data-bs-target="#dispatchRecommendedModal">
+                <i class="fa-solid fa-paper-plane me-1"></i>Send to {{ $file->recommendedDepartment->name }}
+            </button>
             @can('transfer', $file)
             <a href="{{ route('files.transfer.create', $file->uuid) }}" class="btn-portal-outline">
                 <i class="fa-solid fa-right-left me-1"></i>Manual Transfer
@@ -155,12 +152,9 @@
             <div class="small text-muted">Recommended for dispatch by {{ $file->movements->last()?->fromUser?->name ?? 'Executive' }}. Click button to dispatch directly to department admin.</div>
         </div>
     </div>
-    <form action="{{ route('files.dispatchRecommended', $file->uuid) }}" method="POST">
-        @csrf
-        <button type="submit" class="btn btn-warning fw-700 shadow-sm">
-            <i class="fa-solid fa-paper-plane me-1"></i>Send to {{ $file->recommendedDepartment->name }}
-        </button>
-    </form>
+    <button type="button" class="btn btn-warning fw-700 shadow-sm" data-bs-toggle="modal" data-bs-target="#dispatchRecommendedModal">
+        <i class="fa-solid fa-paper-plane me-1"></i>Send to {{ $file->recommendedDepartment->name }}
+    </button>
 </div>
 @endif
 
@@ -348,6 +342,13 @@
                             @if($m->toUser?->designation)
                                 <div class="text-muted fs-sm">{{ $m->toUser->designation->name }}</div>
                             @endif
+                            @if($m->carried_by)
+                                <div class="mt-1">
+                                    <span class="badge bg-light text-dark border fs-xs" style="font-weight:600;">
+                                        <i class="fa-solid fa-person-walking text-primary me-1"></i>Carried by: {{ $m->carried_by }}
+                                    </span>
+                                </div>
+                            @endif
                         </td>
                         <td class="text-muted fs-sm">{{ $m->toDept->name ?? ($m->fromDept->name ?? '—') }}</td>
                         <td class="fs-sm">{{ $m->created_at->format('d M Y, h:i A') }}</td>
@@ -421,6 +422,13 @@
                 <div class="mb-3">
                     <label class="form-label fw-600" for="permsec_remarks">Executive Directives / Remarks</label>
                     <textarea name="remarks" id="permsec_remarks" rows="3" class="form-control" placeholder="Enter instructions for Records and target department..."></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-600" for="permsec_carrier">
+                        <i class="fa-solid fa-person-walking text-primary me-1"></i>Person Taking / Carrying File to Records
+                    </label>
+                    <input type="text" name="carried_by" id="permsec_carrier" class="form-control" placeholder="Enter name of person taking the physical file…">
+                    <div class="form-text text-muted">Recorded as sent to Records and the one who carried it was this person.</div>
                 </div>
             </div>
             <div class="modal-footer border-top bg-light" style="border-bottom-left-radius:16px; border-bottom-right-radius:16px;">
@@ -500,10 +508,58 @@
                     <label class="form-label fw-600" for="admin_remarks">Departmental Return Remarks</label>
                     <textarea name="remarks" id="admin_remarks" rows="3" class="form-control" placeholder="Enter notes for Records..."></textarea>
                 </div>
+                <div class="mb-3">
+                    <label class="form-label fw-600" for="admin_carrier">
+                        <i class="fa-solid fa-person-walking text-primary me-1"></i>Person Taking / Carrying File to Records
+                    </label>
+                    <input type="text" name="carried_by" id="admin_carrier" class="form-control" placeholder="Enter name of person taking the physical file…">
+                    <div class="form-text text-muted">Recorded as sent to Records and the one who carried it was this person.</div>
+                </div>
             </div>
             <div class="modal-footer border-top bg-light" style="border-bottom-left-radius:16px; border-bottom-right-radius:16px;">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                 <button type="submit" class="btn-portal-primary"><i class="fa-solid fa-paper-plane me-1"></i>Send Back to Records</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
+
+@if($isRecordsDept && $file->recommendedDepartment)
+{{-- Modal: Records Admin Send to Recommended Department --}}
+<div class="modal fade" id="dispatchRecommendedModal" tabindex="-1" aria-labelledby="dispatchRecommendedModalLabel" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered">
+        <form action="{{ route('files.dispatchRecommended', $file->uuid) }}" method="POST" class="modal-content shadow-lg border-0" style="border-radius:16px; background:#ffffff;">
+            @csrf
+            <div class="modal-header border-bottom bg-warning bg-opacity-10" style="border-top-left-radius:16px; border-top-right-radius:16px;">
+                <h5 class="modal-title fw-700 text-dark" id="dispatchRecommendedModalLabel">
+                    <i class="fa-solid fa-paper-plane text-warning me-2"></i>Send to {{ $file->recommendedDepartment->name }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted fs-sm mb-3">
+                    You are dispatching this file to the recommended handling department: <strong>{{ $file->recommendedDepartment->name }} ({{ $file->recommendedDepartment->code }})</strong>.
+                </p>
+                <div class="mb-3">
+                    <label class="form-label fw-600" for="dispatch_carrier">
+                        <i class="fa-solid fa-person-walking text-primary me-1"></i>Person Taking / Carrying File
+                    </label>
+                    <input type="text"
+                           name="carried_by"
+                           id="dispatch_carrier"
+                           class="form-control"
+                           placeholder="Enter name of person taking the physical file…">
+                    <div class="form-text text-muted">
+                        Recorded as sent to this department and the one who carried it was this person.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top bg-light" style="border-bottom-left-radius:16px; border-bottom-right-radius:16px;">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-warning fw-700 px-4">
+                    <i class="fa-solid fa-paper-plane me-1"></i>Confirm &amp; Send File
+                </button>
             </div>
         </form>
     </div>

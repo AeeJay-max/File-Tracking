@@ -307,6 +307,13 @@
                             @if($m->toUser?->designation)
                                 <div class="text-muted fs-sm">{{ $m->toUser->designation->name }}</div>
                             @endif
+                            @if($m->carried_by)
+                                <div class="mt-1">
+                                    <span class="badge bg-light text-dark border fs-xs" style="font-weight:600;">
+                                        <i class="fa-solid fa-person-walking text-primary me-1"></i>Carried by: {{ $m->carried_by }}
+                                    </span>
+                                </div>
+                            @endif
                         </td>
                         <td class="text-muted fs-sm">{{ $m->toDept->name ?? ($m->fromDept->name ?? '—') }}</td>
                         <td class="fs-sm">{{ $m->created_at->format('d M Y, h:i A') }}</td>

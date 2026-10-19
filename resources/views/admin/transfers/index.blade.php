@@ -106,7 +106,16 @@
                         </div>
                     </td>
                     <td class="text-muted fs-sm">{{ $move->fromDept->name ?? '—' }}</td>
-                    <td class="text-muted fs-sm">{{ $move->toDept->name ?? '—' }}</td>
+                    <td class="text-muted fs-sm">
+                        {{ $move->toDept->name ?? '—' }}
+                        @if($move->carried_by)
+                            <div class="mt-1">
+                                <span class="badge bg-light text-success border fs-xs" style="font-weight:600;">
+                                    <i class="fa-solid fa-person-walking me-1"></i>Carried by: {{ $move->carried_by }}
+                                </span>
+                            </div>
+                        @endif
+                    </td>
                     <td class="text-muted fs-sm">{{ $move->created_at->format('d M Y, h:i A') }}</td>
                     <td class="text-muted fs-sm" style="max-width:180px;">
                         {{ $move->remarks ? Str::limit($move->remarks, 60) : '—' }}

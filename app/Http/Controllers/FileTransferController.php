@@ -90,6 +90,7 @@ class FileTransferController extends Controller
             'destination_type' => 'required|in:user,same,other,department',
             'to_user_id' => 'required_if:destination_type,user,same|nullable|integer|exists:users,id',
             'department_id' => 'required_if:destination_type,other,department|nullable|integer|exists:departments,id',
+            'carried_by' => 'nullable|string|max:255',
             'remarks' => 'nullable|string|max:1000',
             'return_minutes' => 'nullable|integer|min:1',
             'is_urgent' => 'nullable|boolean',
@@ -107,6 +108,7 @@ class FileTransferController extends Controller
         }
 
         $remarks = $request->string('remarks')->trim()->value() ?: null;
+        $carriedBy = $request->string('carried_by')->trim()->value() ?: null;
         $isRecordsStaff = ($currentUser->department?->code === 'REC' || Str::contains(Str::lower($currentUser->department?->name ?? ''), 'record'));
 
         // RULE: Only lock destination if Permanent Secretary was the immediate sender who assigned the recommended department.
@@ -157,7 +159,7 @@ class FileTransferController extends Controller
                 if ($targetDept) {
                     $file->update(['recommended_department_id' => $targetDept->id]);
                 }
-                return $this->transferToUser($file, $currentUser, $recAdmin, 'Non-records department transfer returned to Records. Recommended Dept: '.($targetDept?->name ?? 'None').'. Notes: '.($remarks ?? 'N/A'));
+                return $this->transferToUser($file, $currentUser, $recAdmin, 'Non-records department transfer returned to Records. Recommended Dept: '.($targetDept?->name ?? 'None').'. Notes: '.($remarks ?? 'N/A'), null, false, $carriedBy);
             }
         }
 
@@ -213,13 +215,13 @@ class FileTransferController extends Controller
             $returnMinutes = $request->filled('return_minutes') ? (int) $request->return_minutes : null;
             $isUrgent = $request->boolean('is_urgent');
 
-            return $this->transferToUser($file, $currentUser, $targetUser, $remarks, $returnMinutes, $isUrgent);
+            return $this->transferToUser($file, $currentUser, $targetUser, $remarks, $returnMinutes, $isUrgent, $carriedBy);
         }
 
         $returnMinutes = $request->filled('return_minutes') ? (int) $request->return_minutes : null;
         $isUrgent = $request->boolean('is_urgent');
 
-        return $this->transferToDepartment($file, $currentUser, (int) $request->department_id, $remarks, $returnMinutes, $isUrgent);
+        return $this->transferToDepartment($file, $currentUser, (int) $request->department_id, $remarks, $returnMinutes, $isUrgent, $carriedBy);
     }
 
     /**
@@ -332,7 +334,7 @@ class FileTransferController extends Controller
     // PRIVATE HELPERS
     // ─────────────────────────────────────────────────────────────
 
-    private function transferToUser(FileRecord $file, User $currentUser, User $targetUser, ?string $remarks, ?int $returnMinutes = null, bool $isUrgent = false): RedirectResponse
+    private function transferToUser(FileRecord $file, User $currentUser, User $targetUser, ?string $remarks, ?int $returnMinutes = null, bool $isUrgent = false, ?string $carriedBy = null): RedirectResponse
     {
         if ($targetUser->id === $currentUser->id) {
             return back()->with('error', 'You cannot transfer a file to yourself.');
@@ -340,14 +342,25 @@ class FileTransferController extends Controller
 
         $transfer = null;
 
-        DB::transaction(function () use ($file, $currentUser, $targetUser, $remarks, $returnMinutes, $isUrgent, &$transfer) {
+        DB::transaction(function () use ($file, $currentUser, $targetUser, $remarks, $returnMinutes, $isUrgent, $carriedBy, &$transfer) {
             $transfer = FileTransfer::create([
                 'file_id' => $file->id,
                 'sender_id' => $currentUser->id,
                 'receiver_id' => $targetUser->id,
+                'carried_by' => $carriedBy,
                 'remarks' => $remarks,
                 'transferred_at' => now(),
             ]);
+
+            $isPermSecTarget = ($targetUser->designation?->name === 'Permanent Secretary' || $targetUser->email === 'permsec@filetrack.local');
+            $targetDeptName = $targetUser->department?->name ?? 'Department';
+            $destLabel = $isPermSecTarget ? 'the Permanent Secretary' : "{$targetDeptName} ({$targetUser->name})";
+
+            $movementRemarks = $remarks ?? 'Transferred to '.$targetUser->name;
+            if ($carriedBy) {
+                $carrierNote = "Sent to {$destLabel} and the one who carried it was {$carriedBy}.";
+                $movementRemarks = $movementRemarks ? ($movementRemarks . " [{$carrierNote}]") : $carrierNote;
+            }
 
             FileMovement::create([
                 'file_id' => $file->id,
@@ -356,7 +369,8 @@ class FileTransferController extends Controller
                 'from_department' => $currentUser->department_id,
                 'to_department' => $targetUser->department_id,
                 'action' => 'transferred',
-                'remarks' => $remarks ?? 'Transferred to '.$targetUser->name,
+                'carried_by' => $carriedBy,
+                'remarks' => $movementRemarks,
             ]);
 
             $targetDeptCode = strtoupper((string) ($targetUser->department?->code ?? ''));
@@ -395,7 +409,7 @@ class FileTransferController extends Controller
             ->with('success', 'File transferred successfully to '.$targetUser->name.'.');
     }
 
-    private function transferToDepartment(FileRecord $file, User $currentUser, int $deptId, ?string $remarks, ?int $returnMinutes = null, bool $isUrgent = false): RedirectResponse
+    private function transferToDepartment(FileRecord $file, User $currentUser, int $deptId, ?string $remarks, ?int $returnMinutes = null, bool $isUrgent = false, ?string $carriedBy = null): RedirectResponse
     {
         $targetDept = Department::findOrFail($deptId);
 
@@ -406,15 +420,22 @@ class FileTransferController extends Controller
 
         $transfer = null;
 
-        DB::transaction(function () use ($file, $currentUser, $targetDept, $remarks, $returnMinutes, $isUrgent, &$transfer) {
+        DB::transaction(function () use ($file, $currentUser, $targetDept, $remarks, $returnMinutes, $isUrgent, $carriedBy, &$transfer) {
             // Record the transfer with no receiver — department owns it now
             $transfer = FileTransfer::create([
                 'file_id' => $file->id,
                 'sender_id' => $currentUser->id,
                 'receiver_id' => null,
+                'carried_by' => $carriedBy,
                 'remarks' => $remarks,
                 'transferred_at' => now(),
             ]);
+
+            $movementRemarks = $remarks ?? 'Cross-department transfer to '.$targetDept->name;
+            if ($carriedBy) {
+                $carrierNote = "Sent to {$targetDept->name} and the one who carried it was {$carriedBy}.";
+                $movementRemarks = $movementRemarks ? ($movementRemarks . " [{$carrierNote}]") : $carrierNote;
+            }
 
             FileMovement::create([
                 'file_id' => $file->id,
@@ -423,7 +444,8 @@ class FileTransferController extends Controller
                 'from_department' => $currentUser->department_id,
                 'to_department' => $targetDept->id,
                 'action' => 'transferred',
-                'remarks' => $remarks ?? 'Cross-department transfer to '.$targetDept->name,
+                'carried_by' => $carriedBy,
+                'remarks' => $movementRemarks,
             ]);
 
             $targetDeptCode = strtoupper((string) ($targetDept->code ?? ''));
@@ -489,6 +511,7 @@ class FileTransferController extends Controller
 
         $request->validate([
             'recommended_department_id' => 'nullable|exists:departments,id',
+            'carried_by' => 'nullable|string|max:255',
             'remarks' => 'nullable|string|max:1000',
         ]);
 
@@ -497,6 +520,7 @@ class FileTransferController extends Controller
             ? Department::find($request->recommended_department_id)
             : null;
 
+        $carriedBy = $request->string('carried_by')->trim()->value() ?: null;
         $userRemarks = $request->string('remarks')->trim()->value();
         $fullRemarks = 'Permanent Secretary completed review.';
         if ($targetDept) {
@@ -511,7 +535,7 @@ class FileTransferController extends Controller
             'recommended_department_id' => $targetDept ? $targetDept->id : $file->recommended_department_id,
         ]);
 
-        return $this->transferToUser($file, $currentUser, $recAdmin, $fullRemarks);
+        return $this->transferToUser($file, $currentUser, $recAdmin, $fullRemarks, null, false, $carriedBy);
     }
 
     /**
@@ -527,6 +551,7 @@ class FileTransferController extends Controller
 
         $request->validate([
             'recommended_department_id' => 'nullable|exists:departments,id',
+            'carried_by' => 'nullable|string|max:255',
             'remarks' => 'nullable|string|max:1000',
         ]);
 
@@ -543,6 +568,7 @@ class FileTransferController extends Controller
             ? Department::find($request->recommended_department_id)
             : null;
 
+        $carriedBy = $request->string('carried_by')->trim()->value() ?: null;
         $userRemarks = $request->string('remarks')->trim()->value();
         $fullRemarks = 'Officer '.$currentUser->name.' completed assigned task.';
         if ($targetDept) {
@@ -556,7 +582,7 @@ class FileTransferController extends Controller
             $file->update(['recommended_department_id' => $targetDept->id]);
         }
 
-        return $this->transferToUser($file, $currentUser, $deptAdmin, $fullRemarks);
+        return $this->transferToUser($file, $currentUser, $deptAdmin, $fullRemarks, null, false, $carriedBy);
     }
 
     /**
@@ -572,6 +598,7 @@ class FileTransferController extends Controller
 
         $request->validate([
             'recommended_department_id' => 'nullable|exists:departments,id',
+            'carried_by' => 'nullable|string|max:255',
             'remarks' => 'nullable|string|max:1000',
         ]);
 
@@ -580,6 +607,7 @@ class FileTransferController extends Controller
             ? Department::find($request->recommended_department_id)
             : null;
 
+        $carriedBy = $request->string('carried_by')->trim()->value() ?: null;
         $userRemarks = $request->string('remarks')->trim()->value();
         $fullRemarks = 'Department Admin returned file to Records.';
         if ($targetDept) {
@@ -593,7 +621,7 @@ class FileTransferController extends Controller
             $file->update(['recommended_department_id' => $targetDept->id]);
         }
 
-        return $this->transferToUser($file, $currentUser, $recAdmin, $fullRemarks);
+        return $this->transferToUser($file, $currentUser, $recAdmin, $fullRemarks, null, false, $carriedBy);
     }
 
     /**
@@ -612,6 +640,10 @@ class FileTransferController extends Controller
             return back()->with('error', 'No recommended handling department is flagged for this file.');
         }
 
+        $request->validate([
+            'carried_by' => 'nullable|string|max:255',
+        ]);
+
         $targetDeptId = (int) $file->recommended_department_id;
         $file->update(['recommended_department_id' => null]);
 
@@ -620,7 +652,9 @@ class FileTransferController extends Controller
             $dispatchRemarks = $file->remarks . "\n[Records Admin]: Dispatched to department.";
         }
 
-        return $this->transferToDepartment($file, $currentUser, $targetDeptId, $dispatchRemarks);
+        $carriedBy = $request->string('carried_by')->trim()->value() ?: null;
+
+        return $this->transferToDepartment($file, $currentUser, $targetDeptId, $dispatchRemarks, null, false, $carriedBy);
     }
 
     private function getRecordsAdmin(): User

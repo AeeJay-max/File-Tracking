@@ -194,6 +194,14 @@
                 <span>{{ $isCurrent ? ($completedAt ? 'Final duration: ' : 'Held so far: ') : 'Time with person: ' }}{{ $durationLabel }}</span>
             </div>
 
+            {{-- Carried by --}}
+            @if($move->carried_by)
+            <div class="tl-carrier my-1" style="font-size:.72rem;background:#f0fdf4;color:#166534;padding:3px 8px;border-radius:6px;font-weight:600;display:inline-flex;align-items:center;gap:4px;border:1px solid #bbf7d0;">
+                <i class="fa-solid fa-person-walking text-success fa-xs"></i>
+                <span>Carried by: <strong>{{ $move->carried_by }}</strong></span>
+            </div>
+            @endif
+
             {{-- Date + Time --}}
             <div class="tl-datetime">
                 <span class="tl-date">

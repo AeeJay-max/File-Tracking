@@ -10,6 +10,7 @@ class FileTransfer extends Model
         'file_id',
         'sender_id',
         'receiver_id',
+        'carried_by',
         'remarks',
         'transferred_at',
     ];

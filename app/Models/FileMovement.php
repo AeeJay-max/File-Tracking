@@ -13,6 +13,7 @@ class FileMovement extends Model
         'from_department',
         'to_department',
         'action',
+        'carried_by',
         'remarks',
     ];
 

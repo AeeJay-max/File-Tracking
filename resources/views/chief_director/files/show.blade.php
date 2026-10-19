@@ -209,7 +209,16 @@
                     <tr>
                         <td class="text-muted fw-600">{{ $i + 1 }}</td>
                         <td>{{ $m->fromUser->name ?? 'System' }}</td>
-                        <td class="fw-600 text-portal-primary">{{ $m->toUser->name ?? ($m->toDept->name ?? 'Department') }}</td>
+                        <td class="fw-600 text-portal-primary">
+                            {{ $m->toUser->name ?? ($m->toDept->name ?? 'Department') }}
+                            @if($m->carried_by)
+                                <div class="mt-1">
+                                    <span class="badge bg-light text-dark border fs-xs" style="font-weight:600;">
+                                        <i class="fa-solid fa-person-walking text-primary me-1"></i>Carried by: {{ $m->carried_by }}
+                                    </span>
+                                </div>
+                            @endif
+                        </td>
                         <td><span class="badge bg-light text-dark border">{{ $m->action }}</span></td>
                         <td class="fs-sm">{{ $m->created_at->format('d M Y, h:i A') }}</td>
                         <td class="fs-sm text-break">{{ $m->remarks ?: '—' }}</td>

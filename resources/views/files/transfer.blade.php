@@ -264,6 +264,37 @@
 
                     @endif {{-- end permsecLockedDept --}}
 
+                    {{-- ── Person Carrying / Delivering File ────────────────── --}}
+                    <div class="mb-4" id="carrierFieldGroup">
+                        <label for="carriedByInput" class="form-label fw-600 d-flex align-items-center justify-content-between">
+                            <span>
+                                <i class="fa-solid fa-person-walking text-primary me-1"></i>
+                                Person Taking / Carrying File <span class="text-muted fw-normal fs-xs">(Carrier / Messenger)</span>
+                            </span>
+                            <span class="badge bg-light text-primary border fw-600 fs-xs" id="carrierHintBadge">
+                                Recorded on file tracking journey
+                            </span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted">
+                                <i class="fa-solid fa-user-tag"></i>
+                            </span>
+                            <input type="text"
+                                   id="carriedByInput"
+                                   name="carried_by"
+                                   class="form-control @error('carried_by') is-invalid @enderror"
+                                   placeholder="Enter name of the person taking the physical file…"
+                                   value="{{ old('carried_by') }}"
+                                   maxlength="255">
+                        </div>
+                        <div class="form-text text-muted" id="carrierHelpText">
+                            <i class="fa-solid fa-circle-info me-1"></i>Enter the name of the person carrying the file to the other department or Permanent Secretary. Recorded as sent to this destination and the one who carried it was this person.
+                        </div>
+                        @error('carried_by')
+                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
                     {{-- ── General Content Body / Message ──────────────────── --}}
                     <div class="mb-4">
                         <label for="remarksInput" class="form-label fw-600">
