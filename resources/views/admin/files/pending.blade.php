@@ -65,7 +65,7 @@
         <table class="portal-table">
             <thead>
                 <tr>
-                    <th>File Number</th>
+                    <th>Folio Number</th>
                     <th>File Name</th>
                     <th>Transferred From</th>
                     <th>Received</th>

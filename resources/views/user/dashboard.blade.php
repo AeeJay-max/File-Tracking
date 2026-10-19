@@ -94,7 +94,7 @@
                         <table class="portal-table">
                             <thead>
                                 <tr>
-                                    <th>File Number</th>
+                                    <th>Folio Number</th>
                                     <th>File Name</th>
                                     <th>Status</th>
                                     <th>Date</th>

@@ -90,7 +90,7 @@
             <table class="portal-table">
                 <thead>
                     <tr>
-                        <th>File Number</th>
+                        <th>Folio Number</th>
                         <th>File Name</th>
                         <th>Created By</th>
                         <th>Received</th>
@@ -133,7 +133,7 @@
                     <table class="portal-table">
                         <thead>
                             <tr>
-                                <th>File Number</th>
+                                <th>Folio Number</th>
                                 <th>Name</th>
                                 <th>Current Holder</th>
                                 <th>Status</th>

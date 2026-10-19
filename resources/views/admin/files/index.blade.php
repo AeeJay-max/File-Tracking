@@ -56,7 +56,7 @@
             <thead>
                 <tr>
                     <th class="d-none d-md-table-cell">#</th>
-                    <th>File Number</th>
+                    <th>Folio Number</th>
                     <th>File Name</th>
                     @if(auth()->user()->role === 'super_admin')
                     <th class="d-none d-lg-table-cell">Department</th>
