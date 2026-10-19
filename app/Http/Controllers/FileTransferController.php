@@ -474,14 +474,20 @@ class FileTransferController extends Controller
         });
 
         if ($transfer) {
-            // Notify all admins of the receiving department
-            $deptAdmins = User::where('department_id', $targetDept->id)
+            // Notify all admins (or active members) of the receiving department
+            $recipients = User::where('department_id', $targetDept->id)
                 ->where('role', 'admin')
                 ->where('is_active', true)
                 ->get();
 
-            foreach ($deptAdmins as $admin) {
-                $admin->notify(new FileAssignmentPendingNotification($transfer, $targetDept));
+            if ($recipients->isEmpty()) {
+                $recipients = User::where('department_id', $targetDept->id)
+                    ->where('is_active', true)
+                    ->get();
+            }
+
+            foreach ($recipients as $recipient) {
+                $recipient->notify(new FileAssignmentPendingNotification($transfer, $targetDept));
             }
 
             // Only broadcast the event if there is a concrete receiver to avoid null-receiver issues
