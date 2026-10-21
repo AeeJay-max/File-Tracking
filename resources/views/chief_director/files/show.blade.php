@@ -133,6 +133,10 @@
                         <div class="fw-700 text-portal-primary">{{ $file->file_number }}</div>
                     </div>
                     <div class="col-sm-6">
+                        <div class="text-muted fs-sm mb-1">Folio Number</div>
+                        <div class="fw-700 text-dark">{{ $file->folio_number ?: $file->file_number }}</div>
+                    </div>
+                    <div class="col-sm-6">
                         <div class="text-muted fs-sm mb-1">Origin Department</div>
                         <div>{{ $file->department->name ?? 'N/A' }}</div>
                     </div>

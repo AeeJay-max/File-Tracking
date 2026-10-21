@@ -387,6 +387,11 @@
                 <td class="col-num text-muted text-center fw-600">{{ $files->firstItem() + $i }}</td>
                 <td class="col-file-folder">
                     <span class="fw-700 text-portal-primary d-block">{{ $file->file_number }}</span>
+                    @if($file->folio_number && $file->folio_number !== $file->file_number)
+                    <small class="text-muted d-block" style="font-size:.74rem;">
+                        <i class="fa-solid fa-tag me-1"></i>{{ $file->folio_number }}
+                    </small>
+                    @endif
                     @if($file->folder)
                     <small class="badge bg-secondary bg-opacity-10 text-dark d-inline-flex align-items-center mt-1">
                         <i class="fa-solid fa-folder me-1 text-primary"></i>{{ $file->folder->folder_number }}

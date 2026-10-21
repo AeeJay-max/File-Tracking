@@ -155,3 +155,48 @@ it('allows creating a file for any department', function () {
         'department_id' => $deptB->id,
     ]);
 });
+
+it('stores both file_number and folio_number and renders them on transfer and show views', function () {
+    $dept = Department::factory()->create(['name' => 'Records', 'code' => 'REC']);
+    $user = User::factory()->create([
+        'role' => 'user',
+        'department_id' => $dept->id,
+        'can_create_file' => true,
+    ]);
+
+    $response = $this->actingAs($user)->post(route('files.store'), [
+        'file_number' => 'FILE-2026-999',
+        'folio_number' => 'FOL-2026-999',
+        'file_name' => 'Important Dossier',
+        'department_id' => $dept->id,
+    ]);
+
+    $response->assertRedirect(route('files.index'));
+
+    $this->assertDatabaseHas('file_records', [
+        'file_number' => 'FILE-2026-999',
+        'folio_number' => 'FOL-2026-999',
+        'file_name' => 'Important Dossier',
+        'department_id' => $dept->id,
+    ]);
+
+    $file = FileRecord::where('file_number', 'FILE-2026-999')->firstOrFail();
+
+    // Verify transfer view
+    $transferView = $this->actingAs($user)->get(route('files.transfer.create', $file->uuid));
+    $transferView->assertOk();
+    $transferView->assertSee('Folio Number');
+    $transferView->assertSee('File Number');
+    $transferView->assertSee('FOL-2026-999');
+    $transferView->assertSee('FILE-2026-999');
+    $transferView->assertDontSee('Document No.');
+
+    // Verify show view
+    $showView = $this->actingAs($user)->get(route('files.show', $file->uuid));
+    $showView->assertOk();
+    $showView->assertSee('Folio Number');
+    $showView->assertSee('File Number');
+    $showView->assertSee('FOL-2026-999');
+    $showView->assertSee('FILE-2026-999');
+});
+

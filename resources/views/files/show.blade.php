@@ -10,7 +10,11 @@
 <div class="page-header">
     <div>
         <h1 class="page-title">{{ $file->file_name }}</h1>
-        <div class="page-subtitle">{{ $file->file_number }}</div>
+        <div class="page-subtitle">
+            <span class="fw-700 text-portal-primary"><i class="fa-solid fa-hashtag me-1"></i>{{ $file->file_number }}</span>
+            <span class="mx-2 text-muted">&bull;</span>
+            <span class="text-muted"><i class="fa-solid fa-tag me-1"></i>Folio: <strong>{{ $file->folio_number ?: $file->file_number }}</strong></span>
+        </div>
     </div>
     @php
         $u = auth()->user();
@@ -183,6 +187,10 @@
                     <div class="col-sm-6">
                         <div class="text-muted fs-sm mb-1">File Number</div>
                         <div class="fw-700 text-portal-primary">{{ $file->file_number }}</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="text-muted fs-sm mb-1">Folio Number</div>
+                        <div class="fw-700 text-dark">{{ $file->folio_number ?: $file->file_number }}</div>
                     </div>
                     <div class="col-sm-6">
                         <div class="text-muted fs-sm mb-1">Department</div>

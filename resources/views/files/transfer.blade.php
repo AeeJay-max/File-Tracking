@@ -50,8 +50,11 @@
             </div>
             <div class="card-body">
                 <dl class="mb-0" style="display:grid;grid-template-columns:auto 1fr;gap:8px 12px;font-size:.85rem;">
-                    <dt class="text-muted fw-600">Document No.</dt>
-                    <dd class="fw-700 text-portal-primary mb-0">{{ $file->file_number }}</dd>
+                    <dt class="text-muted fw-600">Folio Number</dt>
+                    <dd class="fw-700 text-portal-primary mb-0">{{ $file->folio_number ?: $file->file_number }}</dd>
+
+                    <dt class="text-muted fw-600">File Number</dt>
+                    <dd class="fw-700 text-dark mb-0">{{ $file->file_number }}</dd>
 
                     <dt class="text-muted fw-600">Title / Subject</dt>
                     <dd class="fw-600 mb-0">{{ $file->file_name }}</dd>

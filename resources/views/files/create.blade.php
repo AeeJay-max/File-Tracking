@@ -26,25 +26,47 @@
           novalidate>
         @csrf
 
-        {{-- Folio Number --}}
-        <div class="mb-3">
-            <label class="form-label">
-                Folio Number <span class="required-star">*</span>
-            </label>
-            <input type="text"
-                   name="file_number"
-                   class="form-control @error('file_number') is-invalid @enderror"
-                   value="{{ old('file_number') }}"
-                   placeholder="e.g. HR/FIN/2026/234  or  FIN-12/456"
-                   required
-                   autocomplete="off">
-            <div class="form-text text-muted">
-                <i class="fa-solid fa-circle-info me-1"></i>
-                Must be unique. Allowed: letters, numbers, hyphens, slashes, dots, spaces.
+        {{-- File Number & Folio Number --}}
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label class="form-label fw-600">
+                    File Number <span class="required-star">*</span>
+                </label>
+                <input type="text"
+                       name="file_number"
+                       class="form-control font-monospace @error('file_number') is-invalid @enderror"
+                       value="{{ old('file_number') }}"
+                       placeholder="e.g. FILE-2026-001  or  F-1024"
+                       required
+                       autocomplete="off">
+                <div class="form-text text-muted">
+                    <i class="fa-solid fa-circle-info me-1"></i>
+                    Must be unique. Allowed: letters, numbers, hyphens, slashes, dots, spaces.
+                </div>
+                @error('file_number')
+                <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
             </div>
-            @error('file_number')
-            <div class="invalid-feedback">{{ $message }}</div>
-            @enderror
+
+            <div class="col-md-6">
+                <label class="form-label fw-600">
+                    Folio Number <span class="required-star">*</span>
+                </label>
+                <input type="text"
+                       name="folio_number"
+                       class="form-control font-monospace @error('folio_number') is-invalid @enderror"
+                       value="{{ old('folio_number') }}"
+                       placeholder="e.g. FOL-2026-001  or  HR/FIN/2026/234"
+                       required
+                       autocomplete="off">
+                <div class="form-text text-muted">
+                    <i class="fa-solid fa-tag me-1"></i>
+                    The folio reference number for this document.
+                </div>
+                @error('folio_number')
+                <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
         </div>
 
         {{-- Folder Selection (Folder Number & Auto-Filled Folder Name) --}}
