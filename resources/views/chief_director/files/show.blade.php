@@ -133,8 +133,16 @@
                         <div class="fw-700 text-portal-primary">{{ $file->file_number }}</div>
                     </div>
                     <div class="col-sm-6">
-                        <div class="text-muted fs-sm mb-1">Folio Number</div>
-                        <div class="fw-700 text-dark">{{ $file->folio_number ?: $file->file_number }}</div>
+                        <div class="text-muted fs-sm mb-1">Folder Number</div>
+                        <div class="fw-700">
+                            <span class="badge bg-secondary bg-opacity-10 text-dark border">
+                                <i class="fa-solid fa-folder me-1 text-primary"></i>{{ $file->folder->folder_number ?? 'FLD-GENERAL' }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="text-muted fs-sm mb-1">Folder Name</div>
+                        <div class="fw-600 text-dark">{{ $file->folder->folder_name ?? 'General Folder' }}</div>
                     </div>
                     <div class="col-sm-6">
                         <div class="text-muted fs-sm mb-1">Origin Department</div>
@@ -247,6 +255,24 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
+                {{-- Folder & File Indication Banner --}}
+                <div class="alert alert-light border shadow-xs d-flex align-items-center gap-3 mb-3 p-3 rounded" style="background:#f8fafc; border-color:#e2e8f0;">
+                    <div style="width:38px;height:38px;border-radius:8px;background:#e0f2fe;color:#0284c7;display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0;">
+                        <i class="fa-solid fa-folder-open"></i>
+                    </div>
+                    <div class="min-w-0 flex-grow-1">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="badge bg-primary text-white fw-700">
+                                <i class="fa-solid fa-folder me-1"></i>Folder: {{ $file->folder->folder_number ?? 'FLD-GENERAL' }}
+                            </span>
+                            <span class="fw-700 text-dark fs-sm">{{ $file->folder->folder_name ?? 'General Folder' }}</span>
+                        </div>
+                        <div class="text-muted fs-xs mt-1 text-truncate">
+                            Returning File: <strong>{{ $file->file_number }}</strong> &mdash; {{ $file->file_name }}
+                        </div>
+                    </div>
+                </div>
+
                 <div class="alert alert-info bg-opacity-10 border-info text-dark p-3 rounded mb-3">
                     <i class="fa-solid fa-info-circle me-1 text-info"></i>
                     You are completing the action requested by the <strong>Permanent Secretary</strong>. Your action details will be recorded in the official audit trail.

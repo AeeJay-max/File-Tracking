@@ -406,8 +406,11 @@ class FileTransferController extends Controller
 
         $currentUser->markFileNotificationsRead($file);
 
+        $folder = $file->folder;
+        $folderInfo = $folder ? " [Folder: {$folder->folder_number} - {$folder->folder_name}]" : '';
+
         return redirect()->route('files.index')
-            ->with('success', 'File transferred successfully to '.$targetUser->name.'.');
+            ->with('success', "File {$file->file_number}{$folderInfo} transferred successfully to {$targetUser->name}.");
     }
 
     private function transferToDepartment(FileRecord $file, User $currentUser, int $deptId, ?string $remarks, ?int $returnMinutes = null, bool $isUrgent = false, ?string $carriedBy = null): RedirectResponse
@@ -502,8 +505,11 @@ class FileTransferController extends Controller
 
         $currentUser->markFileNotificationsRead($file);
 
+        $folder = $file->folder;
+        $folderInfo = $folder ? " [Folder: {$folder->folder_number} - {$folder->folder_name}]" : '';
+
         return redirect()->route('files.index')
-            ->with('success', 'File transferred to '.$targetDept->name.'. The department admin will assign it to a user.');
+            ->with('success', "File {$file->file_number}{$folderInfo} transferred to {$targetDept->name}. The department admin will assign it to a user.");
     }
 
     /**

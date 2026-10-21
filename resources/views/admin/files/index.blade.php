@@ -207,7 +207,7 @@
             <thead>
                 <tr>
                     <th class="col-num d-none d-md-table-cell">#</th>
-                    <th class="col-folio">File &amp; Folio</th>
+                    <th class="col-folio">Folio Number</th>
                     <th class="col-name">File Name</th>
                     @if(auth()->user()->role === 'super_admin')
                     <th class="col-dept d-none d-lg-table-cell">Department</th>
@@ -228,12 +228,7 @@
                 @endphp
                 <tr>
                     <td class="col-num text-muted d-none d-md-table-cell">{{ $files->firstItem() + $i }}</td>
-                    <td class="col-folio">
-                        <span class="fw-700 text-portal-primary d-block">{{ $file->file_number }}</span>
-                        <small class="text-muted d-block" style="font-size:.78rem;">
-                            <i class="fa-solid fa-tag me-1"></i>{{ $file->folio_number ?: $file->file_number }}
-                        </small>
-                    </td>
+                    <td class="col-folio"><span class="fw-700 text-portal-primary">{{ $file->file_number }}</span></td>
                     <td class="col-name">
                         <div class="fw-600">{{ $file->file_name }}</div>
                         @if($file->attachment_path)

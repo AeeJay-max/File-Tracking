@@ -10,11 +10,7 @@
 <div class="page-header">
     <div>
         <h1 class="page-title">{{ $file->file_name }}</h1>
-        <div class="page-subtitle">
-            <span class="fw-700 text-portal-primary"><i class="fa-solid fa-hashtag me-1"></i>{{ $file->file_number }}</span>
-            <span class="mx-2 text-muted">&bull;</span>
-            <span class="text-muted"><i class="fa-solid fa-tag me-1"></i>Folio: <strong>{{ $file->folio_number ?: $file->file_number }}</strong></span>
-        </div>
+        <div class="page-subtitle">{{ $file->file_number }}</div>
     </div>
     @php
         $u = auth()->user();
@@ -187,10 +183,6 @@
                     <div class="col-sm-6">
                         <div class="text-muted fs-sm mb-1">File Number</div>
                         <div class="fw-700 text-portal-primary">{{ $file->file_number }}</div>
-                    </div>
-                    <div class="col-sm-6">
-                        <div class="text-muted fs-sm mb-1">Folio Number</div>
-                        <div class="fw-700 text-dark">{{ $file->folio_number ?: $file->file_number }}</div>
                     </div>
                     <div class="col-sm-6">
                         <div class="text-muted fs-sm mb-1">Department</div>
@@ -562,6 +554,24 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
+                {{-- Folder & File Indication Banner --}}
+                <div class="alert alert-light border shadow-xs d-flex align-items-center gap-3 mb-3 p-3 rounded" style="background:#f8fafc; border-color:#e2e8f0;">
+                    <div style="width:38px;height:38px;border-radius:8px;background:#e0f2fe;color:#0284c7;display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0;">
+                        <i class="fa-solid fa-folder-open"></i>
+                    </div>
+                    <div class="min-w-0 flex-grow-1">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="badge bg-primary text-white fw-700">
+                                <i class="fa-solid fa-folder me-1"></i>Folder: {{ $file->folder->folder_number ?? 'FLD-GENERAL' }}
+                            </span>
+                            <span class="fw-700 text-dark fs-sm">{{ $file->folder->folder_name ?? 'General Folder' }}</span>
+                        </div>
+                        <div class="text-muted fs-xs mt-1 text-truncate">
+                            Sending File: <strong>{{ $file->file_number }}</strong> &mdash; {{ $file->file_name }}
+                        </div>
+                    </div>
+                </div>
+
                 <p class="text-muted fs-sm mb-3">
                     Select the recommended handling department for this file and enter any directives. The file will be transferred back to <strong>Records Admin</strong> for dispatch.
                 </p>
@@ -608,6 +618,24 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
+                {{-- Folder & File Indication Banner --}}
+                <div class="alert alert-light border shadow-xs d-flex align-items-center gap-3 mb-3 p-3 rounded" style="background:#f8fafc; border-color:#e2e8f0;">
+                    <div style="width:38px;height:38px;border-radius:8px;background:#e0f2fe;color:#0284c7;display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0;">
+                        <i class="fa-solid fa-folder-open"></i>
+                    </div>
+                    <div class="min-w-0 flex-grow-1">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="badge bg-primary text-white fw-700">
+                                <i class="fa-solid fa-folder me-1"></i>Folder: {{ $file->folder->folder_number ?? 'FLD-GENERAL' }}
+                            </span>
+                            <span class="fw-700 text-dark fs-sm">{{ $file->folder->folder_name ?? 'General Folder' }}</span>
+                        </div>
+                        <div class="text-muted fs-xs mt-1 text-truncate">
+                            Sending File: <strong>{{ $file->file_number }}</strong> &mdash; {{ $file->file_name }}
+                        </div>
+                    </div>
+                </div>
+
                 <p class="text-muted fs-sm mb-3">
                     Mark your work on this file as completed. The file will be sent back to your <strong>Department Admin</strong>.
                 </p>
@@ -654,6 +682,24 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
+                {{-- Folder & File Indication Banner --}}
+                <div class="alert alert-light border shadow-xs d-flex align-items-center gap-3 mb-3 p-3 rounded" style="background:#f8fafc; border-color:#e2e8f0;">
+                    <div style="width:38px;height:38px;border-radius:8px;background:#e0f2fe;color:#0284c7;display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0;">
+                        <i class="fa-solid fa-folder-open"></i>
+                    </div>
+                    <div class="min-w-0 flex-grow-1">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="badge bg-primary text-white fw-700">
+                                <i class="fa-solid fa-folder me-1"></i>Folder: {{ $file->folder->folder_number ?? 'FLD-GENERAL' }}
+                            </span>
+                            <span class="fw-700 text-dark fs-sm">{{ $file->folder->folder_name ?? 'General Folder' }}</span>
+                        </div>
+                        <div class="text-muted fs-xs mt-1 text-truncate">
+                            Sending File: <strong>{{ $file->file_number }}</strong> &mdash; {{ $file->file_name }}
+                        </div>
+                    </div>
+                </div>
+
                 <p class="text-muted fs-sm mb-3">
                     Return this file to <strong>Records Admin</strong> so it can be routed to the next designated department or archived.
                 </p>
@@ -700,6 +746,24 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
+                {{-- Folder & File Indication Banner --}}
+                <div class="alert alert-light border shadow-xs d-flex align-items-center gap-3 mb-3 p-3 rounded" style="background:#f8fafc; border-color:#e2e8f0;">
+                    <div style="width:38px;height:38px;border-radius:8px;background:#e0f2fe;color:#0284c7;display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0;">
+                        <i class="fa-solid fa-folder-open"></i>
+                    </div>
+                    <div class="min-w-0 flex-grow-1">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="badge bg-primary text-white fw-700">
+                                <i class="fa-solid fa-folder me-1"></i>Folder: {{ $file->folder->folder_number ?? 'FLD-GENERAL' }}
+                            </span>
+                            <span class="fw-700 text-dark fs-sm">{{ $file->folder->folder_name ?? 'General Folder' }}</span>
+                        </div>
+                        <div class="text-muted fs-xs mt-1 text-truncate">
+                            Sending File: <strong>{{ $file->file_number }}</strong> &mdash; {{ $file->file_name }}
+                        </div>
+                    </div>
+                </div>
+
                 <p class="text-muted fs-sm mb-3">
                     You are dispatching this file to the recommended handling department: <strong>{{ $file->recommendedDepartment->name }} ({{ $file->recommendedDepartment->code }})</strong>.
                 </p>
@@ -775,6 +839,24 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
+                {{-- Folder & File Indication Banner --}}
+                <div class="alert alert-light border shadow-xs d-flex align-items-center gap-3 mb-3 p-3 rounded" style="background:#f8fafc; border-color:#e2e8f0;">
+                    <div style="width:38px;height:38px;border-radius:8px;background:#e0f2fe;color:#0284c7;display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0;">
+                        <i class="fa-solid fa-folder-open"></i>
+                    </div>
+                    <div class="min-w-0 flex-grow-1">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="badge bg-primary text-white fw-700">
+                                <i class="fa-solid fa-folder me-1"></i>Folder: {{ $file->folder->folder_number ?? 'FLD-GENERAL' }}
+                            </span>
+                            <span class="fw-700 text-dark fs-sm">{{ $file->folder->folder_name ?? 'General Folder' }}</span>
+                        </div>
+                        <div class="text-muted fs-xs mt-1 text-truncate">
+                            Sending File: <strong>{{ $file->file_number }}</strong> &mdash; {{ $file->file_name }}
+                        </div>
+                    </div>
+                </div>
+
                 <p class="text-muted fs-sm mb-3">
                     Delegate file action authority to a Chief Director. The Chief Director will receive Acting Permanent Secretary powers strictly for this file.
                 </p>

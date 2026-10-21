@@ -24,36 +24,19 @@
                       novalidate>
                     @csrf
 
-                    {{-- File Number & Folio Number --}}
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-600">
-                                File Number <span class="text-danger">*</span>
-                            </label>
-                            <input type="text"
-                                   name="file_number"
-                                   class="form-control font-monospace"
-                                   placeholder="e.g. FILE-2026-001"
-                                   required
-                                   autocomplete="off">
-                            <div class="form-text text-muted fs-xs">
-                                <i class="fa-solid fa-circle-info me-1"></i>Must be unique.
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label fw-600">
-                                Folio Number <span class="text-danger">*</span>
-                            </label>
-                            <input type="text"
-                                   name="folio_number"
-                                   class="form-control font-monospace"
-                                   placeholder="e.g. FOL-2026-001"
-                                   required
-                                   autocomplete="off">
-                            <div class="form-text text-muted fs-xs">
-                                <i class="fa-solid fa-tag me-1"></i>Folio / document reference.
-                            </div>
+                    {{-- Folio Number --}}
+                    <div class="mb-3">
+                        <label class="form-label fw-600">
+                            Folio Number <span class="text-danger">*</span>
+                        </label>
+                        <input type="text"
+                               name="file_number"
+                               class="form-control"
+                               placeholder="e.g. HR/FIN/2026/234  or  FIN-12/456"
+                               required
+                               autocomplete="off">
+                        <div class="form-text text-muted fs-xs">
+                            <i class="fa-solid fa-circle-info me-1"></i>Must be unique. Allowed: letters, numbers, hyphens, slashes, dots, spaces.
                         </div>
                     </div>
 

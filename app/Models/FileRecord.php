@@ -18,7 +18,6 @@ class FileRecord extends Model
         'recommended_department_id',
         'file_name',
         'file_number',
-        'folio_number',
         'remarks',
         'attachment_path',
         'attachment_name',

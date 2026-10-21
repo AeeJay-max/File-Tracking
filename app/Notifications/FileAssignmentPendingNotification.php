@@ -34,6 +34,9 @@ class FileAssignmentPendingNotification extends Notification
     {
         $file = $this->transfer->file;
         $sender = $this->transfer->sender;
+        $folder = $file?->folder;
+        $folderNumber = $folder->folder_number ?? 'FLD-GENERAL';
+        $folderName = $folder->folder_name ?? 'General Folder';
         $url = route('admin.files.pending');
 
         $mail = (new MailMessage)
@@ -42,6 +45,8 @@ class FileAssignmentPendingNotification extends Notification
             ->line('A file has been dispatched to your department (' . $this->targetDept->name . ') and is awaiting assignment to an officer.')
             ->line('**File Number:** ' . ($file->file_number ?? 'N/A'))
             ->line('**File Title:** ' . ($file->file_name ?? 'N/A'))
+            ->line('**Folder Number:** ' . $folderNumber)
+            ->line('**Folder Name:** ' . $folderName)
             ->line('**Transferred By:** ' . ($sender->name ?? 'System'));
 
         if (!empty($this->transfer->carried_by)) {
@@ -60,13 +65,16 @@ class FileAssignmentPendingNotification extends Notification
     {
         $file = $this->transfer->file;
         $sender = $this->transfer->sender;
+        $folder = $file?->folder;
+        $folderNumber = $folder->folder_number ?? 'FLD-GENERAL';
+        $folderName = $folder->folder_name ?? 'General Folder';
 
         return [
             'type' => 'file_pending_assignment',
             'title' => 'File Needs Assignment',
             'message' => ($sender->name ?? 'System').' transferred '.
                              ($file->file_number ?? 'a file').
-                             ' to '.$this->targetDept->name.'. Please assign it to a user.',
+                             " [Folder: {$folderNumber}] to ".$this->targetDept->name.'. Please assign it to a user.',
             'icon' => 'user-plus',
             'color' => 'orange',
             'url' => route('admin.files.pending', [], false),
@@ -74,6 +82,8 @@ class FileAssignmentPendingNotification extends Notification
             'file_uuid' => $file->uuid ?? null,
             'file_title' => $file->file_name ?? 'Unknown File',
             'file_number' => $file->file_number ?? '',
+            'folder_number' => $folderNumber,
+            'folder_name' => $folderName,
             'sender' => $sender->name ?? 'System',
             'dept' => $this->targetDept->name,
         ];

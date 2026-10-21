@@ -50,14 +50,27 @@
             </div>
             <div class="card-body">
                 <dl class="mb-0" style="display:grid;grid-template-columns:auto 1fr;gap:8px 12px;font-size:.85rem;">
-                    <dt class="text-muted fw-600">Folio Number</dt>
-                    <dd class="fw-700 text-portal-primary mb-0">{{ $file->folio_number ?: $file->file_number }}</dd>
-
-                    <dt class="text-muted fw-600">File Number</dt>
-                    <dd class="fw-700 text-dark mb-0">{{ $file->file_number }}</dd>
+                    <dt class="text-muted fw-600">Document No.</dt>
+                    <dd class="fw-700 text-portal-primary mb-0">{{ $file->file_number }}</dd>
 
                     <dt class="text-muted fw-600">Title / Subject</dt>
                     <dd class="fw-600 mb-0">{{ $file->file_name }}</dd>
+
+                    <dt class="text-muted fw-600">Folder No.</dt>
+                    <dd class="mb-0">
+                        @if($file->folder)
+                            <span class="badge bg-secondary bg-opacity-10 text-dark fw-700">
+                                <i class="fa-solid fa-folder me-1 text-primary"></i>{{ $file->folder->folder_number }}
+                            </span>
+                        @else
+                            <span class="text-muted">N/A</span>
+                        @endif
+                    </dd>
+
+                    <dt class="text-muted fw-600">Folder Name</dt>
+                    <dd class="mb-0 fw-600 text-dark">
+                        {{ $file->folder->folder_name ?? 'General Folder' }}
+                    </dd>
 
                     <dt class="text-muted fw-600">Origin Dept.</dt>
                     <dd class="mb-0">{{ $file->department->name ?? 'N/A' }}</dd>
@@ -79,6 +92,24 @@
                 <i class="fa-solid fa-paper-plane me-2 text-primary"></i>Recipient &amp; Content Details
             </div>
             <div class="card-body">
+
+                {{-- Folder & File Indication Banner --}}
+                <div class="alert alert-light border shadow-xs d-flex align-items-center gap-3 mb-4 p-3 rounded" style="background:#f8fafc; border-color:#e2e8f0;">
+                    <div style="width:42px;height:42px;border-radius:10px;background:#e0f2fe;color:#0284c7;display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0;">
+                        <i class="fa-solid fa-folder-open"></i>
+                    </div>
+                    <div class="min-w-0 flex-grow-1">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="badge bg-primary text-white fw-700">
+                                <i class="fa-solid fa-folder me-1"></i>Folder: {{ $file->folder->folder_number ?? 'FLD-GENERAL' }}
+                            </span>
+                            <span class="fw-700 text-dark">{{ $file->folder->folder_name ?? 'General Files Folder' }}</span>
+                        </div>
+                        <div class="text-muted fs-xs mt-1 text-truncate">
+                            Sending File: <strong>{{ $file->file_number }}</strong> &mdash; {{ $file->file_name }}
+                        </div>
+                    </div>
+                </div>
 
                 <form action="{{ route('files.transfer.store') }}"
                       method="POST"

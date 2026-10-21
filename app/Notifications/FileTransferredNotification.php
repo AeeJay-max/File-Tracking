@@ -30,6 +30,9 @@ class FileTransferredNotification extends Notification
     {
         $file = $this->transfer->file;
         $sender = $this->transfer->sender;
+        $folder = $file?->folder;
+        $folderNumber = $folder->folder_number ?? 'FLD-GENERAL';
+        $folderName = $folder->folder_name ?? 'General Folder';
         $url = route('files.show', $file->uuid ?? '');
 
         $mail = (new MailMessage)
@@ -37,7 +40,9 @@ class FileTransferredNotification extends Notification
             ->greeting('Hello ' . ($notifiable->name ?? 'Officer') . ',')
             ->line('A file has been transferred to you by ' . ($sender->name ?? 'System') . '.')
             ->line('**File Number:** ' . ($file->file_number ?? 'N/A'))
-            ->line('**File Title:** ' . ($file->file_name ?? 'N/A'));
+            ->line('**File Title:** ' . ($file->file_name ?? 'N/A'))
+            ->line('**Folder Number:** ' . $folderNumber)
+            ->line('**Folder Name:** ' . $folderName);
 
         if (!empty($this->transfer->carried_by)) {
             $mail->line('**Carried By:** ' . $this->transfer->carried_by);
@@ -56,6 +61,10 @@ class FileTransferredNotification extends Notification
         $file = $this->transfer->file;
         $sender = $this->transfer->sender;
         $receiver = $this->transfer->receiver;
+        $folder = $file?->folder;
+        $folderNumber = $folder->folder_number ?? 'FLD-GENERAL';
+        $folderName = $folder->folder_name ?? 'General Folder';
+
         $isDepartmentTransfer = $sender
             && $receiver
             && (int) $sender->department_id !== (int) $receiver->department_id;
@@ -67,7 +76,7 @@ class FileTransferredNotification extends Notification
         return [
             'type' => 'file_received',
             'title' => 'File Transferred',
-            'message' => ($sender->name ?? 'System').' transferred '.($file->file_number ?? 'a file'),
+            'message' => ($sender->name ?? 'System').' transferred '.($file->file_number ?? 'a file')." [Folder: {$folderNumber}]",
             'icon' => 'exchange-alt',
             'color' => 'blue',
             'url' => $url,
@@ -75,6 +84,8 @@ class FileTransferredNotification extends Notification
             'file_uuid' => $file->uuid ?? null,
             'file_title' => $file->file_name ?? 'Unknown File',
             'file_number' => $file->file_number ?? '',
+            'folder_number' => $folderNumber,
+            'folder_name' => $folderName,
             'sender' => $sender->name ?? 'System',
             'remarks' => $this->transfer->remarks,
         ];

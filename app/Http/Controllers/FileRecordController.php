@@ -83,8 +83,7 @@ class FileRecordController extends Controller
             $s = $request->string('search')->trim()->value();
             $query->where(fn ($q) => $q
                 ->where('file_name', 'like', "%{$s}%")
-                ->orWhere('file_number', 'like', "%{$s}%")
-                ->orWhere('folio_number', 'like', "%{$s}%"));
+                ->orWhere('file_number', 'like', "%{$s}%"));
         }
 
         if ($request->filled('status')) {
@@ -136,14 +135,11 @@ class FileRecordController extends Controller
         $this->authorize('create', FileRecord::class);
 
         $normalizedFileNumber = strtoupper(trim((string) $request->input('file_number', '')));
-        $rawFolio = trim((string) $request->input('folio_number', ''));
-        $normalizedFolioNumber = $rawFolio !== '' ? strtoupper($rawFolio) : $normalizedFileNumber;
         $normalizedFolderNumber = strtoupper(trim((string) $request->input('folder_number', 'FLD-GENERAL')));
         $folderName = trim((string) $request->input('folder_name', 'General Files Folder')) ?: 'General Files Folder';
 
         $request->merge([
             'file_number' => $normalizedFileNumber,
-            'folio_number' => $normalizedFolioNumber,
             'folder_number' => $normalizedFolderNumber,
             'folder_name' => $folderName,
         ]);
@@ -157,7 +153,6 @@ class FileRecordController extends Controller
                 Rule::unique('file_records', 'file_number')
                     ->where(fn ($query) => $query->where('department_id', (int) $request->input('department_id'))),
             ],
-            'folio_number' => 'nullable|string|max:100',
             'folder_number' => 'nullable|string|max:100',
             'folder_name' => 'nullable|string|max:255',
             'file_name' => 'required|string|max:255',
@@ -189,7 +184,6 @@ class FileRecordController extends Controller
             'folder_id' => $folder->id,
             'file_name' => $request->string('file_name')->trim()->value(),
             'file_number' => $normalizedFileNumber,
-            'folio_number' => $normalizedFolioNumber,
             'remarks' => $request->string('remarks')->trim()->value() ?: null,
             'status' => 'active',
         ]);

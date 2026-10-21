@@ -37,6 +37,7 @@ class AdminFileAssignmentController extends Controller
         $deptId = $admin->department_id;
 
         $pendingFiles = FileRecord::with([
+            'folder',
             'movements' => fn ($query) => $query->latest('created_at')->with(['fromUser', 'fromDept']),
         ])
             ->where('current_department_id', $deptId)

@@ -90,8 +90,16 @@
                     </td>
                     <td>
                         <div class="fw-600">{{ $file->file_name }}</div>
+                        <div class="mt-1 d-flex align-items-center gap-1">
+                            <span class="badge bg-secondary bg-opacity-10 text-dark border fs-xs">
+                                <i class="fa-solid fa-folder me-1 text-primary"></i>{{ $file->folder->folder_number ?? 'FLD-GENERAL' }}
+                            </span>
+                            <span class="text-muted fs-xs text-truncate" style="max-width:180px;" title="{{ $file->folder->folder_name ?? 'General Folder' }}">
+                                {{ $file->folder->folder_name ?? 'General Folder' }}
+                            </span>
+                        </div>
                         @if($displayRemarks)
-                        <div class="text-muted fs-sm text-truncate" style="max-width:260px;"
+                        <div class="text-muted fs-sm text-truncate mt-1" style="max-width:260px;"
                              title="{{ $displayRemarks }}">
                             <i class="fa-solid fa-comment-dots fa-xs me-1 text-primary"></i>{{ Str::limit($displayRemarks, 70) }}
                         </div>

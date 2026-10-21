@@ -12,12 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('file_records', function (Blueprint $table) {
-            $table->string('folio_number')->nullable()->after('file_number');
+            //
         });
-
-        \Illuminate\Support\Facades\DB::table('file_records')
-            ->whereNull('folio_number')
-            ->update(['folio_number' => \Illuminate\Support\Facades\DB::raw('file_number')]);
     }
 
     /**
@@ -26,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('file_records', function (Blueprint $table) {
-            $table->dropColumn('folio_number');
+            //
         });
     }
 };
