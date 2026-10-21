@@ -43,7 +43,7 @@ class ChiefDirectorController extends Controller
         // Active Delegated Assignments
         $activeAssignments = ActingAssignment::where('assigned_to', $user->id)
             ->where('status', 'active')
-            ->with(['file.currentDepartment', 'file.currentHolder', 'assignedBy'])
+            ->with(['file.currentDepartment', 'file.currentHolder', 'file.folder', 'assignedBy'])
             ->latest('assigned_at')
             ->get();
 

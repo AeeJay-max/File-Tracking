@@ -52,6 +52,18 @@
                         <div class="fw-700 text-portal-primary">{{ $file->file_number }}</div>
                     </div>
                     <div class="col-sm-6">
+                        <div class="text-muted fs-sm mb-1">Folder Number</div>
+                        <div class="fw-700">
+                            <span class="badge bg-secondary bg-opacity-10 text-dark border">
+                                <i class="fa-solid fa-folder me-1 text-primary"></i>{{ $file->folder->folder_number ?? 'FLD-GENERAL' }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="text-muted fs-sm mb-1">Folder Name</div>
+                        <div class="fw-600 text-dark">{{ $file->folder->folder_name ?? 'General Folder' }}</div>
+                    </div>
+                    <div class="col-sm-6">
                         <div class="text-muted fs-sm mb-1">Current Department</div>
                         <div>{{ ($file->currentDepartment ?? $file->department)?->name ?? 'N/A' }}</div>
                     </div>

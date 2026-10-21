@@ -104,8 +104,22 @@
                             <tbody>
                                 @forelse($myFiles as $file)
                                 <tr>
-                                    <td class="text-muted fs-sm fw-700">{{ $file->file_number }}</td>
-                                    <td>{{ $file->file_name }}</td>
+                                    <td class="text-muted fs-sm fw-700">
+                                        <div>{{ $file->file_number }}</div>
+                                        @if($file->folder)
+                                        <span class="badge bg-secondary bg-opacity-10 text-dark border fs-xs mt-1">
+                                            <i class="fa-solid fa-folder me-1 text-primary"></i>{{ $file->folder->folder_number }}
+                                        </span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <div class="fw-600">{{ $file->file_name }}</div>
+                                        @if($file->folder)
+                                        <div class="text-muted fs-xs text-truncate mt-0.5" style="max-width:200px;" title="{{ $file->folder->folder_name }}">
+                                            <i class="fa-solid fa-folder-open fa-xs me-1 text-secondary"></i>{{ $file->folder->folder_name }}
+                                        </div>
+                                        @endif
+                                    </td>
                                     <td>@include('partials.status-badge', ['status' => $file->status])</td>
                                     <td class="text-muted fs-sm">{{ $file->created_at->format('d M Y') }}</td>
                                     <td>
@@ -144,6 +158,16 @@
                                     <td>
                                         <div class="fw-700">{{ $t->file->file_name ?? 'N/A' }}</div>
                                         <div class="text-muted fs-sm">{{ $t->file->file_number ?? '' }}</div>
+                                        @if($t->file?->folder)
+                                        <div class="mt-1 d-flex align-items-center gap-1">
+                                            <span class="badge bg-secondary bg-opacity-10 text-dark border fs-xs">
+                                                <i class="fa-solid fa-folder me-1 text-primary"></i>{{ $t->file->folder->folder_number }}
+                                            </span>
+                                            <span class="text-muted fs-xs text-truncate" style="max-width:160px;" title="{{ $t->file->folder->folder_name }}">
+                                                {{ $t->file->folder->folder_name }}
+                                            </span>
+                                        </div>
+                                        @endif
                                     </td>
                                     <td>{{ $t->sender->name ?? 'System' }}</td>
                                     <td class="text-muted">{{ $t->file->department->name ?? '—' }}</td>

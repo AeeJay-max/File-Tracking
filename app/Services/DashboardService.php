@@ -115,13 +115,13 @@ class DashboardService
         $hasDeptOwnershipColumns = self::hasDeptOwnershipColumns();
 
         $recentFiles = $hasDeptOwnershipColumns
-            ? FileRecord::with(['currentHolder'])
+            ? FileRecord::with(['currentHolder', 'folder'])
                 ->where('current_department_id', $deptId)->latest()->take(7)->get()
-            : FileRecord::with(['currentHolder'])
+            : FileRecord::with(['currentHolder', 'folder'])
                 ->where('department_id', $deptId)->latest()->take(7)->get();
 
         $pendingFiles = $hasDeptOwnershipColumns
-            ? FileRecord::with(['creator'])
+            ? FileRecord::with(['creator', 'folder'])
                 ->where('current_department_id', $deptId)
                 ->whereNull('current_user_id')
                 ->where('status', 'pending_assignment')

@@ -111,8 +111,22 @@
                             @if($file->is_urgent)
                                 <span class="badge bg-danger ms-1">Urgent</span>
                             @endif
+                            @if($file->folder)
+                            <div class="mt-1">
+                                <span class="badge bg-secondary bg-opacity-10 text-dark border fs-xs">
+                                    <i class="fa-solid fa-folder me-1 text-primary"></i>{{ $file->folder->folder_number }}
+                                </span>
+                            </div>
+                            @endif
                         </td>
-                        <td class="fw-600">{{ $file->file_name }}</td>
+                        <td>
+                            <div class="fw-600">{{ $file->file_name }}</div>
+                            @if($file->folder)
+                            <div class="text-muted fs-xs text-truncate mt-0.5" style="max-width:180px;" title="{{ $file->folder->folder_name }}">
+                                <i class="fa-solid fa-folder-open fa-xs me-1 text-secondary"></i>{{ $file->folder->folder_name }}
+                            </div>
+                            @endif
+                        </td>
                         <td>
                             <div class="fw-600">{{ $assignment->assignedBy->name ?? 'Permanent Secretary' }}</div>
                             <small class="text-muted">Permanent Secretary</small>

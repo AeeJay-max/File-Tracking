@@ -100,8 +100,22 @@
                 <tbody>
                     @foreach($pendingFiles as $pf)
                     <tr>
-                        <td class="fw-700 text-portal-primary">{{ $pf->file_number }}</td>
-                        <td>{{ $pf->file_name }}</td>
+                        <td class="fw-700 text-portal-primary">
+                            <div>{{ $pf->file_number }}</div>
+                            @if($pf->folder)
+                            <span class="badge bg-secondary bg-opacity-10 text-dark border fs-xs mt-1">
+                                <i class="fa-solid fa-folder me-1 text-primary"></i>{{ $pf->folder->folder_number }}
+                            </span>
+                            @endif
+                        </td>
+                        <td>
+                            <div class="fw-600">{{ $pf->file_name }}</div>
+                            @if($pf->folder)
+                            <div class="text-muted fs-xs text-truncate mt-0.5" style="max-width:180px;" title="{{ $pf->folder->folder_name }}">
+                                <i class="fa-solid fa-folder-open fa-xs me-1 text-secondary"></i>{{ $pf->folder->folder_name }}
+                            </div>
+                            @endif
+                        </td>
                         <td class="text-muted fs-sm">{{ $pf->creator->name ?? '—' }}</td>
                         <td class="text-muted fs-sm">{{ $pf->updated_at->format('d M Y') }}</td>
                         <td>
@@ -143,8 +157,22 @@
                         <tbody>
                             @forelse($recentFiles as $f)
                             <tr>
-                                <td class="text-muted fs-sm">{{ $f->file_number }}</td>
-                                <td class="fw-700">{{ $f->file_name }}</td>
+                                <td class="text-muted fs-sm">
+                                    <div class="fw-700 text-portal-primary">{{ $f->file_number }}</div>
+                                    @if($f->folder)
+                                    <span class="badge bg-secondary bg-opacity-10 text-dark border fs-xs mt-1">
+                                        <i class="fa-solid fa-folder me-1 text-primary"></i>{{ $f->folder->folder_number }}
+                                    </span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <div class="fw-700">{{ $f->file_name }}</div>
+                                    @if($f->folder)
+                                    <div class="text-muted fs-xs text-truncate mt-0.5" style="max-width:180px;" title="{{ $f->folder->folder_name }}">
+                                        <i class="fa-solid fa-folder-open fa-xs me-1 text-secondary"></i>{{ $f->folder->folder_name }}
+                                    </div>
+                                    @endif
+                                </td>
                                 <td class="text-muted">
                                     @if($f->currentHolder)
                                         {{ $f->currentHolder->name }}

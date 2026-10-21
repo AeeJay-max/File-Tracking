@@ -26,6 +26,16 @@
             <span class="notif-content">
                 <span class="notif-title">{{ $n['title'] }}</span>
                 <span class="notif-msg">{{ $n['message'] }}</span>
+                @if(!empty($n['folder_number']))
+                <span class="mt-1 d-inline-flex align-items-center gap-1">
+                    <span class="badge bg-secondary bg-opacity-10 text-dark border fs-xs">
+                        <i class="fa-solid fa-folder me-1 text-primary"></i>{{ $n['folder_number'] }}
+                    </span>
+                    @if(!empty($n['folder_name']))
+                    <span class="text-muted fs-xs">{{ $n['folder_name'] }}</span>
+                    @endif
+                </span>
+                @endif
                 <small class="text-muted">{{ $n['relative_time'] }}</small>
             </span>
 

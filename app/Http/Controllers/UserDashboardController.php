@@ -21,17 +21,17 @@ class UserDashboardController extends Controller
         $stats = $this->dashboard->userStats($userId);
 
         // Files the user currently holds or created
-        $myFiles = FileRecord::with(['department', 'currentHolder'])
+        $myFiles = FileRecord::with(['department', 'currentHolder', 'folder'])
             ->where(fn ($q) => $q->where('created_by', $userId)->orWhere('current_user_id', $userId))
             ->latest()->take(10)->get();
 
         // Files received by this user
-        $receivedFiles = FileTransfer::with(['file.department', 'sender'])
+        $receivedFiles = FileTransfer::with(['file.department', 'file.folder', 'sender'])
             ->where('receiver_id', $userId)
             ->latest()->take(8)->get();
 
         // Files sent (transferred away) by this user
-        $sentFiles = FileTransfer::with(['file.department', 'receiver'])
+        $sentFiles = FileTransfer::with(['file.department', 'file.folder', 'receiver'])
             ->where('sender_id', $userId)
             ->latest()->take(8)->get();
 

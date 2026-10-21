@@ -228,7 +228,19 @@
                 @endphp
                 <tr>
                     <td class="col-num text-muted d-none d-md-table-cell">{{ $files->firstItem() + $i }}</td>
-                    <td class="col-folio"><span class="fw-700 text-portal-primary">{{ $file->file_number }}</span></td>
+                    <td class="col-folio">
+                        <span class="fw-700 text-portal-primary d-block">{{ $file->file_number }}</span>
+                        @if($file->folder)
+                        <div class="mt-1">
+                            <span class="badge bg-secondary bg-opacity-10 text-dark border d-inline-flex align-items-center fs-xs">
+                                <i class="fa-solid fa-folder me-1 text-primary"></i>{{ $file->folder->folder_number }}
+                            </span>
+                            <div class="text-muted fs-xs text-truncate mt-0.5" style="max-width:130px;" title="{{ $file->folder->folder_name }}">
+                                {{ $file->folder->folder_name }}
+                            </div>
+                        </div>
+                        @endif
+                    </td>
                     <td class="col-name">
                         <div class="fw-600">{{ $file->file_name }}</div>
                         @if($file->attachment_path)

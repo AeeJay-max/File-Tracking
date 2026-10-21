@@ -68,6 +68,16 @@
                     <td>
                         <div class="fw-700">{{ $move->file->file_name ?? 'N/A' }}</div>
                         <div class="text-muted fs-sm">{{ $move->file->file_number ?? '' }}</div>
+                        @if($move->file?->folder)
+                        <div class="mt-1 d-flex align-items-center gap-1">
+                            <span class="badge bg-secondary bg-opacity-10 text-dark border fs-xs">
+                                <i class="fa-solid fa-folder me-1 text-primary"></i>{{ $move->file->folder->folder_number }}
+                            </span>
+                            <span class="text-muted fs-xs text-truncate" style="max-width:160px;" title="{{ $move->file->folder->folder_name }}">
+                                {{ $move->file->folder->folder_name }}
+                            </span>
+                        </div>
+                        @endif
                     </td>
                     <td>
                         <div class="d-flex align-items-center gap-2">

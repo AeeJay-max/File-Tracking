@@ -19,7 +19,7 @@ class AdminTransferController extends Controller
     {
         $user = Auth::user();
         $query = FileMovement::with([
-            'file',
+            'file.folder',
             'fromUser',
             'toUser',
             'fromDept',

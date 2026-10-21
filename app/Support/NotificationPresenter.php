@@ -15,6 +15,8 @@ class NotificationPresenter
             'id' => $notification->id,
             'title' => $data['title'] ?? self::defaultTitle($type),
             'message' => $data['message'] ?? 'New notification',
+            'folder_number' => $data['folder_number'] ?? null,
+            'folder_name' => $data['folder_name'] ?? null,
             'icon' => $data['icon'] ?? self::defaultIcon($type),
             'color' => self::safeColor($data['color'] ?? self::defaultColor($type)),
             'url' => $data['url'] ?? route('notifications.index', [], false),
