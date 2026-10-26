@@ -142,15 +142,32 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function isPermanentSecretary(): bool
     {
-        return $this->designation?->name === 'Permanent Secretary' || $this->email === 'permsec@filetrack.local';
+        if ($this->email === 'permsec@filetrack.local') {
+            return true;
+        }
+
+        $desigName = $this->designation?->name;
+        if ($desigName && (strcasecmp($desigName, 'Permanent Secretary') === 0 || str_contains(strtolower($desigName), 'permanent secretary'))) {
+            return true;
+        }
+
+        if (str_contains(strtolower((string) $this->name), 'permanent secretary')) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
      * Get the user's display title for the UI.
-     * E.g. "Director — Finance" for admin role, "Chief Director" for chief_director.
+     * E.g. "Director — Finance" for admin role, "Chief Director" for chief_director, "Permanent Secretary" for Permanent Secretary.
      */
     public function getDisplayTitleAttribute(): string
     {
+        if ($this->isPermanentSecretary()) {
+            return 'Permanent Secretary';
+        }
+
         if ($this->role === 'admin') {
             $deptName = $this->department?->name;
             return $deptName ? "Director — {$deptName}" : "Director";
