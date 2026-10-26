@@ -750,6 +750,36 @@ A typical development workflow is:
 
 ---
 
+# 🖥️ Server Hardware Specifications & Hosting Capacity
+
+Estimated server hardware resources (RAM, CPU Cores, and Storage) for hosting the system across different operational scales:
+
+| Metric | Minimum Capacity (Pilot / < 50 Users) | Recommended Capacity (Standard / 50 – 500 Users) | Highest Capacity (Enterprise / 500+ Concurrent Users) |
+| --- | --- | --- | --- |
+| **RAM** | **2 GB – 4 GB** | **4 GB – 8 GB** | **16 GB+** |
+| **CPU Cores** | **2 vCPUs** | **4 vCPUs** | **8 vCPUs+** |
+| **Storage (SSD / NVMe)** | **40 GB** | **80 GB – 160 GB** | **250 GB – 500 GB+** (or dedicated object storage) |
+| **Database** | SQLite / MySQL 8.0 | MySQL 8.0 / MariaDB 10.6+ | MySQL 8.0+ / PostgreSQL with dedicated connection pool |
+| **Queue & Cache** | Database driver | Redis / Supervisor Worker | Dedicated Redis cluster & multi-worker Supervisor |
+
+### Resource Allocation Breakdown
+
+* **RAM Allocation:**
+  * **OS & Web Server (Nginx + PHP-FPM):** ~1.5 GB – 2 GB
+  * **Database (MySQL / MariaDB buffer pool):** ~1.5 GB – 2 GB
+  * **Queue Workers & Caching (Redis / background jobs):** ~512 MB – 1 GB
+  * **Concurrent PDF & Attachment I/O Buffer:** ~1 GB – 2 GB
+
+* **CPU Cores (vCPUs):**
+  * Dedicated to handling concurrent HTTP requests, background queue workers for email alerts, Bcrypt password hashing, and PDF MIME inspection during document upload.
+
+* **Storage Sizing & Growth Estimation:**
+  * **OS & Application Core:** ~15 GB – 20 GB
+  * **Database & Audit Trail Logs:** ~10 GB – 20 GB
+  * **Document Attachments Growth:** Calculated at ~3 MB per file upload with 1,000 files/month, generating approximately **36 GB – 50 GB per year**. For enterprise high-capacity deployments, attach dedicated persistent volume blocks or S3-compatible object storage.
+
+---
+
 # 📌 Important Notes
 
 * File numbers are manually entered and must be unique.
