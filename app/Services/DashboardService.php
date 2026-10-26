@@ -116,16 +116,16 @@ class DashboardService
 
         $recentFiles = $hasDeptOwnershipColumns
             ? FileRecord::with(['currentHolder', 'folder'])
-                ->where('current_department_id', $deptId)->latest()->take(7)->get()
+                ->where('current_department_id', $deptId)->prioritizeUrgentAndRecent()->take(7)->get()
             : FileRecord::with(['currentHolder', 'folder'])
-                ->where('department_id', $deptId)->latest()->take(7)->get();
+                ->where('department_id', $deptId)->prioritizeUrgentAndRecent()->take(7)->get();
 
         $pendingFiles = $hasDeptOwnershipColumns
             ? FileRecord::with(['creator', 'folder'])
                 ->where('current_department_id', $deptId)
                 ->whereNull('current_user_id')
                 ->where('status', 'pending_assignment')
-                ->latest()->take(5)->get()
+                ->prioritizeUrgentAndRecent()->take(5)->get()
             : collect();
 
         return [

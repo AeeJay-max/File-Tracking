@@ -74,7 +74,13 @@ class AdminTransferController extends Controller
             $query->whereDate('created_at', '<=', $request->date('to_date'));
         }
 
-        $transfers = $query->latest()->paginate(25)->withQueryString();
+        $transfers = $query
+            ->leftJoin('files', 'file_transfers.file_id', '=', 'files.id')
+            ->select('file_transfers.*')
+            ->orderByRaw("CASE WHEN files.is_urgent = 1 AND (files.status IS NULL OR files.status NOT IN ('completed', 'archived')) AND files.completed_at IS NULL THEN 0 ELSE 1 END ASC")
+            ->orderBy('file_transfers.created_at', 'desc')
+            ->paginate(25)
+            ->withQueryString();
         $departments = $user->role === 'super_admin'
             ? Department::orderBy('name')->get()
             : collect();

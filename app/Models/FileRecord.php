@@ -243,5 +243,18 @@ class FileRecord extends Model
     {
         return $this->hasOne(ActingAssignment::class, 'file_id')->where('status', 'active')->latestOfMany();
     }
+
+    /**
+     * Scope a query to arrange files starting with the recently added,
+     * but urgent files get an exception and appear at the top if they have not been actioned yet.
+     */
+    public function scopePrioritizeUrgentAndRecent($query)
+    {
+        $table = $this->getTable();
+
+        return $query->orderByRaw("CASE WHEN {$table}.is_urgent = 1 AND ({$table}.status IS NULL OR {$table}.status NOT IN ('completed', 'archived')) AND {$table}.completed_at IS NULL THEN 0 ELSE 1 END ASC")
+                     ->orderBy("{$table}.created_at", 'desc')
+                     ->orderBy("{$table}.id", 'desc');
+    }
 }
 

@@ -41,10 +41,13 @@ class ChiefDirectorController extends Controller
             ->get();
 
         // Active Delegated Assignments
-        $activeAssignments = ActingAssignment::where('assigned_to', $user->id)
-            ->where('status', 'active')
+        $activeAssignments = ActingAssignment::where('acting_assignments.assigned_to', $user->id)
+            ->where('acting_assignments.status', 'active')
+            ->leftJoin('files', 'acting_assignments.file_id', '=', 'files.id')
+            ->select('acting_assignments.*')
             ->with(['file.currentDepartment', 'file.currentHolder', 'file.folder', 'assignedBy'])
-            ->latest('assigned_at')
+            ->orderByRaw("CASE WHEN files.is_urgent = 1 AND (files.status IS NULL OR files.status NOT IN ('completed', 'archived')) AND files.completed_at IS NULL THEN 0 ELSE 1 END ASC")
+            ->orderBy('acting_assignments.assigned_at', 'desc')
             ->get();
 
         // Completed Delegated Assignments History

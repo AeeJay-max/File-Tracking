@@ -2,8 +2,8 @@
 @php
     $u = auth()->user();
     $isPermSec = ($u->designation?->name === 'Permanent Secretary' || $u->email === 'permsec@filetrack.local');
-    $dashTitle = $isPermSec ? 'Permanent Secretary Dashboard' : 'Departmental Admin Dashboard';
-    $deptName = $u->department->name ?? 'Your Department';
+    $dashTitle = $isPermSec ? "Permanent Secretary's Dashboard" : 'Departmental Admin Dashboard';
+$deptName = $u->department->name ?? 'Your Department';
 @endphp
 
 @section('title', $dashTitle)

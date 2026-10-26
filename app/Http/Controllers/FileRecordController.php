@@ -110,10 +110,8 @@ class FileRecordController extends Controller
             $folders = Folder::withCount('files')->latest()->paginate(20)->withQueryString();
         }
 
-        // Sort urgent files first, then files with upcoming return_deadline, then latest created
-        $files = $query->orderBy('is_urgent', 'desc')
-                       ->orderByRaw('CASE WHEN return_deadline IS NULL THEN 1 ELSE 0 END, return_deadline ASC')
-                       ->latest()
+        // Arrange files starting with recently added, with unactioned urgent files prioritized at the top
+        $files = $query->prioritizeUrgentAndRecent()
                        ->paginate(20)
                        ->withQueryString();
 

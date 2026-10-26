@@ -96,7 +96,7 @@ class AdminFileController extends Controller
             $query->whereDate('created_at', '<=', $request->date('to_date'));
         }
 
-        $files = $query->latest()->paginate(20)->withQueryString();
+        $files = $query->prioritizeUrgentAndRecent()->paginate(20)->withQueryString();
         $fileIds = $files->pluck('id');
 
         // Resolve previous holder per file using a single query (no N+1).

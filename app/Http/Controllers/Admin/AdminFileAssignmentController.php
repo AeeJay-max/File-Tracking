@@ -43,7 +43,7 @@ class AdminFileAssignmentController extends Controller
             ->where('current_department_id', $deptId)
             ->whereNull('current_user_id')
             ->where('status', 'pending_assignment')
-            ->latest()
+            ->prioritizeUrgentAndRecent()
             ->get();
 
         $deptUsers = User::where('department_id', $deptId)
